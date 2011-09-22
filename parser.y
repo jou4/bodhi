@@ -239,6 +239,7 @@ void compile(BDExpr1 *e)
         BDExpr1 *e1 = bd_typing(e);
         BDExpr2 *e2 = bd_knormalize(e1);
         BDExpr2 *e3 = bd_alpha_convert(e2);
+        BDExpr2 *e4 = bd_beta_reduce(e3);
     }
 }
 

@@ -43,9 +43,7 @@ void bd_type_destroy(BDType *t)
 
 BDType *bd_type_clone(BDType *t)
 {
-    if(t == NULL){
-        return;
-    }
+    if(t == NULL){ return NULL; }
 
     switch(t->kind){
         case T_UNIT:
@@ -91,7 +89,6 @@ BDType *bd_type_clone(BDType *t)
         case T_VAR:
             return bd_type_var(bd_type_clone(t->u.u_var.content));
     }
-    free(t);
 }
 
 BDType *bd_type_unit()

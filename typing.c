@@ -319,6 +319,10 @@ int occur(BDType *t1, BDType *t2)
 {
     BDTypeKind k2 = t2->kind;
 
+    if(t1 == t2){
+        return 1;
+    }
+
     switch(k2){
         case T_FUN:
             if(occur_vector(t1, t2->u.u_fun.formals)){
