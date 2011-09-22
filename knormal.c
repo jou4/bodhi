@@ -1,7 +1,4 @@
-#include <stdlib.h>
-#include <stdio.h>
 #include "compile.h"
-#include "id.h"
 
 
 typedef struct {
@@ -34,7 +31,7 @@ InsertLetResult insert_let(Pair p)
     }
     else{
         ret.name = bd_generate_id(p.t);
-        ret.let = bd_expr2_let(bd_expr_ident(ret.name, p.t), p.e, NULL);
+        ret.let = bd_expr2_let(bd_expr_ident(ret.name, bd_type_clone(p.t)), p.e, NULL);
     }
 
     return ret;
@@ -190,7 +187,7 @@ Pair normalize(Env *env, BDExpr1 *e)
                 for(i = 0; i < formals->length; i++){
                     formal = vector_get(formals, i);
                     env_set(funlocal, formal->name, formal->type);
-                    vector_add(new_formals, bd_expr_ident(formal->name, formal->type));
+                    vector_add(new_formals, bd_expr_ident(formal->name, bd_type_clone(formal->type)));
                 }
 
                 Pair p1 = normalize(funlocal, fundef->body);

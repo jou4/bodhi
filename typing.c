@@ -1,7 +1,4 @@
-#include <stdlib.h>
-#include <stdio.h>
 #include "util/exception.h"
-#include "type.h"
 #include "compile.h"
 
 // Error

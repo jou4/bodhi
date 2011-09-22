@@ -1,11 +1,16 @@
 #ifndef _compile_h_
 #define _compile_h_
 
-#include "env.h"
+#include <stdlib.h>
+#include <stdio.h>
+
+#include "type.h"
 #include "expr.h"
 #include "expr1.h"
 #include "expr2.h"
 #include "expr3.h"
+#include "env.h"
+#include "id.h"
 
 BDExpr1 *bd_typing(BDExpr1 *e);
 BDExpr2 *bd_knormalize(BDExpr1 *e);
