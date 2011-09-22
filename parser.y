@@ -4,8 +4,7 @@
 #include "util/exception.h"
 #include "util/vector.h"
 #include "id.h"
-#include "expr1.h"
-#include "typing.h"
+#include "compile.h"
 
 #define YYDEBUG 1
 #define YYLEX_PARAM lexer->scanner, lexer
@@ -238,6 +237,7 @@ void compile(BDExpr1 *e)
     try{
         bd_expr1_show(e);
         BDExpr1 *e1 = bd_typing(e);
+        BDExpr2 *e2 = bd_knormalize(e1);
     }
 }
 

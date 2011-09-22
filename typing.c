@@ -1,9 +1,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "util/exception.h"
-#include "env.h"
 #include "type.h"
-#include "typing.h"
+#include "compile.h"
 
 // Error
 
@@ -382,7 +381,7 @@ void unify(BDType *t1, BDType *t2)
             if(error_type == ERROR_INVALID_ARGUMENT){
                 throw(ERROR_UNIFY, unify_error(t1, t2));
             }else{
-                throw(ERROR_UNIFY, catch_error());
+                throw(error_type, catch_error());
             }
         }
         unify(t1->u.u_fun.ret, t2->u.u_fun.ret);
@@ -396,7 +395,7 @@ void unify(BDType *t1, BDType *t2)
             if(error_type == ERROR_INVALID_ARGUMENT){
                 throw(ERROR_UNIFY, unify_error(t1, t2));
             }else{
-                throw(ERROR_UNIFY, catch_error());
+                throw(error_type, catch_error());
             }
         }
         return;
