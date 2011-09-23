@@ -19,6 +19,8 @@ BDExpr2 *bd_alpha(Env *env, BDExpr2 *e);
 BDExpr2 *bd_beta_reduce(BDExpr2 *e);
 BDExpr2 *bd_flatten(BDExpr2 *e);
 BDExpr2 *bd_inline_expand(int threashold, BDExpr2 *e);
+BDExpr2 *bd_const_fold(BDExpr2 *e);
+BDExpr2 *bd_elim(BDExpr2 *e);
 BDExpr3 *bd_closure_transform(BDExpr2 *e);
 
 #endif
