@@ -241,6 +241,7 @@ void compile(BDExpr1 *e)
         BDExpr2 *e4 = bd_beta_reduce(e3);
         BDExpr2 *e5 = bd_inline_expand(5, e4);
         BDExpr2 *e6 = bd_const_fold(e5);
+        BDExpr2 *e7 = bd_elim(e6);
     }
 }
 

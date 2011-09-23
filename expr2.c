@@ -172,6 +172,118 @@ BDExpr2 *bd_expr2_lettuple(Vector *idents, const char *val, BDExpr2 *body)
     return e;
 }
 
+Set *bd_expr2_freevars(BDExpr2 *e)
+{
+    switch(e->kind){
+        case E_UNIT:
+        case E_INT:
+        case E_FLOAT:
+            return set_new();
+        case E_UNIOP:
+            {
+                Set *set = set_new();
+                set_add(set, e->u.u_uniop.val);
+                return set;
+            }
+        case E_BINOP:
+            {
+                Set *set = set_new();
+                set_add(set, e->u.u_binop.l);
+                set_add(set, e->u.u_binop.r);
+                return set;
+            }
+        case E_IF:
+            {
+                Set *s1 = bd_expr2_freevars(e->u.u_if.t);
+                Set *s2 = bd_expr2_freevars(e->u.u_if.f);
+                Set *set = set_union(s1, s2);
+                set_add(set, e->u.u_if.l);
+                set_add(set, e->u.u_if.r);
+
+                set_destroy(s1);
+                set_destroy(s2);
+
+                return set;
+            }
+        case E_LET:
+            {
+                Set *s1 = bd_expr2_freevars(e->u.u_let.val);
+                Set *s2 = bd_expr2_freevars(e->u.u_let.body);
+                set_remove(s2, e->u.u_let.ident->name);
+                Set *set = set_union(s1, s2);
+
+                set_destroy(s1);
+                set_destroy(s2);
+
+                return set;
+            }
+        case E_VAR:
+            {
+                Set *set = set_new();
+                set_add(set, e->u.u_var.name);
+                return set;
+            }
+        case E_LETREC:
+            {
+                Set *s1 = bd_expr2_freevars(e->u.u_letrec.fundef->body);
+                Set *s2 = set_new();
+
+                Vector *formals = e->u.u_letrec.fundef->formals;
+                BDExprIdent *formal;
+                int i;
+                for(i = 0; i < formals->length; i++){
+                    formal = vector_get(formals, i);
+                    set_add(s2, formal->name);
+                }
+
+                Set *s3 = set_diff(s1, s2);
+                Set *s4 = bd_expr2_freevars(e->u.u_letrec.body);
+                Set *set = set_union(s3, s4);
+                set_remove(set, e->u.u_letrec.fundef->ident->name);
+
+                set_destroy(s1);
+                set_destroy(s2);
+                set_destroy(s3);
+                set_destroy(s4);
+
+                return set;
+            }
+        case E_APP:
+            {
+                Set *set = set_of_list(e->u.u_app.actuals);
+                set_add(set, e->u.u_app.fun);
+                return set;
+            }
+        case E_TUPLE:
+            {
+                Set *set = set_of_list(e->u.u_tuple.elems);
+                return set;
+            }
+        case E_LETTUPLE:
+            {
+                Set *s1 = bd_expr2_freevars(e->u.u_lettuple.body);
+                Set *s2 = set_new();
+
+                Vector *idents = e->u.u_lettuple.idents;
+                BDExprIdent *ident;
+                int i;
+
+                for(i = 0; i < idents->length; i++){
+                    ident = vector_get(idents, i);
+                    set_add(s2, ident->name);
+                }
+
+                Set *set = set_diff(s1, s2);
+                set_add(set, e->u.u_lettuple.val);
+
+                set_destroy(s1);
+                set_destroy(s2);
+
+                return set;
+            }
+    }
+}
+
 
 void _bd_expr2_show(BDExpr2 *e, int depth)
 {

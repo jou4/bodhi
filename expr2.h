@@ -1,6 +1,7 @@
 #ifndef _expr2_h_
 #define _expr2_h_
 
+#include "util/set.h"
 #include "expr1.h"
 
 typedef struct BDExpr2 BDExpr2;
@@ -82,6 +83,7 @@ struct BDExpr2 {
 BDExpr2 *bd_expr2(BDExprKind kind);
 void bd_expr2_destroy(BDExpr2 *e);
 void bd_expr2_show(BDExpr2 *e);
+Set *bd_expr2_freevars(BDExpr2 *e);
 
 BDExpr2 *bd_expr2_unit();
 BDExpr2 *bd_expr2_int(int val);
