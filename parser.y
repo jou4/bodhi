@@ -19,7 +19,7 @@ void compile(BDExpr1 *e);
 
 %code requires {
 #include "lexer.h"
-#include "expr1.h"
+#include "compile.h"
 }
 
 %define api.pure
