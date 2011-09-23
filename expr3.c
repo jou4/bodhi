@@ -3,11 +3,12 @@
 #include "expr3.h"
 
 
-BDExpr3Fundef *bd_expr3_fundef(BDExprIdent *ident, Vector *formals, BDExpr3 *body)
+BDExpr3Fundef *bd_expr3_fundef(BDExprIdent *ident, Vector *formals, Vector *freevars, BDExpr3 *body)
 {
     BDExpr3Fundef *fundef = malloc(sizeof(BDExpr3Fundef));
     fundef->ident = ident;
     fundef->formals = formals;
+    fundef->freevars = freevars;
     fundef->body = body;
     return fundef;
 }
@@ -183,6 +184,104 @@ BDExpr3 *bd_expr3_lettuple(Vector *idents, const char *val, BDExpr3 *body)
     return e;
 }
 
+Set *bd_expr3_freevars(BDExpr3 *e)
+{
+    Set *s;
+
+    switch(e->kind){
+        case E_UNIT:
+        case E_INT:
+        case E_FLOAT:
+            return set_new();
+        case E_UNIOP:
+            s = set_new();
+            set_add(s, e->u.u_uniop.val);
+            return s;
+        case E_BINOP:
+            s = set_new();
+            set_add(s, e->u.u_binop.l);
+            set_add(s, e->u.u_binop.r);
+            return s;
+        case E_IF:
+            {
+                Set *s1 = bd_expr3_freevars(e->u.u_if.t);
+                Set *s2 = bd_expr3_freevars(e->u.u_if.f);
+
+                s = set_union(s1, s2);
+                set_add(s, e->u.u_if.l);
+                set_add(s, e->u.u_if.r);
+
+                set_destroy(s1);
+                set_destroy(s2);
+
+                return s;
+            }
+        case E_LET:
+            {
+                Set *s1 = bd_expr3_freevars(e->u.u_let.val);
+                Set *s2 = bd_expr3_freevars(e->u.u_let.body);
+
+                set_remove(s2, e->u.u_let.ident->name);
+                s = set_union(s1, s2);
+
+                set_destroy(s1);
+                set_destroy(s2);
+
+                return s;
+            }
+        case E_VAR:
+            s = set_new();
+            set_add(s, e->u.u_var.name);
+            return s;
+        case E_MAKECLS:
+            {
+                BDExprClosure *cls = e->u.u_makecls.closure;
+                Set *s1 = set_of_list(cls->freevars);
+                Set *s2 = bd_expr3_freevars(e->u.u_makecls.body);
+
+                s = set_union(s1, s2);
+                set_remove(s, e->u.u_makecls.ident->name);
+
+                set_destroy(s1);
+                set_destroy(s2);
+
+                return s;
+            }
+        case E_APPCLS:
+            s = set_of_list(e->u.u_app.actuals);
+            set_add(s, e->u.u_app.fun);
+            return s;
+        case E_APPDIR:
+            s = set_of_list(e->u.u_app.actuals);
+            return s;
+        case E_TUPLE:
+            s = set_of_list(e->u.u_tuple.elems);
+            return s;
+        case E_LETTUPLE:
+            {
+                Set *s1 = bd_expr3_freevars(e->u.u_lettuple.body);
+                Set *s2 = set_new();
+                Vector *idents = e->u.u_lettuple.idents;
+                int i;
+                BDExprIdent *ident;
+
+                for(i = 0; i < idents->length; i++){
+                    ident = vector_get(idents, i);
+                    set_add(s2, ident->name);
+                }
+
+                s = set_diff(s1, s2);
+                set_add(s, e->u.u_lettuple.val);
+
+                set_destroy(s1);
+                set_destroy(s2);
+
+                return s;
+            }
+    }
+    return NULL;
+}
+
 
 void _bd_expr3_show(BDExpr3 *e, int depth)
 {
@@ -356,3 +455,42 @@ void bd_expr3_show(BDExpr3 *e)
     printf("\n");
 }
 
+void _bd_expr3_fundef_show(BDExpr3Fundef *fundef, int depth)
+{
+    if(fundef == NULL){ return; }
+
+    bd_show_indent(depth);
+    bd_expr_ident_show(fundef->ident);
+
+    Vector *vec;
+    int i;
+
+    printf("\n");
+    bd_show_indent(depth + 1);
+    printf("formals: ");
+
+    vec = fundef->formals;
+    for(i = 0; i < vec->length; i++){
+        if(i > 0){ printf(", "); }
+        bd_expr_ident_show(vector_get(vec, i));
+    }
+
+    printf("\n");
+    bd_show_indent(depth + 1);
+    printf("freevars: ");
+
+    vec = fundef->freevars;
+    for(i = 0; i < vec->length; i++){
+        if(i > 0){ printf(", "); }
+        bd_expr_ident_show(vector_get(vec, i));
+    }
+
+    printf("\n");
+    _bd_expr3_show(fundef->body, depth + 1);
+}
+
+void bd_expr3_fundef_show(BDExpr3Fundef *fundef)
+{
+    _bd_expr3_fundef_show(fundef, 0);
+    printf("\n");
+}

@@ -1,6 +1,7 @@
 #ifndef _expr3_h_
 #define _expr3_h_
 
+#include "util/set.h"
 #include "expr2.h"
 
 typedef struct BDExpr3 BDExpr3;
@@ -85,6 +86,7 @@ struct BDExpr3 {
 BDExpr3 *bd_expr3(BDExprKind kind);
 void bd_expr3_destroy(BDExpr3 *e);
 void bd_expr3_show(BDExpr3 *e);
+Set *bd_expr3_freevars(BDExpr3 *e);
 
 BDExpr3 *bd_expr3_unit();
 BDExpr3 *bd_expr3_int(int val);
@@ -100,7 +102,8 @@ BDExpr3 *bd_expr3_appdir(const char *fun, Vector *actuals);
 BDExpr3 *bd_expr3_tuple(Vector *elems);
 BDExpr3 *bd_expr3_lettuple(Vector *idents, const char *val, BDExpr3 *body);
 
-BDExpr3Fundef *bd_expr3_fundef(BDExprIdent *ident, Vector *formals, BDExpr3 *body);
+BDExpr3Fundef *bd_expr3_fundef(BDExprIdent *ident, Vector *formals, Vector *freevars, BDExpr3 *body);
 void bd_expr3_fundef_destroy(BDExpr3Fundef *fundef);
+void bd_expr3_fundef_show(BDExpr3Fundef *fundef);
 
 #endif

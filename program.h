@@ -1,0 +1,18 @@
+#ifndef _program_h_
+#define _program_h_
+
+#include "util/vector.h"
+#include "expr3.h"
+#include "show.h"
+
+typedef struct {
+    Vector *fundefs;
+    BDExpr3 *expr;
+} BDProgram1;
+
+
+BDProgram1 *bd_program1(Vector *fundefs, BDExpr3 *expr);
+void bd_program1_show(BDProgram1 *prog);
+
+
+#endif

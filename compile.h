@@ -9,6 +9,7 @@
 #include "expr1.h"
 #include "expr2.h"
 #include "expr3.h"
+#include "program.h"
 #include "env.h"
 #include "id.h"
 
@@ -21,6 +22,6 @@ BDExpr2 *bd_flatten(BDExpr2 *e);
 BDExpr2 *bd_inline_expand(int threashold, BDExpr2 *e);
 BDExpr2 *bd_const_fold(BDExpr2 *e);
 BDExpr2 *bd_elim(BDExpr2 *e);
-BDExpr3 *bd_closure_transform(BDExpr2 *e);
+BDProgram1 *bd_closure_transform(BDExpr2 *e);
 
 #endif
