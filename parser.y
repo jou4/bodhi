@@ -235,14 +235,22 @@ void compile(BDExpr1 *e)
 {
     try{
         bd_expr1_show(e);
+
         BDExpr1 *e1 = bd_typing(e);
-        BDExpr2 *e2 = bd_knormalize(e1);
-        BDExpr2 *e3 = bd_alpha_convert(e2);
-        BDExpr2 *e4 = bd_beta_reduce(e3);
-        BDExpr2 *e5 = bd_inline_expand(5, e4);
-        BDExpr2 *e6 = bd_const_fold(e5);
-        BDExpr2 *e7 = bd_elim(e6);
-        BDProgram1 *prog1 = bd_closure_transform(e7);
+        BDExpr2 *e2;
+        e2 = bd_knormalize(e1);
+        e2 = bd_alpha_convert(e2);
+
+        int i;
+        for(i = 0; i < 10; i++){
+            e2 = bd_beta_reduce(e2);
+            e2 = bd_flatten(e2);
+            e2 = bd_inline_expand(0, e2);
+            e2 = bd_const_fold(e2);
+            e2 = bd_elim(e2);
+        }
+
+        BDProgram1 *prog1 = bd_closure_transform(e2);
     }
 }
 

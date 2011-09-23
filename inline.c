@@ -41,6 +41,7 @@ BDExpr2 *inline_expand(Env *env, int threashold, BDExpr2 *e)
 
                 env_local_destroy(local);
             }
+            break;
         case E_APP:
             {
                 BDExpr2Fundef *fundef = env_get(env, e->u.u_app.fun);

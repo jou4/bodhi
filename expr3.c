@@ -375,13 +375,12 @@ void _bd_expr3_show(BDExpr3 *e, int depth)
                 int i;
                 char *fv;
 
-                printf("make closure %s", ident->name);
+                printf("make closure *%s* = ", ident->name);
                 printf("(");
 
+                printf("%s", entry);
                 for(i = 0; i < fvs->length; i++){
-                    if(i > 0){
-                        printf(", ");
-                    }
+                    printf(", ");
                     fv = vector_get(fvs, i);
                     printf("%s", fv);
                 }

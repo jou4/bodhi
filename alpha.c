@@ -1,5 +1,13 @@
 #include "compile.h"
 
+char *find_alt_name(Env *env, char *name){
+    char *alt = env_get(env, name);
+    if(alt){
+        return alt;
+    }
+    return name;
+}
+
 BDExpr2 *bd_alpha(Env *env, BDExpr2 *e)
 {
     switch(e->kind){
@@ -10,12 +18,12 @@ BDExpr2 *bd_alpha(Env *env, BDExpr2 *e)
         case E_FLOAT:
             return bd_expr2_float(e->u.u_double);
         case E_UNIOP:
-            return bd_expr2_uniop(e->u.u_uniop.kind, env_get(env, e->u.u_uniop.val));
+            return bd_expr2_uniop(e->u.u_uniop.kind, find_alt_name(env, e->u.u_uniop.val));
         case E_BINOP:
-            return bd_expr2_binop(e->u.u_binop.kind, env_get(env, e->u.u_binop.l), env_get(env, e->u.u_binop.r));
+            return bd_expr2_binop(e->u.u_binop.kind, find_alt_name(env, e->u.u_binop.l), find_alt_name(env, e->u.u_binop.r));
         case E_IF:
             return bd_expr2_if(e->u.u_if.kind
-                    , env_get(env, e->u.u_if.l), env_get(env, e->u.u_if.r)
+                    , find_alt_name(env, e->u.u_if.l), find_alt_name(env, e->u.u_if.r)
                     , bd_alpha(env, e->u.u_if.t), bd_alpha(env, e->u.u_if.f));
         case E_LET:
             {
@@ -37,7 +45,7 @@ BDExpr2 *bd_alpha(Env *env, BDExpr2 *e)
                 return newexpr;
             }
         case E_VAR:
-            return bd_expr2_var(env_get(env, e->u.u_var.name));
+            return bd_expr2_var(find_alt_name(env, e->u.u_var.name));
         case E_LETREC:
             {
                 BDExpr2Fundef *fundef = e->u.u_letrec.fundef;
@@ -91,10 +99,10 @@ BDExpr2 *bd_alpha(Env *env, BDExpr2 *e)
                 char *oldname;
                 for(i = 0; i < actuals->length; i++){
                     oldname = vector_get(actuals, i);
-                    vector_add(newactuals, env_get(env, oldname));
+                    vector_add(newactuals, find_alt_name(env, oldname));
                 }
 
-                return bd_expr2_app(env_get(env, e->u.u_app.fun), newactuals);
+                return bd_expr2_app(find_alt_name(env, e->u.u_app.fun), newactuals);
             }
         case E_TUPLE:
             {
@@ -104,7 +112,7 @@ BDExpr2 *bd_alpha(Env *env, BDExpr2 *e)
                 char *oldname;
                 for(i = 0; i < elems->length; i++){
                     oldname = vector_get(elems, i);
-                    vector_add(newelems, env_get(env, oldname));
+                    vector_add(newelems, find_alt_name(env, oldname));
                 }
 
                 return bd_expr2_tuple(newelems);
@@ -129,7 +137,7 @@ BDExpr2 *bd_alpha(Env *env, BDExpr2 *e)
 
                 BDExpr2 *newexpr = bd_expr2_lettuple(
                         newidents
-                        , env_get(env, e->u.u_lettuple.val)
+                        , find_alt_name(env, e->u.u_lettuple.val)
                         , bd_alpha(local, e->u.u_lettuple.body));
 
                 env_local_destroy(local);
