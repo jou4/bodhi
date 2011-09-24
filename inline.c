@@ -50,16 +50,16 @@ BDExpr2 *inline_expand(Env *env, int threashold, BDExpr2 *e)
                     Vector *formals = fundef->formals;
                     BDExpr2 *body = fundef->body;
 
-                    Env *local = env_local_new(env);
+                    Env *alphalocal = env_new();
                     int i;
                     BDExprIdent *formal;
                     for(i = 0; i < actuals->length; i++){
                         formal = vector_get(formals, i);
-                        env_set(local, formal->name, vector_get(actuals, i));
+                        env_set(alphalocal, formal->name, vector_get(actuals, i));
                     }
 
-                    BDExpr2 *newexpr = bd_alpha(local, body);
-                    env_local_destroy(local);
+                    BDExpr2 *newexpr = bd_alpha(alphalocal, body);
+                    env_destroy(alphalocal);
 
                     bd_expr2_destroy(e);
 
