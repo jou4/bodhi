@@ -132,7 +132,7 @@ Pair normalize(Env *env, BDExpr1 *e)
                 BDExpr1 *pred = e->u.u_if.pred;
 
                 if(pred->kind == E_UNIOP && pred->u.u_uniop.kind == OP_NOT){
-                    return normalize(env, bd_expr1_if(pred->u.u_uniop.val, e->u.u_if.t, e->u.u_if.f));
+                    return normalize(env, bd_expr1_if(pred->u.u_uniop.val, e->u.u_if.f, e->u.u_if.t));
                 }
                 else if(pred->kind == E_BINOP){
                     return normalize_if(env, e, bd_expr2_if(pred->u.u_binop.kind, NULL, NULL, NULL, NULL));
