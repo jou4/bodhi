@@ -2,28 +2,45 @@
 #define _bytecode_h_
 
 typedef enum {
-    BOP_NOP,
-    BOP_CALL,
-    BOP_RET,
-    BOP_JMP,
-    BOP_CREATE_FRAME,
-    BOP_REMOVE_FRAME,
-    BOP_SET_LOCALVAR,
-    BOP_GET_LOCALVAR,
-    BOP_SET_ARG,
-    BOP_GET_ARG,
-    BOP_SET_ARG_FASTCALL,
-    BOP_GET_ARG_FASTCALL,
+    NOP,
+    CALL,
+    RET,
+    CMP,
+    JMP,
+    JMP_EQ,
+    JMP_LE,
+    ADD,
+    SUB,
+    MUL,
+    DIV,
+    CREATE_FRAME,
+    REMOVE_FRAME,
+    SET_LOCALVAR,
+    GET_LOCALVAR,
+    SET_ARG,
+    GET_ARG,
+    SET_ARG_FASTCALL,
+    GET_ARG_FASTCALL,
+    LET,
 } BDByteCodeOp;
 
+typedef struct BDByteCode BDByteCode;
+
 typedef struct {
+    int reg;
+    BDType type;
+} BDByteCodeLet;
+
+struct BDByteCode {
     BDByteCodeOp op;
+    union {
+    } u;
     char *callee;
     int i_const;
     int localvar1;
     int localvar2;
     int register1;
     int register2;
-} BDByteCode;
+}
 
 #endif
