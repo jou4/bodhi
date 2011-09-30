@@ -1,6 +1,9 @@
 #ifndef _bytecode_h_
 #define _bytecode_h_
 
+#include "show.h"
+#include "type.h"
+
 /*
  * [ex01]
  * let a = 10 in
@@ -72,52 +75,75 @@
  */
 
 typedef enum {
-    NOP,
-    LET,
-    CALL,
-    RET,
-    CMP,
-    JMP,
-    JE,
-    JLE,
-    ADD,
-    SUB,
-    MUL,
-    DIV,
-    SET_ARG,
-    GET_ARG,
-    CREATE_FRAME,
-    REMOVE_FRAME,
-    SET_LOCALVAR,
-    GET_LOCALVAR,
-    SET_ARG_FASTCALL,
-    GET_ARG_FASTCALL,
+    BCO_NOP,
+    BCO_LET,
+    BCO_CALL,
+    BCO_RET,
+    BCO_CMP,
+    BCO_JMP,
+    BCO_JE,
+    BCO_JLE,
+    BCO_ADD,
+    BCO_SUB,
+    BCO_MUL,
+    BCO_DIV,
+    BCO_SET_ARG,
+    BCO_GET_ARG,
+    BCO_LBL
 } BDByteCodeOp;
 
 typedef struct BDByteCode BDByteCode;
+typedef struct BDByteCodeExpr BDByteCodeExpr;
 
 typedef struct {
-    int reg;
+    BDByteCode *expr;
+} BDByteCodeAns;
+
+typedef struct {
+    char *reg;
     BDType type;
-    BDByteCode *code;
+    BDByteCode *expr;
 } BDByteCodeLet;
 
 typedef struct {
     BDByteCode *code;
 } BDByteCodeRet;
 
-struct BDByteCode {
-    BDByteCodeOp op;
+typedef enum {
+    BCV_LBL,
+    BCV_REG,
+    BCV_INT
+} BDByteCodeValueType;
+
+typedef struct {
+    BDByteCodeValueType type;
     union {
-        BDByteCodeLet *let;
-        BDByteCodeRet *ret;
+        char *name;
+        int intval;
     } u;
-    char *callee;
-    int i_const;
-    int localvar1;
-    int localvar2;
-    int register1;
-    int register2;
-}
+} BDByteCodeValue;
+
+typedef enum {
+    BCT_ANS,
+    BCT_LET
+} BDByteCodeType;
+
+struct BDByteCode {
+    BDByteCodeType type;
+    union {
+        BDByteCodeAns u_ans;
+        BDByteCodeLet u_let;
+    } u;
+};
+
+BDByteCodeValue *bd_byte_code_value_lbl(char *lbl);
+BDByteCodeValue *bd_byte_code_value_reg(char *reg);
+BDByteCodeValue *bd_byte_code_value_int(int val);
+
+BDByteCode *bd_byte_code_let(char *reg, BDType *type, BDByteCode *code);
+BDByteCode *bd_byte_code_ret(BDByteCode *code);
+BDByteCode *bd_byte_code(BDByteCodeOp op, BDByteCodeValue *arg1, BDByteCodeValue *arg2);
+
+void bd_byte_code_show(BDByteCode *code);
 
 #endif

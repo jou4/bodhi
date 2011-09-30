@@ -27,3 +27,16 @@ void bd_program1_show(BDProgram1 *prog)
 
     bd_expr3_show(prog->expr);
 }
+
+BDProgram2 *bd_program2(Vector *fundefs, Vector *codes)
+{
+    BDProgram2 *prog = malloc(sizeof(BDProgram2));
+    prog->fundefs = fundefs;
+    prog->codes = codes;
+    return prog;
+}
+
+void bd_program2_show(BDProgram2 *prog)
+{
+}
+
