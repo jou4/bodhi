@@ -2,11 +2,11 @@
 #include <stdio.h>
 #include "program.h"
 
-BDProgram1 *bd_program1(Vector *fundefs, BDExpr3 *expr)
+BDProgram1 *bd_program1(Vector *fundefs, BDExpr3 *main)
 {
     BDProgram1 *prog = malloc(sizeof(BDProgram1));
     prog->fundefs = fundefs;
-    prog->expr = expr;
+    prog->main = main;
     return prog;
 }
 
@@ -25,18 +25,5 @@ void bd_program1_show(BDProgram1 *prog)
     printf("\n");
     printf("Expressions\n");
 
-    bd_expr3_show(prog->expr);
+    bd_expr3_show(prog->main);
 }
-
-BDProgram2 *bd_program2(Vector *fundefs, Vector *codes)
-{
-    BDProgram2 *prog = malloc(sizeof(BDProgram2));
-    prog->fundefs = fundefs;
-    prog->codes = codes;
-    return prog;
-}
-
-void bd_program2_show(BDProgram2 *prog)
-{
-}
-

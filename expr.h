@@ -33,6 +33,7 @@ typedef enum {
     OP_DIV,
     OP_EQ,
     OP_LE,
+    OP_GE,
 } BDOpKind;
 
 typedef struct {

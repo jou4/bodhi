@@ -246,11 +246,12 @@ void compile(BDExpr1 *e)
             e2 = bd_beta_reduce(e2);
             e2 = bd_flatten(e2);
             e2 = bd_inline_expand(0, e2);
-            e2 = bd_const_fold(e2);
+            //e2 = bd_const_fold(e2);
             e2 = bd_elim(e2);
         }
 
         BDProgram1 *prog1 = bd_closure_transform(e2);
+        BDAsmProg *prog2 = bd_virtual(prog1);
     }
 }
 
