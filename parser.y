@@ -252,6 +252,7 @@ void compile(BDExpr1 *e)
 
         BDProgram1 *prog1 = bd_closure_transform(e2);
         BDAsmProg *prog2 = bd_virtual(prog1);
+        BDAsmProg *prog3 = bd_register_allocate(prog2);
     }
 }
 

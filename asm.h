@@ -18,7 +18,9 @@ typedef enum {
     AE_BINOP,
     AE_IF,
     AE_CALLCLS,
-    AE_CALLDIR
+    AE_CALLDIR,
+    AE_STORE,
+    AE_LOAD
 } BDAsmExprKind;
 
 typedef struct BDAsmProg BDAsmProg;
@@ -75,6 +77,11 @@ typedef struct {
     Vector *actuals;    // Vector<String>
 } BDAsmExprCall;
 
+typedef struct {
+    char *lbl;
+    int offset;
+} BDAsmExprStore;
+
 struct BDAsmExpr {
     BDAsmExprKind kind;
     union {
@@ -84,6 +91,7 @@ struct BDAsmExpr {
         BDAsmExprBinOp u_binop;
         BDAsmExprIf u_if;
         BDAsmExprCall u_call;
+        BDAsmExprStore u_store;
     } u;
 };
 
@@ -106,6 +114,8 @@ void bd_asmins_destroy(BDAsmIns *ins);
 BDAsmExpr *bd_asmexpr_nop();
 BDAsmExpr *bd_asmexpr_set(int val);
 BDAsmExpr *bd_asmexpr_mov(const char *lbl);
+BDAsmExpr *bd_asmexpr_store(const char *lbl, int offset);
+BDAsmExpr *bd_asmexpr_load(int offset);
 BDAsmExpr *bd_asmexpr_uniop(BDOpKind kind, const char *val);
 BDAsmExpr *bd_asmexpr_binop(BDOpKind kind, const char *l, const char *r);
 BDAsmExpr *bd_asmexpr_if(BDOpKind kind, const char *l, const char *r, BDAsmIns *t, BDAsmIns *f);
@@ -115,5 +125,6 @@ void bd_asmexpr_destroy(BDAsmExpr *e);
 BDAsmExprFundef *bd_asmexpr_fundef(const char *name, BDType *type, Vector *formals, BDAsmIns *body);
 void bd_asmexpr_fundef_destory(BDAsmExprFundef *fundef);
 
+BDAsmIns *bd_asmins_concat(BDAsmIns *e1, BDExprIdent *ident, BDAsmIns *e2);
 
 #endif

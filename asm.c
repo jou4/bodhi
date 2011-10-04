@@ -78,6 +78,22 @@ BDAsmExpr *bd_asmexpr_mov(const char *lbl)
     return e;
 }
 
+BDAsmExpr *bd_asmexpr_store(const char *lbl, int offset)
+{
+    BDAsmExpr *e = bd_asmexpr(AE_STORE);
+    e->u.u_store.offset = offset;
+    e->u.u_store.lbl = mem_strdup(lbl);
+    return e;
+}
+
+BDAsmExpr *bd_asmexpr_load(int offset)
+{
+    BDAsmExpr *e = bd_asmexpr(AE_LOAD);
+    e->u.u_store.offset = offset;
+    e->u.u_store.lbl = NULL;
+    return e;
+}
+
 BDAsmExpr *bd_asmexpr_uniop(BDOpKind kind, const char *val)
 {
     BDAsmExpr *e = bd_asmexpr(AE_UNIOP);
@@ -219,4 +235,20 @@ void asmins_show(BDAsmIns *ins)
 void bd_asmprog_show(BDAsmProg *prog)
 {
     asmins_show(prog->main);
+}
+
+BDAsmIns *bd_asmins_concat(BDAsmIns *e1, BDExprIdent *ident, BDAsmIns *e2)
+{
+    BDAsmIns *ret;
+    switch(e1->kind){
+        case AI_ANS:
+            ret = bd_asmins_let(ident, e1->u.u_ans.expr, e2);
+            break;
+        case AI_LET:
+            ret = bd_asmins_let(e1->u.u_let.ident, e1->u.u_let.val,
+                    bd_asmins_concat(e1->u.u_let.body, ident, e2));
+            break;
+    }
+    free(e1);
+    return ret;
 }

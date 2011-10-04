@@ -1,22 +1,6 @@
 #include "compile.h"
 #include "util/mem.h"
 
-BDAsmIns *virtual_expr_concat(BDAsmIns *e1, BDExprIdent *ident, BDAsmIns *e2)
-{
-    BDAsmIns *ret;
-    switch(e1->kind){
-        case AI_ANS:
-            ret = bd_asmins_let(ident, e1->u.u_ans.expr, e2);
-            break;
-        case AI_LET:
-            ret = bd_asmins_let(e1->u.u_let.ident, e1->u.u_let.val,
-                    virtual_expr_concat(e1->u.u_let.body, ident, e2));
-            break;
-    }
-    free(e1);
-    return ret;
-}
-
 BDAsmIns *virtual_expr(Env *env, BDExpr3 *e)
 {
     switch(e->kind){
@@ -43,7 +27,7 @@ BDAsmIns *virtual_expr(Env *env, BDExpr3 *e)
                 BDAsmIns *e2 = virtual_expr(local, e->u.u_let.body);
 
                 env_local_destroy(local);
-                return virtual_expr_concat(e1, ident, e2);
+                return bd_asmins_concat(e1, ident, e2);
             }
             break;
         case E_VAR:
