@@ -1,18 +1,3 @@
-var regs = [null, null, null];
-var stack = [];
-
-var vals = {};
-
-var expr = [
-    ["a", 10],
-    ["b", "a", "a"],
-    ["c", "b", "b"],
-    ["d", "c", "c"],
-    ["e", "d", "d"],
-    ["f", "e", "e"],
-    ["g", "d", "e", "f"]
-];
-
 function live_range(name, begin, expr)
 {
     var end = begin;
@@ -83,8 +68,16 @@ function load(reg_i, stack_i)
 }
 
 
-function regalloc()
+function regalloc(expr)
 {
+    regs = [];
+    stack = [];
+    vals = {};
+
+    for(var i = 0; i < regs_len; ++i){
+        regs.push(null);
+    }
+
     var e;
     var name;
     var live;
@@ -132,7 +125,7 @@ function regalloc()
         live[4] = reg_i;
         set_reg(reg_i, live);
 
-        console.log(regs);
+        //console.log(regs);
     }
     console.log("");
     console.log("registers");
@@ -147,4 +140,41 @@ function regalloc()
     console.log(vals);
 }
 
-regalloc();
+var regs;
+var regs_len = 3;
+var stack;
+var vals;
+
+console.log("--------------------");
+
+regalloc([
+        ["a", 10],                              // a = 10
+        ["b", "a", "a"],                        // b = a + a
+        ["c", "b", "b"],                        // c = b + b
+        ["d", "c", "c"],                        // d = c + c
+        ["e", "d", "d"],                        // e = d + d
+        ["f", "e", "e"],                        // f = e + e
+        ["g", "d", "e", "f"]                    // g = d + e + f
+]);
+
+console.log("--------------------");
+
+regalloc([
+        ["a", 10],                              // a = 10
+        ["b", "a", "a"],                        // b = a + a
+        ["c", "b", "b"],                        // c = b + b
+        ["d", "c", "c"],                        // d = c + c
+        ["e", "d", "d"],                        // e = d + d
+        ["f", "e", "e"],                        // f = e + e
+        ["g", "a", "b", "c", "d", "e", "f"]     // g = a + b + c + d + e + f
+]);
+
+console.log("--------------------");
+
+regalloc([
+        ["a", 10],                              // a = 10
+        ["b", 20],                              // b = 20
+        ["c", 30],                              // c = 30
+        ["d", 40],                              // d = 40
+        ["e", "a", "b", "c", "d"]               // e = a + b + c + d
+]);
