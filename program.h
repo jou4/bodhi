@@ -3,7 +3,6 @@
 
 #include "util/vector.h"
 #include "expr3.h"
-#include "bytecode.h"
 #include "show.h"
 
 typedef struct {
