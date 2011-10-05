@@ -6,9 +6,9 @@
 #include "util/mem.h"
 
 #define ACC_REG_INDEX -1
-//static char *acc_reg = "rax";
-static char *common_regs[] = {"rbx", "rcx", "rsi", "rdi"};
-static int common_regs_length = 4;
+#define NONE_REG_INDEX -2
+
+static int common_regs_length = 3;
 
 typedef enum {
     IN_REG,
@@ -153,34 +153,38 @@ int latest_val(Vector *regs, RegVal *val)
     return latest_i;
 }
 
-char *common_reg(int i)
-{
-    return common_regs[i];
-}
-
 BDAsmVal *acc_reg()
 {
     return bd_asmval_reg(ACC_REG_INDEX);
 }
 
-char *acc_reg_name()
+BDAsmVal *none_reg()
 {
-    return mem_strdup("rax");
+    return bd_asmval_reg(NONE_REG_INDEX);
 }
 
 BDAsmVal *find_reg(Env *env, const char *name)
 {
     RegVal *regval = env_get(env, name);
-    if(regval != NULL){
-        return regval->val;
-    }
+    return regval->val;
 
+    /*
     NoRegError *err = malloc(sizeof(NoRegError));
     err->val = regval;
     throw(ERROR_NOREG, err);
+    */
 }
 
-BDAsmExpr *_regalloc(RegAllocState *st, BDAsmExpr *e)
+int store_reg(RegAllocState *st, RegVal *regval)
+{
+    int stack_i = st->stack_i++;
+    regval->state = IN_STACK;
+    regval->index = stack_i;
+    regval->val = bd_asmval_mem(stack_i * -8);
+    return stack_i;
+}
+
+BDAsmIns *_regalloc(RegAllocState *st, BDAsmExpr *e)
 {
     switch(e->kind){
         case AE_NOP:
@@ -189,27 +193,22 @@ BDAsmExpr *_regalloc(RegAllocState *st, BDAsmExpr *e)
         case AE_MOV:
         case AE_UNIOP:
             {
-                if(e->u.u_uniop.val->kind == AV_LBL){
-                    char *name = e->u.u_uniop.val->u.u_lbl;
-                    e->u.u_uniop.val = find_reg(st->env, name);
-                    free(name);
-                }
+                char *name = e->u.u_uniop.val->u.u_lbl;
+                BDAsmVal *val = find_reg(st->env, name);
+                e->u.u_uniop.val = val;
+                free(name);
             }
             break;
         case AE_BINOP:
             {
                 char *name;
 
-                if(e->u.u_binop.l->kind == AV_LBL){
-                    name = e->u.u_binop.l->u.u_lbl;
-                    e->u.u_binop.l = find_reg(st->env, name);
-                    free(name);
-                }
-                if(e->u.u_binop.r->kind == AV_LBL){
-                    name = e->u.u_binop.r->u.u_lbl;
-                    e->u.u_binop.r = find_reg(st->env, name);
-                    free(name);
-                }
+                name = e->u.u_binop.l->u.u_lbl;
+                e->u.u_binop.l = find_reg(st->env, name);
+                free(name);
+                name = e->u.u_binop.r->u.u_lbl;
+                e->u.u_binop.r = find_reg(st->env, name);
+                free(name);
             }
             break;
         case AE_IF:
@@ -217,7 +216,7 @@ BDAsmExpr *_regalloc(RegAllocState *st, BDAsmExpr *e)
         case AE_CALLDIR:
             break;
     }
-    return e;
+    return bd_asmins_ans(e);
 }
 
 
@@ -231,8 +230,9 @@ BDAsmIns *regalloc(RegAllocState *st, BDAsmIns *ins)
             {
                 st->current++;
                 try{
-                    return bd_asmins_ans(_regalloc(st, ins->u.u_ans.expr));
+                    return _regalloc(st, ins->u.u_ans.expr);
                 }catch{
+                    /*
                     if(error_type == ERROR_NOREG){
                         NoRegError *err = catch_error();
                         RegVal *val = err->val;
@@ -244,6 +244,7 @@ BDAsmIns *regalloc(RegAllocState *st, BDAsmIns *ins)
                     }else{
                         throw(error_type, catch_error());
                     }
+                    */
                 }
             }
         case AI_LET:
@@ -259,31 +260,25 @@ BDAsmIns *regalloc(RegAllocState *st, BDAsmIns *ins)
                 regval->begin = st->current;
                 regval->end = find_live_range_end(regval->name, body, regval->begin, regval->begin + 1);
 
-                val = _regalloc(st, val);
-
                 env_set(st->env, regval->name, regval);
 
                 int disused_reg_i = disused_regs(st->regs);
                 if(disused_reg_i < 0){
                     int latest_reg_i = latest_val(st->regs, regval);
-                    int stack_i = st->stack_i++;
-                    int stack_offset = stack_i * 8;
                     RegVal *spill_val;
                     if(latest_reg_i < 0){
                         // Spill itself.
                         spill_val = regval;
-                        spill_val->state = IN_STACK;
-                        spill_val->index = stack_i;
-                        spill_val->val = bd_asmval_mem(stack_i * -8);
+                        store_reg(st, spill_val);
 
                         st->current++;
 
-                        BDAsmIns *new_ins = bd_asmins_let(
+                        BDAsmIns *new_ins = bd_asmins_concat(
+                                _regalloc(st, val),
                                 acc_reg(), bd_type_clone(spill_val->type),
-                                val,
                                 bd_asmins_let(
-                                    acc_reg(), bd_type_clone(spill_val->type),
-                                    bd_asmexpr_store(acc_reg(), stack_offset),
+                                    none_reg(), bd_type_clone(spill_val->type),
+                                    bd_asmexpr_store(acc_reg(), spill_val->val->u.u_mem.offset),
                                     regalloc(st, body)
                                 ));
 
@@ -293,9 +288,7 @@ BDAsmIns *regalloc(RegAllocState *st, BDAsmIns *ins)
                     else{
                         // Spill.
                         spill_val = vector_get(st->regs, latest_reg_i);
-                        spill_val->state = IN_STACK;
-                        spill_val->index = stack_i;
-                        spill_val->val = bd_asmval_mem(stack_i * -8);
+                        store_reg(st, spill_val);
 
                         // Add to regs.
                         regval->state = IN_REG;
@@ -306,11 +299,11 @@ BDAsmIns *regalloc(RegAllocState *st, BDAsmIns *ins)
                         st->current++;
 
                         BDAsmIns *new_ins = bd_asmins_let(
-                                acc_reg(), bd_type_clone(spill_val->type),
-                                bd_asmexpr_store(bd_asmval_reg(spill_val->index), stack_offset),
-                                bd_asmins_let(
+                                none_reg(), bd_type_clone(spill_val->type),
+                                bd_asmexpr_store(bd_asmval_reg(latest_reg_i), spill_val->val->u.u_mem.offset),
+                                bd_asmins_concat(
+                                    _regalloc(st, val),
                                     bd_asmval_reg(disused_reg_i), bd_type_clone(type),
-                                    val,
                                     regalloc(st, body)
                                     ));
 
@@ -327,8 +320,10 @@ BDAsmIns *regalloc(RegAllocState *st, BDAsmIns *ins)
 
                     st->current++;
 
-                    BDAsmIns *new_ins = bd_asmins_let(
-                            bd_asmval_reg(disused_reg_i), bd_type_clone(type), val, regalloc(st, body));
+                    BDAsmIns *new_ins = bd_asmins_concat(
+                            _regalloc(st, val),
+                            bd_asmval_reg(disused_reg_i), bd_type_clone(type),
+                            regalloc(st, body));
 
                     free(ins);
                     return new_ins;
