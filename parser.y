@@ -1,19 +1,12 @@
 %{
 
 #include <stdio.h>
-#include "util/exception.h"
+#include "parser.h"
 #include "util/vector.h"
-#include "compile.h"
 
 #define YYDEBUG 1
 #define YYLEX_PARAM lexer->scanner, lexer
 
-typedef struct {
-   Vector *exprs;   // Vector<BDExpr1>
-} Parser;
-
-void prompt(int level);
-void compile(BDExpr1 *e);
 
 %}
 
@@ -219,55 +212,4 @@ void parser_init(Parser *ps){
 
 void parser_destroy(Parser *ps){
     // TODO
-}
-
-void prompt(int level)
-{
-    if(level == 0){
-        printf("> ");
-    }
-    else{
-        printf("... ");
-    }
-}
-
-void compile(BDExpr1 *e)
-{
-    try{
-        bd_expr1_show(e);
-
-        BDExpr1 *e1 = bd_typing(e);
-        BDExpr2 *e2;
-        e2 = bd_knormalize(e1);
-        e2 = bd_alpha_convert(e2);
-
-        int i;
-        for(i = 0; i < 10; i++){
-            e2 = bd_beta_reduce(e2);
-            e2 = bd_flatten(e2);
-            e2 = bd_inline_expand(0, e2);
-            //e2 = bd_const_fold(e2);
-            e2 = bd_elim(e2);
-        }
-
-        BDProgram1 *prog1 = bd_closure_transform(e2);
-        BDAsmProg *prog2 = bd_virtual(prog1);
-        BDAsmProg *prog3 = bd_register_allocate(prog2);
-    }
-}
-
-int main(int argc, char **argv)
-{
-    Parser ps;
-    Lexer lexer;
-
-    parser_init(&ps);
-    lexer_init(&lexer);
-
-    prompt(0);
-
-//yydebug = 1;
-    yyparse(&ps, &lexer, "input");
-
-    return 0;
 }

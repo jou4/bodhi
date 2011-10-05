@@ -14,6 +14,7 @@
 #include "env.h"
 #include "id.h"
 
+void compile(BDExpr1 *e);
 BDExpr1 *bd_typing(BDExpr1 *e);
 BDExpr2 *bd_knormalize(BDExpr1 *e);
 BDExpr2 *bd_alpha_convert(BDExpr2 *e);
