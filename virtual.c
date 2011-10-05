@@ -7,15 +7,16 @@ BDAsmIns *virtual_expr(Env *env, BDExpr3 *e)
         case E_UNIT:
             return bd_asmins_ans(bd_asmexpr_nop());
         case E_INT:
-            return bd_asmins_ans(bd_asmexpr_set(e->u.u_int));
+            return bd_asmins_ans(bd_asmexpr_set(bd_asmval_int(e->u.u_int)));
         //case E_FLOAT:
         case E_UNIOP:
-            return bd_asmins_ans(bd_asmexpr_uniop(e->u.u_uniop.kind, e->u.u_uniop.val));
+            return bd_asmins_ans(bd_asmexpr_uniop(e->u.u_uniop.kind, bd_asmval_lbl(e->u.u_uniop.val)));
         case E_BINOP:
-            return bd_asmins_ans(bd_asmexpr_binop(e->u.u_binop.kind, e->u.u_binop.l, e->u.u_binop.r));
+            return bd_asmins_ans(bd_asmexpr_binop(e->u.u_binop.kind,
+                        bd_asmval_lbl(e->u.u_binop.l), bd_asmval_lbl(e->u.u_binop.r)));
         case E_IF:
             return bd_asmins_ans(bd_asmexpr_if(e->u.u_if.kind,
-                        e->u.u_if.l, e->u.u_if.r,
+                        bd_asmval_lbl(e->u.u_if.l), bd_asmval_lbl(e->u.u_if.r),
                         virtual_expr(env, e->u.u_if.t), virtual_expr(env, e->u.u_if.f)));
         case E_LET:
             {
@@ -27,7 +28,7 @@ BDAsmIns *virtual_expr(Env *env, BDExpr3 *e)
                 BDAsmIns *e2 = virtual_expr(local, e->u.u_let.body);
 
                 env_local_destroy(local);
-                return bd_asmins_concat(e1, ident, e2);
+                return bd_asmins_concat(e1, bd_asmval_lbl(ident->name), bd_type_clone(ident->type), e2);
             }
             break;
         case E_VAR:
@@ -37,7 +38,7 @@ BDAsmIns *virtual_expr(Env *env, BDExpr3 *e)
                     return bd_asmins_ans(bd_asmexpr_nop());
                 }
                 else{
-                    return bd_asmins_ans(bd_asmexpr_mov(e->u.u_var.name));
+                    return bd_asmins_ans(bd_asmexpr_mov(bd_asmval_lbl(e->u.u_var.name)));
                 }
             }
         case E_TUPLE:

@@ -23,12 +23,33 @@ typedef enum {
     AE_LOAD
 } BDAsmExprKind;
 
+typedef enum {
+    AV_LBL,
+    AV_REG,
+    AV_MEM,
+    AV_IMMINT
+} BDAsmValKind;
+
 typedef struct BDAsmProg BDAsmProg;
 typedef struct BDAsmIns BDAsmIns;
 typedef struct BDAsmInsAns BDAsmInsAns;
 typedef struct BDAsmInsLet BDAsmInsLet;
 typedef struct BDAsmExpr BDAsmExpr;
 typedef struct BDAsmExprFundef BDAsmExprFundef;
+
+typedef struct {
+    BDAsmValKind kind;
+    union {
+        char *u_lbl;
+        struct {
+            int index;
+        } u_reg;
+        struct {
+            int offset;
+        } u_mem;
+        int u_int;
+    } u;
+} BDAsmVal;
 
 struct BDAsmProg {
     Vector *fundefs;    // Vector<BDAsmExprFundef>
@@ -40,7 +61,8 @@ struct BDAsmInsAns {
 };
 
 struct BDAsmInsLet {
-    BDExprIdent *ident;
+    BDAsmVal *lbl;
+    BDType *type;
     BDAsmExpr *val;
     BDAsmIns *body;
 };
@@ -53,45 +75,33 @@ struct BDAsmIns {
     } u;
 };
 
-typedef struct {
-    BDOpKind kind;
-    char *val;
-} BDAsmExprUniOp;
-
-typedef struct {
-    BDOpKind kind;
-    char *l;
-    char *r;
-} BDAsmExprBinOp;
-
-typedef struct {
-    BDOpKind kind;
-    char *l;
-    char *r;
-    BDAsmIns *t;
-    BDAsmIns *f;
-} BDAsmExprIf;
-
-typedef struct {
-    char *fun;
-    Vector *actuals;    // Vector<String>
-} BDAsmExprCall;
-
-typedef struct {
-    char *lbl;
-    int offset;
-} BDAsmExprStore;
-
 struct BDAsmExpr {
     BDAsmExprKind kind;
     union {
-        int u_int;
-        char *u_lbl;
-        BDAsmExprUniOp u_uniop;
-        BDAsmExprBinOp u_binop;
-        BDAsmExprIf u_if;
-        BDAsmExprCall u_call;
-        BDAsmExprStore u_store;
+        struct {
+            BDOpKind kind;
+            BDAsmVal *val;
+        } u_uniop;
+        struct {
+            BDOpKind kind;
+            BDAsmVal *l;
+            BDAsmVal *r;
+        } u_binop;
+        struct {
+            BDOpKind kind;
+            BDAsmVal *l;
+            BDAsmVal *r;
+            BDAsmIns *t;
+            BDAsmIns *f;
+        } u_if;
+        struct {
+            BDAsmVal *fun;
+            Vector *actuals;    // Vector<String>
+        } u_call;
+        struct {
+            BDAsmVal *lbl;
+            int offset;
+        } u_store;
     } u;
 };
 
@@ -108,23 +118,30 @@ void bd_asmprog_destroy(BDAsmProg *prog);
 void bd_asmprog_show(BDAsmProg *prog);
 
 BDAsmIns *bd_asmins_ans(BDAsmExpr *e);
-BDAsmIns *bd_asmins_let(BDExprIdent *ident, BDAsmExpr *val, BDAsmIns *body);
+BDAsmIns *bd_asmins_let(BDAsmVal *lbl, BDType *type, BDAsmExpr *val, BDAsmIns *body);
 void bd_asmins_destroy(BDAsmIns *ins);
 
 BDAsmExpr *bd_asmexpr_nop();
-BDAsmExpr *bd_asmexpr_set(int val);
-BDAsmExpr *bd_asmexpr_mov(const char *lbl);
-BDAsmExpr *bd_asmexpr_store(const char *lbl, int offset);
+BDAsmExpr *bd_asmexpr_set(BDAsmVal *val);
+BDAsmExpr *bd_asmexpr_mov(BDAsmVal *lbl);
+BDAsmExpr *bd_asmexpr_store(BDAsmVal *lbl, int offset);
 BDAsmExpr *bd_asmexpr_load(int offset);
-BDAsmExpr *bd_asmexpr_uniop(BDOpKind kind, const char *val);
-BDAsmExpr *bd_asmexpr_binop(BDOpKind kind, const char *l, const char *r);
-BDAsmExpr *bd_asmexpr_if(BDOpKind kind, const char *l, const char *r, BDAsmIns *t, BDAsmIns *f);
-BDAsmExpr *bd_asmexpr_call(BDAsmExprKind kind, const char *fun, Vector *actuals);
+BDAsmExpr *bd_asmexpr_uniop(BDOpKind kind, BDAsmVal *val);
+BDAsmExpr *bd_asmexpr_binop(BDOpKind kind, BDAsmVal *l, BDAsmVal *r);
+BDAsmExpr *bd_asmexpr_if(BDOpKind kind, BDAsmVal *l, BDAsmVal *r, BDAsmIns *t, BDAsmIns *f);
+BDAsmExpr *bd_asmexpr_call(BDAsmExprKind kind, BDAsmVal *fun, Vector *actuals);
 void bd_asmexpr_destroy(BDAsmExpr *e);
+
+BDAsmVal *bd_asmval_lbl(const char *lbl);
+BDAsmVal *bd_asmval_reg(int index);
+BDAsmVal *bd_asmval_mem(int offset);
+BDAsmVal *bd_asmval_int(int imm);
+BDAsmVal *bd_asmval_clone(BDAsmVal *val);
+void bd_asmval_destroy(BDAsmVal *val);
 
 BDAsmExprFundef *bd_asmexpr_fundef(const char *name, BDType *type, Vector *formals, BDAsmIns *body);
 void bd_asmexpr_fundef_destory(BDAsmExprFundef *fundef);
 
-BDAsmIns *bd_asmins_concat(BDAsmIns *e1, BDExprIdent *ident, BDAsmIns *e2);
+BDAsmIns *bd_asmins_concat(BDAsmIns *e1, BDAsmVal *lbl, BDType *type, BDAsmIns *e2);
 
 #endif

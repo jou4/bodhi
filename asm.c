@@ -27,11 +27,12 @@ BDAsmIns *bd_asmins_ans(BDAsmExpr *e)
     return ins;
 }
 
-BDAsmIns *bd_asmins_let(BDExprIdent *ident, BDAsmExpr *val, BDAsmIns *body)
+BDAsmIns *bd_asmins_let(BDAsmVal *lbl, BDType *type, BDAsmExpr *val, BDAsmIns *body)
 {
     BDAsmIns *ins = malloc(sizeof(BDAsmIns));
     ins->kind = AI_LET;
-    ins->u.u_let.ident = ident;
+    ins->u.u_let.lbl = lbl;
+    ins->u.u_let.type = type;
     ins->u.u_let.val = val;
     ins->u.u_let.body = body;
     return ins;
@@ -44,7 +45,8 @@ void bd_asmins_destroy(BDAsmIns *ins)
             bd_asmexpr_destroy(ins->u.u_ans.expr);
             break;
         case AI_LET:
-            bd_expr_ident_destroy(ins->u.u_let.ident);
+            bd_asmval_destroy(ins->u.u_let.lbl);
+            bd_type_destroy(ins->u.u_let.type);
             bd_asmexpr_destroy(ins->u.u_let.val);
             bd_asmins_destroy(ins->u.u_let.body);
             break;
@@ -64,25 +66,25 @@ BDAsmExpr *bd_asmexpr_nop()
     return bd_asmexpr(AE_NOP);
 }
 
-BDAsmExpr *bd_asmexpr_set(int val)
+BDAsmExpr *bd_asmexpr_set(BDAsmVal *val)
 {
     BDAsmExpr *e = bd_asmexpr(AE_SET);
-    e->u.u_int = val;
+    e->u.u_uniop.val = val;
     return e;
 }
 
-BDAsmExpr *bd_asmexpr_mov(const char *lbl)
+BDAsmExpr *bd_asmexpr_mov(BDAsmVal *lbl)
 {
     BDAsmExpr *e = bd_asmexpr(AE_MOV);
-    e->u.u_lbl = mem_strdup(lbl);
+    e->u.u_uniop.val = lbl;
     return e;
 }
 
-BDAsmExpr *bd_asmexpr_store(const char *lbl, int offset)
+BDAsmExpr *bd_asmexpr_store(BDAsmVal *lbl, int offset)
 {
     BDAsmExpr *e = bd_asmexpr(AE_STORE);
     e->u.u_store.offset = offset;
-    e->u.u_store.lbl = mem_strdup(lbl);
+    e->u.u_store.lbl = lbl;
     return e;
 }
 
@@ -94,38 +96,38 @@ BDAsmExpr *bd_asmexpr_load(int offset)
     return e;
 }
 
-BDAsmExpr *bd_asmexpr_uniop(BDOpKind kind, const char *val)
+BDAsmExpr *bd_asmexpr_uniop(BDOpKind kind, BDAsmVal *val)
 {
     BDAsmExpr *e = bd_asmexpr(AE_UNIOP);
     e->u.u_uniop.kind = kind;
-    e->u.u_uniop.val = mem_strdup(val);
+    e->u.u_uniop.val = val;
     return e;
 }
 
-BDAsmExpr *bd_asmexpr_binop(BDOpKind kind, const char *l, const char *r)
+BDAsmExpr *bd_asmexpr_binop(BDOpKind kind, BDAsmVal *l, BDAsmVal *r)
 {
     BDAsmExpr *e = bd_asmexpr(AE_BINOP);
     e->u.u_binop.kind = kind;
-    e->u.u_binop.l = mem_strdup(l);
-    e->u.u_binop.r = mem_strdup(r);
+    e->u.u_binop.l = l;
+    e->u.u_binop.r = r;
     return e;
 }
 
-BDAsmExpr *bd_asmexpr_if(BDOpKind kind, const char *l, const char *r, BDAsmIns *t, BDAsmIns *f)
+BDAsmExpr *bd_asmexpr_if(BDOpKind kind, BDAsmVal *l, BDAsmVal *r, BDAsmIns *t, BDAsmIns *f)
 {
     BDAsmExpr *e = bd_asmexpr(AE_IF);
     e->u.u_if.kind = kind;
-    e->u.u_if.l = mem_strdup(l);
-    e->u.u_if.r = mem_strdup(r);
+    e->u.u_if.l = l;
+    e->u.u_if.r = r;
     e->u.u_if.t = t;
     e->u.u_if.f = f;
     return e;
 }
 
-BDAsmExpr *bd_asmexpr_call(BDAsmExprKind kind, const char *fun, Vector *actuals)
+BDAsmExpr *bd_asmexpr_call(BDAsmExprKind kind, BDAsmVal *fun, Vector *actuals)
 {
     BDAsmExpr *e = bd_asmexpr(kind);
-    e->u.u_call.fun = mem_strdup(fun);
+    e->u.u_call.fun = fun;
     e->u.u_call.actuals = actuals;
     return e;
 }
@@ -147,6 +149,66 @@ void bd_asmexpr_destroy(BDAsmExpr *e)
     }
 }
 
+BDAsmVal *bd_asmval_lbl(const char *lbl)
+{
+    BDAsmVal *val = malloc(sizeof(BDAsmVal));
+    val->kind = AV_LBL;
+    val->u.u_lbl = mem_strdup(lbl);
+    return val;
+}
+
+BDAsmVal *bd_asmval_reg(int index)
+{
+    BDAsmVal *val = malloc(sizeof(BDAsmVal));
+    val->kind = AV_REG;
+    val->u.u_reg.index = index;
+    return val;
+}
+
+BDAsmVal *bd_asmval_mem(int offset)
+{
+    BDAsmVal *val = malloc(sizeof(BDAsmVal));
+    val->kind = AV_MEM;
+    val->u.u_mem.offset = offset;
+    return val;
+}
+
+BDAsmVal *bd_asmval_int(int imm)
+{
+    BDAsmVal *val = malloc(sizeof(BDAsmVal));
+    val->kind = AV_IMMINT;
+    val->u.u_int = imm;
+    return val;
+}
+
+BDAsmVal *bd_asmval_clone(BDAsmVal *val)
+{
+    switch(val->kind){
+        case AV_LBL:
+            return bd_asmval_lbl(val->u.u_lbl);
+        case AV_REG:
+            return bd_asmval_reg(val->u.u_reg.index);
+        case AV_MEM:
+            return bd_asmval_mem(val->u.u_mem.offset);
+        case AV_IMMINT:
+            return bd_asmval_int(val->u.u_int);
+    }
+}
+
+void bd_asmval_destroy(BDAsmVal *val)
+{
+    switch(val->kind){
+        case AV_LBL:
+            free(val->u.u_lbl);
+            break;
+        case AV_REG:
+        case AV_MEM:
+        case AV_IMMINT:
+            break;
+    }
+    free(val);
+}
+
 BDAsmExprFundef *bd_asmexpr_fundef(const char *name, BDType *type, Vector *formals, BDAsmIns *body)
 {
     BDAsmExprFundef *fundef = malloc(sizeof(BDAsmExprFundef));
@@ -166,17 +228,41 @@ void bd_asmexpr_fundef_destory(BDAsmExprFundef *fundef)
     free(fundef);
 }
 
+char *asmval_text(BDAsmVal *val)
+{
+    char *text = malloc(sizeof(char) * 20);
+    switch(val->kind){
+        case AV_LBL:
+            sprintf(text, "%s", val->u.u_lbl);
+            break;
+        case AV_REG:
+            sprintf(text, "R%d", val->u.u_reg.index);
+            break;
+        case AV_MEM:
+            sprintf(text, "[bp+%d]", val->u.u_mem.offset);
+            break;
+        case AV_IMMINT:
+            sprintf(text, "%d", val->u.u_int);
+            break;
+    }
+    return text;
+}
+
 void asmexpr_show(BDAsmExpr *e)
 {
+    char *text1 = NULL;
+    char *text2 = NULL;
     switch(e->kind){
         case AE_NOP:
             printf("NOP\n");
             break;
         case AE_SET:
-            printf("SET\t%d\n", e->u.u_int);
+            text1 = asmval_text(e->u.u_uniop.val);
+            printf("SET\t%s\n", text1);
             break;
         case AE_MOV:
-            printf("MOV\t%s\n", e->u.u_lbl);
+            text1 = asmval_text(e->u.u_uniop.val);
+            printf("MOV\t%s\n", text1);
             break;
         case AE_UNIOP:
             {
@@ -186,7 +272,8 @@ void asmexpr_show(BDAsmExpr *e)
                         op = "NEG";
                         break;
                 }
-                printf("%s\t%s\n", op, e->u.u_uniop.val);
+                text1 = asmval_text(e->u.u_uniop.val);
+                printf("%s\t%s\n", op, text1);
             }
             break;
         case AE_BINOP:
@@ -206,7 +293,9 @@ void asmexpr_show(BDAsmExpr *e)
                         op = "DIV";
                         break;
                 }
-                printf("%s\t%s, %s\n", op, e->u.u_binop.l, e->u.u_binop.r);
+                text1 = asmval_text(e->u.u_binop.l);
+                text2 = asmval_text(e->u.u_binop.r);
+                printf("%s\t%s, %s\n", op, text1, text2);
             }
             break;
         case AE_IF:
@@ -215,6 +304,21 @@ void asmexpr_show(BDAsmExpr *e)
             break;
         case AE_CALLDIR:
             break;
+        case AE_STORE:
+            text1 = asmval_text(e->u.u_store.lbl);
+            printf("STORE\t%s\n", text1);
+            break;
+        case AE_LOAD:
+            text1 = asmval_text(e->u.u_store.lbl);
+            printf("LOAD\t%s\n", text1);
+            break;
+    }
+
+    if(text1 != NULL){
+        free(text1);
+    }
+    if(text2 != NULL){
+        free(text2);
     }
 }
 
@@ -225,7 +329,7 @@ void asmins_show(BDAsmIns *ins)
             asmexpr_show(ins->u.u_ans.expr);
             break;
         case AI_LET:
-            printf("LET\t%s::%s = ", ins->u.u_let.ident->name, bd_type_show(ins->u.u_let.ident->type));
+            printf("LET\t%s::%s = ", asmval_text(ins->u.u_let.lbl), bd_type_show(ins->u.u_let.type));
             asmexpr_show(ins->u.u_let.val);
             asmins_show(ins->u.u_let.body);
             break;
@@ -237,16 +341,16 @@ void bd_asmprog_show(BDAsmProg *prog)
     asmins_show(prog->main);
 }
 
-BDAsmIns *bd_asmins_concat(BDAsmIns *e1, BDExprIdent *ident, BDAsmIns *e2)
+BDAsmIns *bd_asmins_concat(BDAsmIns *e1, BDAsmVal *lbl, BDType *type, BDAsmIns *e2)
 {
     BDAsmIns *ret;
     switch(e1->kind){
         case AI_ANS:
-            ret = bd_asmins_let(ident, e1->u.u_ans.expr, e2);
+            ret = bd_asmins_let(lbl, type, e1->u.u_ans.expr, e2);
             break;
         case AI_LET:
-            ret = bd_asmins_let(e1->u.u_let.ident, e1->u.u_let.val,
-                    bd_asmins_concat(e1->u.u_let.body, ident, e2));
+            ret = bd_asmins_let(e1->u.u_let.lbl, e1->u.u_let.type, e1->u.u_let.val,
+                    bd_asmins_concat(e1->u.u_let.body, lbl, type, e2));
             break;
     }
     free(e1);
