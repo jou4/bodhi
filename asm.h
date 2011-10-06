@@ -100,7 +100,7 @@ struct BDAsmExpr {
         } u_call;
         struct {
             BDAsmVal *lbl;
-            int offset;
+            char *name;
         } u_store;
     } u;
 };
@@ -124,8 +124,8 @@ void bd_asmins_destroy(BDAsmIns *ins);
 BDAsmExpr *bd_asmexpr_nop();
 BDAsmExpr *bd_asmexpr_set(BDAsmVal *val);
 BDAsmExpr *bd_asmexpr_mov(BDAsmVal *lbl);
-BDAsmExpr *bd_asmexpr_store(BDAsmVal *lbl, int offset);
-BDAsmExpr *bd_asmexpr_load(int offset);
+BDAsmExpr *bd_asmexpr_store(BDAsmVal *lbl, const char *name);
+BDAsmExpr *bd_asmexpr_load(BDAsmVal *lbl);
 BDAsmExpr *bd_asmexpr_uniop(BDOpKind kind, BDAsmVal *val);
 BDAsmExpr *bd_asmexpr_binop(BDOpKind kind, BDAsmVal *l, BDAsmVal *r);
 BDAsmExpr *bd_asmexpr_if(BDOpKind kind, BDAsmVal *l, BDAsmVal *r, BDAsmIns *t, BDAsmIns *f);

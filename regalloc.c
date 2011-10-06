@@ -33,9 +33,23 @@ typedef struct {
     int stack_i;
 } RegAllocState;
 
+typedef enum {
+    RA_ALLOC,
+    RA_SPILL
+} RegAllocResultKind;
+
+typedef struct {
+    RegAllocResultKind kind;
+    union {
+        RegVal *val;
+        int index;
+    } u;
+} RegAllocResult;
+
 #define ERROR_NOREG 105
 typedef struct {
-    RegVal *val;
+    const char *name;
+    BDType *type;
 } NoRegError;
 
 Vector *init_regs(int length)
@@ -133,7 +147,7 @@ int find_live_range_end(const char *name, BDAsmIns *ins, int end, int count)
     }
 }
 
-int latest_val(Vector *regs, RegVal *val)
+int latest_val(Vector *regs)
 {
     int latest_end = -1;
     int latest_i = -1;
@@ -147,9 +161,6 @@ int latest_val(Vector *regs, RegVal *val)
         }
     }
 
-    if(val->end > latest_end){
-        return -1;
-    }
     return latest_i;
 }
 
@@ -163,18 +174,20 @@ BDAsmVal *none_reg()
     return bd_asmval_reg(NONE_REG_INDEX);
 }
 
-BDAsmVal *find_reg(Env *env, const char *name)
+BDAsmVal *find_reg(Env *env, const char *name, BDType *type)
 {
     RegVal *regval = env_get(env, name);
-    return regval->val;
+    if(regval != NULL){
+        return regval->val;
+    }
 
-    /*
     NoRegError *err = malloc(sizeof(NoRegError));
-    err->val = regval;
+    err->name = name;
+    err->type = type;
     throw(ERROR_NOREG, err);
-    */
 }
 
+/*
 int store_reg(RegAllocState *st, RegVal *regval)
 {
     int stack_i = st->stack_i++;
@@ -232,7 +245,6 @@ BDAsmIns *regalloc(RegAllocState *st, BDAsmIns *ins)
                 try{
                     return _regalloc(st, ins->u.u_ans.expr);
                 }catch{
-                    /*
                     if(error_type == ERROR_NOREG){
                         NoRegError *err = catch_error();
                         RegVal *val = err->val;
@@ -244,7 +256,6 @@ BDAsmIns *regalloc(RegAllocState *st, BDAsmIns *ins)
                     }else{
                         throw(error_type, catch_error());
                     }
-                    */
                 }
             }
         case AI_LET:
@@ -332,16 +343,169 @@ BDAsmIns *regalloc(RegAllocState *st, BDAsmIns *ins)
             break;
     }
 }
+*/
+
+RegAllocResult *allocatable_reg(Env *env)
+{
+    int i;
+    Vector *regs = init_regs(common_regs_length);
+    Vector *live_regs = env_values(env);
+    RegVal *val;
+    int reg_i;
+    for(i = 0; i < live_regs->length; i++){
+        val = vector_get(live_regs, i);
+        reg_i = val->val->u.u_reg.index;
+        if(reg_i >= 0){
+            vector_set(regs, i, val);
+        }
+    }
+
+    val = NULL;
+    reg_i = -1;
+    for(i = 0; i < regs->length; i++){
+        val = vector_get(regs, i);
+        if(val == NULL){
+            reg_i = i;
+            break;
+        }
+    }
+
+    RegAllocResult *ret = malloc(sizeof(RegAllocResult));
+    if(reg_i < 0){
+        ret->kind = RA_SPILL;
+        ret->u.val = vector_get(regs, latest_val(regs));
+    }
+    else{
+        ret->kind = RA_ALLOC;
+        ret->u.index = reg_i;
+    }
+    return ret;
+}
+
+BDAsmIns *_regalloc(Env *env, BDAsmExpr *e, int current)
+{
+    switch(e->kind){
+        case AE_NOP:
+        case AE_SET:
+            break;
+        case AE_MOV:
+        case AE_UNIOP:
+            {
+                if(e->u.u_uniop.val->kind == AV_LBL){
+                    char *name = e->u.u_uniop.val->u.u_lbl;
+                    BDAsmVal *val = find_reg(env, name, bd_type_int());
+                    e->u.u_uniop.val = val;
+                }
+            }
+            break;
+        case AE_BINOP:
+            {
+                char *name;
+
+                if(e->u.u_binop.l->kind == AV_LBL){
+                    name = e->u.u_binop.l->u.u_lbl;
+                    e->u.u_binop.l = find_reg(env, name, bd_type_int());
+                    free(name);
+                }
+                if(e->u.u_binop.r->kind == AV_LBL){
+                    name = e->u.u_binop.r->u.u_lbl;
+                    e->u.u_binop.r = find_reg(env, name, bd_type_int());
+                    free(name);
+                }
+            }
+            break;
+        case AE_IF:
+        case AE_CALLCLS:
+        case AE_CALLDIR:
+            break;
+    }
+    return bd_asmins_ans(e);
+}
+
+BDAsmIns *regalloc(Env *env, BDAsmIns *ins, int current);
+
+BDAsmIns *regalloc_and_restore(Env *env, BDAsmExpr *e, int current)
+{
+    try{
+        return _regalloc(env, e, current);
+    }catch{
+        if(error_type == ERROR_NOREG){
+            NoRegError *err = catch_error();
+            const char *name = err->name;
+            BDType *type = err->type;
+            return regalloc(env,
+                    bd_asmins_let(
+                        bd_asmval_lbl(name), bd_type_clone(type),
+                        bd_asmexpr_load(bd_asmval_lbl(name)),
+                        bd_asmins_ans(e)
+                        ), current + 1);
+        }else{
+            throw(error_type, catch_error());
+        }
+    }
+}
+
+BDAsmIns *regalloc(Env *env, BDAsmIns *ins, int current)
+{
+    switch(ins->kind){
+        case AI_ANS:
+            return regalloc_and_restore(env, ins->u.u_ans.expr, current + 1);
+        case AI_LET:
+            {
+                BDAsmVal *lbl = ins->u.u_let.lbl;
+                BDType *type = ins->u.u_let.type;
+                BDAsmExpr *val = ins->u.u_let.val;
+                BDAsmIns *body = ins->u.u_let.body;
+
+                Env *local = env_local_new(env);
+                BDAsmIns *newval = regalloc_and_restore(local, val, current + 1);
+
+                RegVal *regval = malloc(sizeof(RegVal));
+                regval->name = lbl->u.u_lbl;
+                regval->type = type;
+                regval->begin = current;
+                regval->end = find_live_range_end(regval->name, body, regval->begin, regval->begin + 1);
+
+                env_set(local, regval->name, regval);
+
+                RegAllocResult *alloc = allocatable_reg(env);
+                if(alloc->kind == RA_SPILL){
+                    RegVal *target = alloc->u.val;
+                    regval->val = bd_asmval_reg(target->val->u.u_reg.index);
+                    map_remove(local, target->name);
+                    return bd_asmins_let(
+                            none_reg(), bd_type_unit(),
+                            bd_asmexpr_store(target->val, target->name),
+                            bd_asmins_concat(
+                                newval,
+                                regval->val, type,
+                                regalloc(local, body, current + 1)));
+                }
+                else{
+                    regval->val = bd_asmval_reg(alloc->u.index);
+                    return bd_asmins_concat(
+                            newval,
+                            regval->val, type,
+                            regalloc(local, body, current + 1));
+                }
+            }
+            break;
+    }
+}
 
 BDAsmProg *bd_register_allocate(BDAsmProg *prog)
 {
+    /*
     RegAllocState *st = malloc(sizeof(RegAllocState));
     st->env = env_new();
     st->regs = init_regs(common_regs_length);
     st->current = 0;
     st->stack_i = 0;
+    */
 
-    BDAsmIns *ins = regalloc(st, prog->main);
+    Env *env = env_new();
+
+    BDAsmIns *ins = regalloc(env, prog->main, 0);
     prog->main = ins;
     bd_asmprog_show(prog);
     return NULL;

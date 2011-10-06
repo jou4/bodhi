@@ -80,19 +80,19 @@ BDAsmExpr *bd_asmexpr_mov(BDAsmVal *lbl)
     return e;
 }
 
-BDAsmExpr *bd_asmexpr_store(BDAsmVal *lbl, int offset)
+BDAsmExpr *bd_asmexpr_store(BDAsmVal *lbl, const char *name)
 {
     BDAsmExpr *e = bd_asmexpr(AE_STORE);
-    e->u.u_store.offset = offset;
     e->u.u_store.lbl = lbl;
+    e->u.u_store.name = mem_strdup(name);
     return e;
 }
 
-BDAsmExpr *bd_asmexpr_load(int offset)
+BDAsmExpr *bd_asmexpr_load(BDAsmVal *lbl)
 {
     BDAsmExpr *e = bd_asmexpr(AE_LOAD);
-    e->u.u_store.offset = offset;
-    e->u.u_store.lbl = NULL;
+    e->u.u_store.lbl = lbl;
+    e->u.u_store.name = NULL;
     return e;
 }
 
