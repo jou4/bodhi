@@ -260,7 +260,7 @@ BDAsmIns *regalloc(Env *env, BDAsmIns *ins, int current);
 BDAsmIns *regalloc_and_restore(Env *env, BDAsmExpr *e, int current)
 {
     try{
-        return _regalloc(env, e, current);
+        return _regalloc(env, e, current + 1);
     }catch{
         if(error_type == ERROR_NOREG){
             NoRegError *err = catch_error();
@@ -271,7 +271,7 @@ BDAsmIns *regalloc_and_restore(Env *env, BDAsmExpr *e, int current)
                         bd_asmval_lbl(name), bd_type_clone(type),
                         bd_asmexpr_load(bd_asmval_lbl(name)),
                         bd_asmins_ans(e)
-                        ), current - 2);
+                        ), current - 1);
         }else{
             throw(error_type, catch_error());
         }
@@ -284,7 +284,7 @@ BDAsmIns *regalloc(Env *env, BDAsmIns *ins, int current)
 
     switch(ins->kind){
         case AI_ANS:
-            return regalloc_and_restore(env, ins->u.u_ans.expr, current + 1);
+            return regalloc_and_restore(env, ins->u.u_ans.expr, current);
         case AI_LET:
             {
                 BDAsmVal *lbl = ins->u.u_let.lbl;
@@ -293,7 +293,7 @@ BDAsmIns *regalloc(Env *env, BDAsmIns *ins, int current)
                 BDAsmIns *body = ins->u.u_let.body;
 
                 Env *local = env_local_new(env);
-                BDAsmIns *newval = regalloc_and_restore(local, val, current + 1);
+                BDAsmIns *newval = regalloc_and_restore(local, val, current);
 
                 RegVal *regval = malloc(sizeof(RegVal));
                 regval->name = lbl->u.u_lbl;
@@ -330,14 +330,6 @@ BDAsmIns *regalloc(Env *env, BDAsmIns *ins, int current)
 
 BDAsmProg *bd_register_allocate(BDAsmProg *prog)
 {
-    /*
-    RegAllocState *st = malloc(sizeof(RegAllocState));
-    st->env = env_new();
-    st->regs = init_regs(common_regs_length);
-    st->current = 0;
-    st->stack_i = 0;
-    */
-
     Env *env = env_new();
 
     BDAsmIns *ins = regalloc(env, prog->main, 0);
