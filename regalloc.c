@@ -62,15 +62,18 @@ Vector *init_regs(int length)
     return regs;
 }
 
-void clean_regs(Vector *regs, int current)
+void clean_regs(Env *env, int current)
 {
+    Vector *keys = env_keys(env);
     RegVal *regval;
     int i;
-    for(i = 0; i < regs->length; i++){
-        regval = vector_get(regs, i);
+    char *key;
+    for(i = 0; i < keys->length; i++){
+        key = vector_get(keys, i);
+        regval = env_get(env, key);
         if(regval && regval->end < current){
             regval->state = REMOVED;
-            vector_set(regs, i, NULL);
+            map_remove(env, key);
         }
     }
 }
@@ -391,27 +394,15 @@ BDAsmIns *_regalloc(Env *env, BDAsmExpr *e, int current)
         case AE_MOV:
         case AE_UNIOP:
             {
-                if(e->u.u_uniop.val->kind == AV_LBL){
-                    char *name = e->u.u_uniop.val->u.u_lbl;
-                    BDAsmVal *val = find_reg(env, name, bd_type_int());
-                    e->u.u_uniop.val = val;
-                }
+                BDAsmVal *val = find_reg(env, e->u.u_uniop.val->u.u_lbl, bd_type_int());
+                return bd_asmins_ans(bd_asmexpr_uniop(e->u.u_uniop.kind, val));
             }
             break;
         case AE_BINOP:
             {
-                char *name;
-
-                if(e->u.u_binop.l->kind == AV_LBL){
-                    name = e->u.u_binop.l->u.u_lbl;
-                    e->u.u_binop.l = find_reg(env, name, bd_type_int());
-                    free(name);
-                }
-                if(e->u.u_binop.r->kind == AV_LBL){
-                    name = e->u.u_binop.r->u.u_lbl;
-                    e->u.u_binop.r = find_reg(env, name, bd_type_int());
-                    free(name);
-                }
+                BDAsmVal *l = find_reg(env, e->u.u_binop.l->u.u_lbl, bd_type_int());
+                BDAsmVal *r = find_reg(env, e->u.u_binop.r->u.u_lbl, bd_type_int());
+                return bd_asmins_ans(bd_asmexpr_binop(e->u.u_binop.kind, l, r));
             }
             break;
         case AE_IF:
@@ -438,7 +429,7 @@ BDAsmIns *regalloc_and_restore(Env *env, BDAsmExpr *e, int current)
                         bd_asmval_lbl(name), bd_type_clone(type),
                         bd_asmexpr_load(bd_asmval_lbl(name)),
                         bd_asmins_ans(e)
-                        ), current + 1);
+                        ), current - 2);
         }else{
             throw(error_type, catch_error());
         }
@@ -447,6 +438,8 @@ BDAsmIns *regalloc_and_restore(Env *env, BDAsmExpr *e, int current)
 
 BDAsmIns *regalloc(Env *env, BDAsmIns *ins, int current)
 {
+    clean_regs(env, current);
+
     switch(ins->kind){
         case AI_ANS:
             return regalloc_and_restore(env, ins->u.u_ans.expr, current + 1);

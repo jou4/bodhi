@@ -306,7 +306,7 @@ void asmexpr_show(BDAsmExpr *e)
             break;
         case AE_STORE:
             text1 = asmval_text(e->u.u_store.lbl);
-            printf("STORE\t%s\n", text1);
+            printf("STORE\t%s(%s)\n", text1, e->u.u_store.name);
             break;
         case AE_LOAD:
             text1 = asmval_text(e->u.u_store.lbl);
