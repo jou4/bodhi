@@ -42,6 +42,7 @@ _main:
     ;add    rcx, rax
     ;mov    [rsp], rcx
 
+    ; let a = 1 in let b = 2 in let c = 3 in a + b + c + a + b + c
     mov    rax, 1
     mov    rbx, 2
     mov    rcx, 3
