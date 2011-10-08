@@ -335,5 +335,6 @@ BDAsmProg *bd_register_allocate(BDAsmProg *prog)
     BDAsmIns *ins = regalloc(env, prog->main, 0);
     prog->main = ins;
     bd_asmprog_show(prog);
-    return NULL;
+
+    return prog;
 }

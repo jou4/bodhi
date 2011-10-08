@@ -27,5 +27,6 @@ BDExpr2 *bd_elim(BDExpr2 *e);
 BDProgram1 *bd_closure_transform(BDExpr2 *e);
 BDAsmProg *bd_virtual(BDProgram1 *prog);
 BDAsmProg *bd_register_allocate(BDAsmProg *prog);
+void bd_emit(BDAsmProg *prog);
 
 #endif

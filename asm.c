@@ -329,7 +329,12 @@ void asmins_show(BDAsmIns *ins)
             asmexpr_show(ins->u.u_ans.expr);
             break;
         case AI_LET:
-            printf("LET\t%s::%s = ", asmval_text(ins->u.u_let.lbl), bd_type_show(ins->u.u_let.type));
+            if(ins->u.u_let.type->kind == T_UNIT){
+                printf("LET\t_ = ");
+            }
+            else{
+                printf("LET\t%s::%s = ", asmval_text(ins->u.u_let.lbl), bd_type_show(ins->u.u_let.type));
+            }
             asmexpr_show(ins->u.u_let.val);
             asmins_show(ins->u.u_let.body);
             break;
@@ -339,6 +344,26 @@ void asmins_show(BDAsmIns *ins)
 void bd_asmprog_show(BDAsmProg *prog)
 {
     asmins_show(prog->main);
+}
+
+static char *regs[] = {"rax", "rbx", "rcx", "rsi", "rdi", NULL};
+
+char *bd_asmval_emit(BDAsmVal *val)
+{
+    switch(val->kind){
+        case AV_LBL:
+            return mem_strdup(val->u.u_lbl);
+        case AV_REG:
+            return mem_strdup(regs[val->u.u_reg.index]);
+        case AV_MEM:
+            break;
+        case AV_IMMINT:
+            {
+                char *text = malloc(sizeof(char) * 10);
+                sprintf(text, "%d", val->u.u_int);
+                return text;
+            }
+    }
 }
 
 BDAsmIns *bd_asmins_concat(BDAsmIns *e1, BDAsmVal *lbl, BDType *type, BDAsmIns *e2)

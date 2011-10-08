@@ -138,6 +138,7 @@ BDAsmVal *bd_asmval_mem(int offset);
 BDAsmVal *bd_asmval_int(int imm);
 BDAsmVal *bd_asmval_clone(BDAsmVal *val);
 void bd_asmval_destroy(BDAsmVal *val);
+char *bd_asmval_emit(BDAsmVal *val);
 
 BDAsmExprFundef *bd_asmexpr_fundef(const char *name, BDType *type, Vector *formals, BDAsmIns *body);
 void bd_asmexpr_fundef_destory(BDAsmExprFundef *fundef);
