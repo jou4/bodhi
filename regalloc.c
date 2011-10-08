@@ -10,28 +10,13 @@
 
 static int common_regs_length = 3;
 
-typedef enum {
-    IN_REG,
-    IN_STACK,
-    REMOVED
-} RegValState;
-
 typedef struct {
     char *name;
     BDType *type;
     int begin;
     int end;
     BDAsmVal *val;
-    RegValState state;
-    int index;
 } RegVal;
-
-typedef struct {
-    Env *env;
-    Vector *regs;
-    int current;
-    int stack_i;
-} RegAllocState;
 
 typedef enum {
     RA_ALLOC,
@@ -45,6 +30,11 @@ typedef struct {
         int index;
     } u;
 } RegAllocResult;
+
+typedef struct {
+    BDAsmIns *ins;
+    Env *env;
+} RegAllocPair;
 
 #define ERROR_NOREG 105
 typedef struct {
@@ -72,7 +62,6 @@ void clean_regs(Env *env, int current)
         key = vector_get(keys, i);
         regval = env_get(env, key);
         if(regval && regval->end < current){
-            regval->state = REMOVED;
             map_remove(env, key);
         }
     }
@@ -227,6 +216,12 @@ RegAllocResult *allocatable_reg(Env *env)
     return ret;
 }
 
+RegAllocPair regalloc_pair(BDAsmIns *ins, Env *env)
+{
+    RegAllocPair pair = {ins, env};
+    return pair;
+}
+
 BDAsmIns *_regalloc(Env *env, BDAsmExpr *e, int current)
 {
     switch(e->kind){
@@ -255,12 +250,12 @@ BDAsmIns *_regalloc(Env *env, BDAsmExpr *e, int current)
     return bd_asmins_ans(e);
 }
 
-BDAsmIns *regalloc(Env *env, BDAsmIns *ins, int current);
+RegAllocPair regalloc(Env *env, BDAsmIns *ins, int current);
 
-BDAsmIns *regalloc_and_restore(Env *env, BDAsmExpr *e, int current)
+RegAllocPair regalloc_and_restore(Env *env, BDAsmExpr *e, int current)
 {
     try{
-        return _regalloc(env, e, current + 1);
+        return regalloc_pair(_regalloc(env, e, current + 1), env);
     }catch{
         if(error_type == ERROR_NOREG){
             NoRegError *err = catch_error();
@@ -278,7 +273,7 @@ BDAsmIns *regalloc_and_restore(Env *env, BDAsmExpr *e, int current)
     }
 }
 
-BDAsmIns *regalloc(Env *env, BDAsmIns *ins, int current)
+RegAllocPair regalloc(Env *env, BDAsmIns *ins, int current)
 {
     clean_regs(env, current);
 
@@ -292,8 +287,11 @@ BDAsmIns *regalloc(Env *env, BDAsmIns *ins, int current)
                 BDAsmExpr *val = ins->u.u_let.val;
                 BDAsmIns *body = ins->u.u_let.body;
 
-                Env *local = env_local_new(env);
-                BDAsmIns *newval = regalloc_and_restore(local, val, current);
+                RegAllocPair pair = regalloc_and_restore(env, val, current);
+                BDAsmIns *newval = pair.ins;
+                Env *local = pair.env;
+
+                RegAllocResult *alloc = allocatable_reg(local);
 
                 RegVal *regval = malloc(sizeof(RegVal));
                 regval->name = lbl->u.u_lbl;
@@ -303,25 +301,28 @@ BDAsmIns *regalloc(Env *env, BDAsmIns *ins, int current)
 
                 env_set(local, regval->name, regval);
 
-                RegAllocResult *alloc = allocatable_reg(env);
                 if(alloc->kind == RA_SPILL){
                     RegVal *target = alloc->u.val;
                     regval->val = bd_asmval_reg(target->val->u.u_reg.index);
                     map_remove(local, target->name);
-                    return bd_asmins_let(
-                            none_reg(), bd_type_unit(),
-                            bd_asmexpr_store(target->val, target->name),
-                            bd_asmins_concat(
-                                newval,
-                                regval->val, type,
-                                regalloc(local, body, current + 1)));
+                    RegAllocPair pair = regalloc(local, body, current + 1);
+                    return regalloc_pair(bd_asmins_let(
+                                none_reg(), bd_type_unit(),
+                                bd_asmexpr_store(target->val, target->name),
+                                bd_asmins_concat(
+                                    newval,
+                                    regval->val, type,
+                                    pair.ins)),
+                            local);
                 }
                 else{
                     regval->val = bd_asmval_reg(alloc->u.index);
-                    return bd_asmins_concat(
-                            newval,
-                            regval->val, type,
-                            regalloc(local, body, current + 1));
+                    RegAllocPair pair = regalloc(local, body, current + 1);
+                    return regalloc_pair(bd_asmins_concat(
+                                newval,
+                                regval->val, type,
+                                pair.ins),
+                            local);
                 }
             }
             break;
@@ -332,8 +333,8 @@ BDAsmProg *bd_register_allocate(BDAsmProg *prog)
 {
     Env *env = env_new();
 
-    BDAsmIns *ins = regalloc(env, prog->main, 0);
-    prog->main = ins;
+    RegAllocPair pair = regalloc(env, prog->main, 0);
+    prog->main = pair.ins;
     bd_asmprog_show(prog);
 
     return prog;

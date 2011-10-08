@@ -32,15 +32,36 @@ _main:
     ;mov    [rsp], rbx
 
     ; let a = 1 in let b = 2 in let c = 3 in a + b + c
+    ;mov    rax, 1
+    ;mov    rbx, 2
+    ;mov    rcx, 3
+    ;mov    qword [rbp - 0], rcx
+    ;mov    rcx, rax
+    ;add    rcx, rbx
+    ;mov    rax, [rbp - 0]
+    ;add    rcx, rax
+    ;mov    [rsp], rcx
+
     mov    rax, 1
     mov    rbx, 2
     mov    rcx, 3
     mov    qword [rbp - 0], rcx
     mov    rcx, rax
     add    rcx, rbx
+    mov    qword [rbp - 8], rax
+    mov    qword [rbp - 16], rbx
+    mov    rbx, [rbp - 0]
+    mov    rax, rcx
+    add    rax, rbx
+    mov    rbx, [rbp - 8]
+    mov    rcx, rax
+    add    rcx, rbx
+    mov    rax, [rbp - 16]
+    mov    rbx, rcx
+    add    rbx, rax
     mov    rax, [rbp - 0]
-    add    rcx, rax
-    mov    [rsp], rcx
+    add    rbx, rax
+    mov    [rsp], rbx
 
     ; print
     call   print_number
