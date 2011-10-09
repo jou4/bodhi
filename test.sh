@@ -1,2 +1,3 @@
 nasm -f macho64 sample/test.s
-gcc -o test sample/test.o
+nasm -f macho64 sample/util.s
+gcc -o test sample/test.o sample/util.o
