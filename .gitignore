@@ -1,6 +1,7 @@
 bd
 bd.dSYM
 test
+test.s
 lex.yy.c
 y.tab.c
 y.tab.h
