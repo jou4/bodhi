@@ -90,7 +90,8 @@ test = match 3
              ["_u1", "_u2", "_u3"]
              [ ([Var "f", Con "NIL" [], Var "ys"], e1),
                ([Var "f", Con "CONS" [Var "x", Var "xs"], Con "NIL" []], e2),
-               ([Var "f", Con "CONS" [Var "x", Var "xs"], Con "CONS" [Var "y", Var "ys"]], e3) ]
+               --([Var "f", Con "CONS" [Var "x", Var "xs"], Con "CONS" [Var "y", Var "ys"]], e3) ]
+               ([Var "f", Con "CONS" [Var "x", Con "CONS" [Var "x'", Var "xs"]], Con "CONS" [Var "y", Var "ys"]], e3) ]
              e0
 {-
 match (u1, u2, u3)
@@ -113,6 +114,36 @@ case u2 of
         case u3 of
             [] -> f u4 u5
             (u6:u7) -> f u4 u6
+
+match (u1, u2, u3)
+    (f, [], ys) -> f ys
+    (f, (x:xs) []) -> f x xs
+    (f, (x:x':xs) (y:ys)) -> f x y
+
+Case "_u2" [
+    Clause "NIL" [] (Fatbar (App "f" ["_u3"]) (App "f" [])),
+    Clause "CONS" ["_u4","_u5"] (
+        Case "_u3" [
+            Clause "NIL" [] (Fatbar (App "f" ["_u4","_u5"]) (
+                Case "_u5" [
+                    Clause "NIL" [] (App "f" []),
+                    Clause "CONS" ["_u6","_u7"] (
+                        Case "_u3" [
+                            Clause "NIL" [] (App "f" []),
+                            Clause "CONS" ["_u8","_u9"] (Fatbar (App "f" ["_u4","_u8"]) (App "f" []))])])),
+            Clause "CONS" ["_u6","_u7"] (
+                Case "_u5" [
+                    Clause "NIL" [] (App "f" []),
+                    Clause "CONS" ["_u6","_u7"] (
+                        Case "_u3" [
+                            Clause "NIL" [] (App "f" []),
+                            Clause "CONS" ["_u8","_u9"] (Fatbar (App "f" ["_u4","_u8"]) (App "f" []))])])])]
+
+case u2 of
+    [] -> f u3
+    (u4:u5) ->
+        case u3 of
+            [] ->
 
 -}
 
