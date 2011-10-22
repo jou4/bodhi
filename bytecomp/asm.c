@@ -1,7 +1,7 @@
 #include "stdio.h"
 #include "stdlib.h"
 #include "asm.h"
-#include "util/mem.h"
+#include "util.h"
 
 
 BDAsmProg *bd_asmprog(Vector *fundefs, BDAsmIns *main)

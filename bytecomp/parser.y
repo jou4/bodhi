@@ -2,7 +2,7 @@
 
 #include <stdio.h>
 #include "parser.h"
-#include "util/vector.h"
+#include "util.h"
 
 #define YYDEBUG 1
 #define YYLEX_PARAM lexer->scanner, lexer

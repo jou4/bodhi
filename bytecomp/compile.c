@@ -1,5 +1,5 @@
 #include "compile.h"
-#include "util/exception.h"
+#include "util.h"
 
 void compile(BDExpr1 *e)
 {

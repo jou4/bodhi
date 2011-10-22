@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
-#include "util/mem.h"
+#include "util.h"
 #include "expr.h"
 
 

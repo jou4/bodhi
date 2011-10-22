@@ -1,5 +1,5 @@
 #include "compile.h"
-#include "util/mem.h"
+#include "util.h"
 
 BDAsmIns *virtual_expr(Env *env, BDExpr3 *e)
 {

@@ -1,7 +1,7 @@
 #ifndef _type_h_
 #define _type_h_
 
-#include "util/vector.h"
+#include "util.h"
 
 typedef enum {
     T_UNIT,

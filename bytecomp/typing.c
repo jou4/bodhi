@@ -1,4 +1,4 @@
-#include "util/exception.h"
+#include "util.h"
 #include "compile.h"
 
 // Error

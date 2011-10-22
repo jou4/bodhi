@@ -1,33 +1,32 @@
 #include <stdlib.h>
-#include "util/mem.h"
-#include "expr3.h"
+#include "util.h"
+#include "expr2.h"
 
 
-BDExpr3Fundef *bd_expr3_fundef(BDExprIdent *ident, Vector *formals, Vector *freevars, BDExpr3 *body)
+BDExpr2Fundef *bd_expr2_fundef(BDExprIdent *ident, Vector *formals, BDExpr2 *body)
 {
-    BDExpr3Fundef *fundef = malloc(sizeof(BDExpr3Fundef));
+    BDExpr2Fundef *fundef = malloc(sizeof(BDExpr2Fundef));
     fundef->ident = ident;
     fundef->formals = formals;
-    fundef->freevars = freevars;
     fundef->body = body;
     return fundef;
 }
 
-void bd_expr3_fundef_destroy(BDExpr3Fundef *fundef)
+void bd_expr2_fundef_destroy(BDExpr2Fundef *fundef)
 {
     bd_expr_ident_destroy(fundef->ident);
     vector_each(fundef->formals, bd_expr_ident_destroy);
-    bd_expr3_destroy(fundef->body);
+    bd_expr2_destroy(fundef->body);
 }
 
-BDExpr3 *bd_expr3(BDExprKind kind)
+BDExpr2 *bd_expr2(BDExprKind kind)
 {
-    BDExpr3 *e = malloc(sizeof(BDExpr3));
+    BDExpr2 *e = malloc(sizeof(BDExpr2));
     e->kind = kind;
     return e;
 }
 
-void bd_expr3_destroy(BDExpr3 *e)
+void bd_expr2_destroy(BDExpr2 *e)
 {
     if(e == NULL){ return; }
 
@@ -47,24 +46,22 @@ void bd_expr3_destroy(BDExpr3 *e)
         case E_IF:
             free(e->u.u_if.l);
             free(e->u.u_if.r);
-            bd_expr3_destroy(e->u.u_if.t);
-            bd_expr3_destroy(e->u.u_if.f);
+            bd_expr2_destroy(e->u.u_if.t);
+            bd_expr2_destroy(e->u.u_if.f);
             break;
         case E_LET:
             bd_expr_ident_destroy(e->u.u_let.ident);
-            bd_expr3_destroy(e->u.u_let.val);
-            bd_expr3_destroy(e->u.u_let.body);
+            bd_expr2_destroy(e->u.u_let.val);
+            bd_expr2_destroy(e->u.u_let.body);
             break;
         case E_VAR:
             free(e->u.u_var.name);
             break;
-        case E_MAKECLS:
-            bd_expr_ident_destroy(e->u.u_makecls.ident);
-            bd_expr_closure_destroy(e->u.u_makecls.closure);
-            bd_expr3_destroy(e->u.u_makecls.body);
+        case E_LETREC:
+            bd_expr2_fundef_destroy(e->u.u_letrec.fundef);
+            bd_expr2_destroy(e->u.u_letrec.body);
             break;
-        case E_APPCLS:
-        case E_APPDIR:
+        case E_APP:
             free(e->u.u_app.fun);
             vector_each(e->u.u_app.actuals, free);
             break;
@@ -74,51 +71,51 @@ void bd_expr3_destroy(BDExpr3 *e)
         case E_LETTUPLE:
             vector_each(e->u.u_lettuple.idents, bd_expr_ident_destroy);
             free(e->u.u_lettuple.val);
-            bd_expr3_destroy(e->u.u_lettuple.body);
+            bd_expr2_destroy(e->u.u_lettuple.body);
             break;
     }
     free(e);
 }
 
-BDExpr3 *bd_expr3_unit()
+BDExpr2 *bd_expr2_unit()
 {
-    return bd_expr3(E_UNIT);
+    return bd_expr2(E_UNIT);
 }
 
-BDExpr3 *bd_expr3_int(int val)
+BDExpr2 *bd_expr2_int(int val)
 {
-    BDExpr3 *e = bd_expr3(E_INT);
+    BDExpr2 *e = bd_expr2(E_INT);
     e->u.u_int = val;
     return e;
 }
 
-BDExpr3 *bd_expr3_float(double val)
+BDExpr2 *bd_expr2_float(double val)
 {
-    BDExpr3 *e = bd_expr3(E_FLOAT);
+    BDExpr2 *e = bd_expr2(E_FLOAT);
     e->u.u_double = val;
     return e;
 }
 
-BDExpr3 *bd_expr3_uniop(BDOpKind kind, const char *val)
+BDExpr2 *bd_expr2_uniop(BDOpKind kind, const char *val)
 {
-    BDExpr3 *e = bd_expr3(E_UNIOP);
+    BDExpr2 *e = bd_expr2(E_UNIOP);
     e->u.u_uniop.kind = kind;
     e->u.u_uniop.val = mem_strdup(val);
     return e;
 }
 
-BDExpr3 *bd_expr3_binop(BDOpKind kind, const char *l, const char *r)
+BDExpr2 *bd_expr2_binop(BDOpKind kind, const char *l, const char *r)
 {
-    BDExpr3 *e = bd_expr3(E_BINOP);
+    BDExpr2 *e = bd_expr2(E_BINOP);
     e->u.u_binop.kind = kind;
     e->u.u_binop.l = mem_strdup(l);
     e->u.u_binop.r = mem_strdup(r);
     return e;
 }
 
-BDExpr3 *bd_expr3_if(BDOpKind kind, const char *l, const char *r, BDExpr3 *t, BDExpr3 *f)
+BDExpr2 *bd_expr2_if(BDOpKind kind, const char *l, const char *r, BDExpr2 *t, BDExpr2 *f)
 {
-    BDExpr3 *e = bd_expr3(E_IF);
+    BDExpr2 *e = bd_expr2(E_IF);
     e->u.u_if.kind = kind;
     e->u.u_if.l = mem_strdup(l);
     e->u.u_if.r = mem_strdup(r);
@@ -127,163 +124,168 @@ BDExpr3 *bd_expr3_if(BDOpKind kind, const char *l, const char *r, BDExpr3 *t, BD
     return e;
 }
 
-BDExpr3 *bd_expr3_let(BDExprIdent *ident, BDExpr3 *val, BDExpr3 *body)
+BDExpr2 *bd_expr2_let(BDExprIdent *ident, BDExpr2 *val, BDExpr2 *body)
 {
-    BDExpr3 *e = bd_expr3(E_LET);
+    BDExpr2 *e = bd_expr2(E_LET);
     e->u.u_let.ident = ident;
     e->u.u_let.val = val;
     e->u.u_let.body = body;
     return e;
 }
 
-BDExpr3 *bd_expr3_var(const char *name)
+BDExpr2 *bd_expr2_var(const char *name)
 {
-    BDExpr3 *e = bd_expr3(E_VAR);
+    BDExpr2 *e = bd_expr2(E_VAR);
     e->u.u_var.name = mem_strdup(name);
     return e;
 }
 
-BDExpr3 *bd_expr3_makecls(BDExprIdent *ident, BDExprClosure *closure, BDExpr3 *body)
+BDExpr2 *bd_expr2_letrec(BDExpr2Fundef *fundef, BDExpr2 *body)
 {
-    BDExpr3 *e = bd_expr3(E_MAKECLS);
-    e->u.u_makecls.ident = ident;
-    e->u.u_makecls.closure = closure;
-    e->u.u_makecls.body = body;
+    BDExpr2 *e = bd_expr2(E_LETREC);
+    e->u.u_letrec.fundef = fundef;
+    e->u.u_letrec.body = body;
     return e;
 }
 
-BDExpr3 *bd_expr3_appcls(const char *fun, Vector *actuals)
+BDExpr2 *bd_expr2_app(const char *fun, Vector *actuals)
 {
-    BDExpr3 *e = bd_expr3(E_APPCLS);
+    BDExpr2 *e = bd_expr2(E_APP);
     e->u.u_app.fun = mem_strdup(fun);
     e->u.u_app.actuals = actuals;
     return e;
 }
 
-BDExpr3 *bd_expr3_appdir(const char *fun, Vector *actuals)
+BDExpr2 *bd_expr2_tuple(Vector *elems)
 {
-    BDExpr3 *e = bd_expr3(E_APPDIR);
-    e->u.u_app.fun = mem_strdup(fun);
-    e->u.u_app.actuals = actuals;
-    return e;
-}
-
-BDExpr3 *bd_expr3_tuple(Vector *elems)
-{
-    BDExpr3 *e = bd_expr3(E_TUPLE);
+    BDExpr2 *e = bd_expr2(E_TUPLE);
     e->u.u_tuple.elems = elems;
     return e;
 }
 
-BDExpr3 *bd_expr3_lettuple(Vector *idents, const char *val, BDExpr3 *body)
+BDExpr2 *bd_expr2_lettuple(Vector *idents, const char *val, BDExpr2 *body)
 {
-    BDExpr3 *e = bd_expr3(E_LETTUPLE);
+    BDExpr2 *e = bd_expr2(E_LETTUPLE);
     e->u.u_lettuple.idents = idents;
     e->u.u_lettuple.val = mem_strdup(val);
     e->u.u_lettuple.body = body;
     return e;
 }
 
-Set *bd_expr3_freevars(BDExpr3 *e)
+Set *bd_expr2_freevars(BDExpr2 *e)
 {
-    Set *s;
-
     switch(e->kind){
         case E_UNIT:
         case E_INT:
         case E_FLOAT:
             return set_new();
         case E_UNIOP:
-            s = set_new();
-            set_add(s, e->u.u_uniop.val);
-            return s;
+            {
+                Set *set = set_new();
+                set_add(set, e->u.u_uniop.val);
+                return set;
+            }
         case E_BINOP:
-            s = set_new();
-            set_add(s, e->u.u_binop.l);
-            set_add(s, e->u.u_binop.r);
-            return s;
+            {
+                Set *set = set_new();
+                set_add(set, e->u.u_binop.l);
+                set_add(set, e->u.u_binop.r);
+                return set;
+            }
         case E_IF:
             {
-                Set *s1 = bd_expr3_freevars(e->u.u_if.t);
-                Set *s2 = bd_expr3_freevars(e->u.u_if.f);
-
-                s = set_union(s1, s2);
-                set_add(s, e->u.u_if.l);
-                set_add(s, e->u.u_if.r);
+                Set *s1 = bd_expr2_freevars(e->u.u_if.t);
+                Set *s2 = bd_expr2_freevars(e->u.u_if.f);
+                Set *set = set_union(s1, s2);
+                set_add(set, e->u.u_if.l);
+                set_add(set, e->u.u_if.r);
 
                 set_destroy(s1);
                 set_destroy(s2);
 
-                return s;
+                return set;
             }
         case E_LET:
             {
-                Set *s1 = bd_expr3_freevars(e->u.u_let.val);
-                Set *s2 = bd_expr3_freevars(e->u.u_let.body);
-
+                Set *s1 = bd_expr2_freevars(e->u.u_let.val);
+                Set *s2 = bd_expr2_freevars(e->u.u_let.body);
                 set_remove(s2, e->u.u_let.ident->name);
-                s = set_union(s1, s2);
+                Set *set = set_union(s1, s2);
 
                 set_destroy(s1);
                 set_destroy(s2);
 
-                return s;
+                return set;
             }
         case E_VAR:
-            s = set_new();
-            set_add(s, e->u.u_var.name);
-            return s;
-        case E_MAKECLS:
             {
-                BDExprClosure *cls = e->u.u_makecls.closure;
-                Set *s1 = set_of_list(cls->freevars);
-                Set *s2 = bd_expr3_freevars(e->u.u_makecls.body);
+                Set *set = set_new();
+                set_add(set, e->u.u_var.name);
+                return set;
+            }
+        case E_LETREC:
+            {
+                Set *s1 = bd_expr2_freevars(e->u.u_letrec.fundef->body);
+                Set *s2 = set_new();
 
-                s = set_union(s1, s2);
-                set_remove(s, e->u.u_makecls.ident->name);
+                Vector *formals = e->u.u_letrec.fundef->formals;
+                BDExprIdent *formal;
+                int i;
+                for(i = 0; i < formals->length; i++){
+                    formal = vector_get(formals, i);
+                    set_add(s2, formal->name);
+                }
+
+                Set *s3 = set_diff(s1, s2);
+                Set *s4 = bd_expr2_freevars(e->u.u_letrec.body);
+                Set *set = set_union(s3, s4);
+                set_remove(set, e->u.u_letrec.fundef->ident->name);
 
                 set_destroy(s1);
                 set_destroy(s2);
+                set_destroy(s3);
+                set_destroy(s4);
 
-                return s;
+                return set;
             }
-        case E_APPCLS:
-            s = set_of_list(e->u.u_app.actuals);
-            set_add(s, e->u.u_app.fun);
-            return s;
-        case E_APPDIR:
-            s = set_of_list(e->u.u_app.actuals);
-            return s;
+        case E_APP:
+            {
+                Set *set = set_of_list(e->u.u_app.actuals);
+                set_add(set, e->u.u_app.fun);
+                return set;
+            }
         case E_TUPLE:
-            s = set_of_list(e->u.u_tuple.elems);
-            return s;
+            {
+                Set *set = set_of_list(e->u.u_tuple.elems);
+                return set;
+            }
         case E_LETTUPLE:
             {
-                Set *s1 = bd_expr3_freevars(e->u.u_lettuple.body);
+                Set *s1 = bd_expr2_freevars(e->u.u_lettuple.body);
                 Set *s2 = set_new();
+
                 Vector *idents = e->u.u_lettuple.idents;
-                int i;
                 BDExprIdent *ident;
+                int i;
 
                 for(i = 0; i < idents->length; i++){
                     ident = vector_get(idents, i);
                     set_add(s2, ident->name);
                 }
 
-                s = set_diff(s1, s2);
-                set_add(s, e->u.u_lettuple.val);
+                Set *set = set_diff(s1, s2);
+                set_add(set, e->u.u_lettuple.val);
 
                 set_destroy(s1);
                 set_destroy(s2);
 
-                return s;
+                return set;
             }
     }
-    return NULL;
 }
 
 
-void _bd_expr3_show(BDExpr3 *e, int depth)
+void _bd_expr2_show(BDExpr2 *e, int depth)
 {
     if(e == NULL){ return; }
 
@@ -345,64 +347,51 @@ void _bd_expr3_show(BDExpr3 *e, int depth)
             bd_show_indent(depth + 1);
 
             printf("then ");
-            _bd_expr3_show(e->u.u_if.t, 0);
+            _bd_expr2_show(e->u.u_if.t, 0);
 
             printf("\n");
             bd_show_indent(depth + 1);
 
             printf("else ");
-            _bd_expr3_show(e->u.u_if.f, 0);
+            _bd_expr2_show(e->u.u_if.f, 0);
             break;
         case E_LET:
             printf("let ");
             bd_expr_ident_show(e->u.u_let.ident);
             printf(" = ");
-            _bd_expr3_show(e->u.u_let.val, 0);
+            _bd_expr2_show(e->u.u_let.val, 0);
 
             printf(" in\n");
-            _bd_expr3_show(e->u.u_let.body, depth + 1);
+            _bd_expr2_show(e->u.u_let.body, depth + 1);
             break;
         case E_VAR:
             printf("%s", e->u.u_var.name);
             break;
-        case E_MAKECLS:
+        case E_LETREC:
             {
-                BDExprIdent *ident = e->u.u_makecls.ident;
-                BDExprClosure *cls = e->u.u_makecls.closure;
-
-                char *entry = cls->entry;
-                Vector *fvs = cls->freevars;
+                BDExpr2Fundef *fundef = e->u.u_letrec.fundef;
                 int i;
-                char *fv;
 
-                printf("make closure *%s* = ", ident->name);
-                printf("(");
-
-                printf("%s", entry);
-                for(i = 0; i < fvs->length; i++){
-                    printf(", ");
-                    fv = vector_get(fvs, i);
-                    printf("%s", fv);
+                printf("let rec ");
+                bd_expr_ident_show(fundef->ident);
+                for(i = 0; i < fundef->formals->length; i++){
+                    printf(" ");
+                    bd_expr_ident_show(vector_get(fundef->formals, i));
                 }
+                printf(" = ");
+                _bd_expr2_show(fundef->body, 0);
 
-                printf(")\n");
-                _bd_expr3_show(e->u.u_makecls.body, depth + 1);
+                printf(" in\n");
+                _bd_expr2_show(e->u.u_letrec.body, depth + 1);
             }
             break;
-        case E_APPCLS:
-        case E_APPDIR:
+        case E_APP:
             {
                 Vector *actuals = e->u.u_app.actuals;
                 int i;
                 char *x;
 
-                if(e->kind == E_APPCLS){
-                    printf("(closure)%s", e->u.u_app.fun);
-                }
-                else{
-                    printf("(direct)%s", e->u.u_app.fun);
-                }
-
+                printf("%s", e->u.u_app.fun);
                 for(i = 0; i < actuals->length; i++){
                     x = vector_get(actuals, i);
                     printf(" %s", x);
@@ -442,54 +431,15 @@ void _bd_expr3_show(BDExpr3 *e, int depth)
                 printf(") = %s in\n", e->u.u_lettuple.val);
 
                 printf(" in\n");
-                _bd_expr3_show(e->u.u_lettuple.body, depth + 1);
+                _bd_expr2_show(e->u.u_lettuple.body, depth + 1);
             }
             break;
     }
 }
 
-void bd_expr3_show(BDExpr3 *e)
+void bd_expr2_show(BDExpr2 *e)
 {
-    _bd_expr3_show(e, 0);
+    _bd_expr2_show(e, 0);
     printf("\n");
 }
 
-void _bd_expr3_fundef_show(BDExpr3Fundef *fundef, int depth)
-{
-    if(fundef == NULL){ return; }
-
-    bd_show_indent(depth);
-    bd_expr_ident_show(fundef->ident);
-
-    Vector *vec;
-    int i;
-
-    printf("\n");
-    bd_show_indent(depth + 1);
-    printf("formals: ");
-
-    vec = fundef->formals;
-    for(i = 0; i < vec->length; i++){
-        if(i > 0){ printf(", "); }
-        bd_expr_ident_show(vector_get(vec, i));
-    }
-
-    printf("\n");
-    bd_show_indent(depth + 1);
-    printf("freevars: ");
-
-    vec = fundef->freevars;
-    for(i = 0; i < vec->length; i++){
-        if(i > 0){ printf(", "); }
-        bd_expr_ident_show(vector_get(vec, i));
-    }
-
-    printf("\n");
-    _bd_expr3_show(fundef->body, depth + 1);
-}
-
-void bd_expr3_fundef_show(BDExpr3Fundef *fundef)
-{
-    _bd_expr3_fundef_show(fundef, 0);
-    printf("\n");
-}

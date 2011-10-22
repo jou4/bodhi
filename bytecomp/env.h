@@ -1,8 +1,7 @@
 #ifndef _env_h_
 #define _env_h_
 
-#include "util/map.h"
-#include "util/vector.h"
+#include "util.h"
 
 typedef Map Env;
 

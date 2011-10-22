@@ -102,7 +102,7 @@ void emit_ins(Vector *stack, BDAsmIns *ins)
 
 void bd_emit(BDAsmProg *prog)
 {
-    output = fopen("sample/test.s", "w");
+    output = fopen("test/test.s", "w");
 
     fprintf(output, "extern print_number\n");
     fprintf(output, "extern exit\n");

@@ -1,7 +1,7 @@
 #ifndef _lexer_h_
 #define _lexer_h_
 
-#include "util/string_buffer.h"
+#include "util.h"
 
 typedef struct {
     StringBuffer *buf;

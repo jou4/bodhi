@@ -1,7 +1,7 @@
 #ifndef _expr3_h_
 #define _expr3_h_
 
-#include "util/set.h"
+#include "util.h"
 #include "expr2.h"
 
 typedef struct BDExpr3 BDExpr3;

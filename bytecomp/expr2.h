@@ -1,7 +1,7 @@
 #ifndef _expr2_h_
 #define _expr2_h_
 
-#include "util/set.h"
+#include "util.h"
 #include "expr1.h"
 
 typedef struct BDExpr2 BDExpr2;

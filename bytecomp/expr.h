@@ -1,7 +1,7 @@
 #ifndef _expr_h_
 #define _expr_h_
 
-#include "util/vector.h"
+#include "util.h"
 #include "type.h"
 
 typedef enum {

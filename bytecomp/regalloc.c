@@ -2,8 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include "util/exception.h"
-#include "util/mem.h"
+#include "util.h"
 
 #define ACC_REG_INDEX -1
 #define NONE_REG_INDEX -2
