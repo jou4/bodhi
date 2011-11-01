@@ -1,0 +1,37 @@
+i2f :: Int -> Float
+f2i :: Float -> Int
+i2c :: Int -> Char
+c2i :: Char -> Int
+
+head :: [a] -> a
+tail :: [a] -> [a]
+empty :: [a] -> Bool
+
+array_make :: Int -> a -> [|a|]
+array_set :: [|a|] -> Int -> a -> ()
+array_get :: [|a|] -> Int -> a
+array_length :: [|a|] -> Int
+array_of_list :: [a] -> [|a|]
+array_to_list :: [|a|] -> [a]
+
+string_make :: Int -> String
+string_set :: String -> Int -> Char -> ()
+string_get :: String -> Int -> Char
+string_length :: String -> Int
+string_of_cstr :: CStr -> String
+string_to_cstr :: String -> CString
+string_append :: String -> String -> String
+string_concat :: String -> [String] -> String
+string_compare :: String -> String -> Bool
+
+ref :: a -> [|a|]
+deref :: [|a|] -> a
+setref :: [|a|] -> a -> ()
+
+print_int :: Int -> ()
+print_float :: Float -> ()
+print_char :: Char -> ()
+print_string :: String -> ()
+
+throw :: a -> ()
+get_exception :: () -> a

@@ -1,0 +1,26 @@
+1. Make First-Generation Compiler
+
+    C言語
+    x86_64アセンブリ出力
+
+    基本データ型（Int, Float, Bool, Char, String, List, Array, Tuple, Ref）
+    関数・無名関数定義
+    クロージャ
+    部分適用？
+    型推論
+    GC（世代別）
+    末尾再帰最適化
+    モジュール機能なし
+    パターンマッチングなし
+    例外機能？
+    破壊的操作はArray型、String型に限る
+    Ref型はArray型を活用（操作用プリミティブは用意する）
+    構造体はTuple型とRef型を活用
+    Cで定義した関数を利用可能（型推論の対象外）
+
+
+2. Make Second-Generation Compiler
+
+    第一世代コンパイラ
+    その他未定
+

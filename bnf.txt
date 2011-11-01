@@ -1,0 +1,68 @@
+input
+: /* nothing */
+| input toplevel
+
+toplevel
+: IDENT '=' exp
+| IDENT formal_args '=' exp
+| MAIN '=' exp
+
+simple_exp
+: '(' exp ')'
+| '(' elems ')'
+| '(' ')'
+| '[' elems ']'
+| '[' ']'
+| IDENT
+| BOOL_LIT
+| INT_LIT
+| FLOAT_LIT
+| CHAR_LIT
+| STR_LIT
+
+exp
+: simple_exp
+| uniop_exp
+| binop_exp
+| IF exp THEN exp ELSE exp
+| LET IDENT '=' exp IN exp
+| LET REC fundef IN exp
+| simple_exp actual_args
+| CCALL IDENT actual_args
+| LET '(' pat ')' '=' exp IN exp
+| FUN IDENT formal_args "->" exp
+| TRY exp CATCH exp
+
+uniop_exp
+: NOT exp
+| '-' exp
+
+binop_exp
+: exp '+' exp
+| exp '-' exp
+| exp '*' exp
+| exp '/' exp
+| exp '%' exp
+| exp "==" exp
+| exp "!=" exp
+| exp '<' exp
+| exp '>' exp
+| exp "<=" exp
+| exp ">=" exp
+| exp ':' exp
+
+formal_arg
+: IDENT
+| '(' ')'
+
+formal_args
+: formal_arg
+| formal_args formal_arg
+
+actual_args
+: simple_exp
+| actual_args simple_exp
+
+elems : elems ',' exp
+
+pat : IDENT | pat ',' IDENT
