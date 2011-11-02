@@ -563,7 +563,10 @@ BDType *typing(Env *env, BDSExpr *e)
                         return substitute_for_schema(schema);
                     }
 
-                    throw(ERROR, "undefined variable");
+                    char msg[100];
+                    sprintf(msg, "'%s' is undefined.", name);
+
+                    throw(ERROR, mem_strdup(msg));
                 }
             case E_LETREC:
                 {
@@ -685,16 +688,14 @@ BDSProgram *bd_typing(BDSProgram *prog)
     try{
 
         // add primitives
-        vec = vector_new();
-        vector_add(vec, bd_type_int());
-        env_set(env, "print_int", bd_type_schema(vector_new(), bd_type_fun(vec, bd_type_unit())));
-
-        vec = vector_new();
-        BDType *t1 = bd_type_var(NULL);
-        BDType *t2 = bd_type_list(t1);
-        vector_add(vec, t1);
-        vector_add(vec, t2);
-        env_set(env, "cons", bd_type_schema(vector_new(), bd_type_fun(vec, bd_type_list(t1))));
+        Vector *prims = primitives();
+        PrimSig *sig;
+        for(i = 0; i < prims->length; i++){
+            sig = vector_get(prims, i);
+            env_set(env, sig->name, bd_type_schema(vector_new(), sig->type));
+            free(sig);
+        }
+        vector_destroy(prims);
 
         // add datadefs
         vec = prog->datadefs;

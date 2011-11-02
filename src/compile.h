@@ -7,6 +7,7 @@
 #include "type.h"
 #include "id.h"
 #include "env.h"
+#include "primitives.h"
 #include "program.h"
 #include "expr.h"
 #include "sexpr.h"

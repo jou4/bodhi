@@ -7,4 +7,5 @@ y.tab.c
 y.tab.h
 .DS_Store
 *.o
-
+*.out
+binfile

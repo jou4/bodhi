@@ -191,7 +191,7 @@ void bd_type_to_string(BDType *t, StringBuffer *sb, Vector *vars)
 {
     switch(t->kind){
         case T_UNIT:
-            sb_append(sb, "Unit");
+            sb_append(sb, "()");
             return;
         case T_BOOL:
             sb_append(sb, "Bool");

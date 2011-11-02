@@ -28,10 +28,11 @@ ref :: a -> [|a|]
 deref :: [|a|] -> a
 setref :: [|a|] -> a -> ()
 
+print_bool :: Bool -> ()
 print_int :: Int -> ()
 print_float :: Float -> ()
 print_char :: Char -> ()
 print_string :: String -> ()
 
-throw :: a -> ()
+raise :: a -> ()
 get_exception :: () -> a
