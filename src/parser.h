@@ -4,7 +4,7 @@
 #include "y.tab.h"
 
 typedef struct {
-   Vector *exprs;   // Vector<BDExpr1>
+    BDSProgram prog;
 } Parser;
 
 void prompt(int level);

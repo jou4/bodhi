@@ -5,18 +5,21 @@
 #include <stdio.h>
 
 #include "type.h"
-#include "expr.h"
-#include "expr1.h"
-#include "expr2.h"
-#include "expr3.h"
 #include "program.h"
-#include "asm.h"
-#include "env.h"
-#include "id.h"
+#include "expr.h"
+#include "sexpr.h"
+/*
+_include "expr2.h"
+_include "expr3.h"
+_include "asm.h"
+_include "env.h"
+_include "id.h"
+*/
 
-void compile(BDExpr1 *e);
-BDExpr1 *bd_typing(BDExpr1 *e);
-BDExpr2 *bd_knormalize(BDExpr1 *e);
+void compile(BDSProgram *prog);
+BDSProgram *bd_typing(BDSProgram *prog);
+/*
+BDExpr2 *bd_knormalize(BDSExpr *e);
 BDExpr2 *bd_alpha_convert(BDExpr2 *e);
 BDExpr2 *bd_alpha(Env *env, BDExpr2 *e);
 BDExpr2 *bd_beta_reduce(BDExpr2 *e);
@@ -28,5 +31,6 @@ BDProgram1 *bd_closure_transform(BDExpr2 *e);
 BDAsmProg *bd_virtual(BDProgram1 *prog);
 BDAsmProg *bd_register_allocate(BDAsmProg *prog);
 void bd_emit(BDAsmProg *prog);
+*/
 
 #endif

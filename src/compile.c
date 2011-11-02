@@ -1,12 +1,13 @@
 #include "compile.h"
 #include "util.h"
 
-void compile(BDExpr1 *e)
+void compile(BDSProgram *prog)
 {
     try{
-        bd_expr1_show(e);
+        bd_sprogram_show(prog);
 
-        BDExpr1 *e1 = bd_typing(e);
+        /*
+        BDSExpr *e1 = bd_typing(e);
         BDExpr2 *e2;
         e2 = bd_knormalize(e1);
         e2 = bd_alpha_convert(e2);
@@ -24,5 +25,6 @@ void compile(BDExpr1 *e)
         BDAsmProg *prog2 = bd_virtual(prog1);
         BDAsmProg *prog3 = bd_register_allocate(prog2);
         bd_emit(prog3);
+        */
     }
 }

@@ -9,6 +9,8 @@ typedef enum {
     E_BOOL,
     E_INT,
     E_FLOAT,
+    E_CHAR,
+    E_STR,
     E_UNIOP,
     E_BINOP,
     E_IF,
@@ -18,6 +20,8 @@ typedef enum {
     E_APP,
     E_TUPLE,
     E_LETTUPLE,
+    E_NIL,
+    E_LIST,
     E_ARRAY,
     E_MAKECLS,
     E_APPCLS,
@@ -34,6 +38,7 @@ typedef enum {
     OP_EQ,
     OP_LE,
     OP_GE,
+    OP_CONS,
 } BDOpKind;
 
 typedef struct {

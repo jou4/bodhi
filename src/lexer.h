@@ -9,6 +9,7 @@ typedef struct {
 } Lexer;
 
 void lexer_init(Lexer *lexer);
+void lexer_setin(Lexer *lexer, FILE *in);
 void lexer_destroy(Lexer *lexer);
 
 #endif

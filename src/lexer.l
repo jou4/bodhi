@@ -26,12 +26,21 @@ upper [A-Z]
 %%
 
 <INITIAL>{space}    { }
-<INITIAL>{br}       { return(BR); }
+<INITIAL>{br}       { }
 <INITIAL>"("        { return(LPAREN); }
 <INITIAL>")"        { return(RPAREN); }
-<INITIAL>"true"     { yylval->i_val = 1; return(BOOL); }
-<INITIAL>"false"    { yylval->i_val = 0; return(BOOL); }
+<INITIAL>"["        { return(LBRACKET); }
+<INITIAL>"]"        { return(RBRACKET); }
+<INITIAL>"{"        { return(LBRACE); }
+<INITIAL>"}"        { return(RBRACE); }
+<INITIAL>":"        { return(COLON); }
+<INITIAL>"True"     { yylval->i_val = 1; return(BOOL_LIT); }
+<INITIAL>"False"    { yylval->i_val = 0; return(BOOL_LIT); }
 <INITIAL>"not"      { return(NOT); }
+<INITIAL>"main"     { return(MAIN); }
+<INITIAL>"def"      { return(DEF); }
+<INITIAL>"\\"       { return(FUN); }
+<INITIAL>"->"       { return(ARROW); }
 
 <INITIAL>"+"        { return(PLUS); }
 <INITIAL>"-"        { return(MINUS); }
@@ -57,10 +66,18 @@ upper [A-Z]
  /*<INITIAL>"<-"       { return(LESS_MINUS); } */
  /*<INITIAL>";"        { return(SEMICOLON); } */
 
+<INITIAL>'\\n' {
+    yylval->c_val = '\n';
+    return(CHAR_LIT);
+}
+<INITIAL>'(\\.|[^\\'])' {
+    yylval->c_val = yytext[1];
+    return(CHAR_LIT);
+}
 
 <INITIAL>{digit}+ {
     yylval->i_val = atoi(yytext);
-    return(INT);
+    return(INT_LIT);
 }
 <INITIAL>[A-Za-z_][A-Za-z_0-9]* {
     sb_clear(lexer->buf);
@@ -78,7 +95,7 @@ upper [A-Z]
 <STRLIT>"\"" {
     BEGIN(INITIAL);
     yylval->buf = lexer->buf;
-    return(STRING_LITERAL);
+    return(STR_LIT);
 }
 <STRLIT>"\\\\" { sb_append_n(lexer->buf, "\\", 1); }
 <STRLIT>"\\a"  { sb_append_n(lexer->buf, "\a", 1); }
@@ -108,6 +125,11 @@ void lexer_init(Lexer *lexer)
 {
     lexer->buf = sb_new();
     yylex_init(&lexer->scanner);
+}
+
+void lexer_setin(Lexer *lexer, FILE *in)
+{
+    yyset_in(in, lexer->scanner);
 }
 
 void lexer_destroy(Lexer *lexer)

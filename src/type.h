@@ -12,6 +12,7 @@ typedef enum {
     T_STRING,
     T_FUN,
     T_TUPLE,
+    T_LIST,
     T_ARRAY,
     T_VAR,
     T_SCHEMA
@@ -27,6 +28,10 @@ typedef struct {
 typedef struct {
     Vector *elems;  // Vector<BDType>
 } BDTypeTuple;
+
+typedef struct {
+    BDType *elem;
+} BDTypeList;
 
 typedef struct {
     BDType *elem;
@@ -46,6 +51,7 @@ struct BDType {
     union {
         BDTypeFun u_fun;
         BDTypeTuple u_tuple;
+        BDTypeList u_list;
         BDTypeArray u_array;
         BDTypeVar u_var;
         BDTypeSchema u_schema;
@@ -65,6 +71,7 @@ BDType *bd_type_float();
 BDType *bd_type_string();
 BDType *bd_type_fun(Vector *formals, BDType *ret);
 BDType *bd_type_tuple(Vector *elems);
+BDType *bd_type_list(BDType *elem);
 BDType *bd_type_array(BDType *elem);
 BDType *bd_type_var(BDType *content);
 BDType *bd_type_schema(Vector *vars, BDType *body);

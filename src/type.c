@@ -31,6 +31,9 @@ void bd_type_destroy(BDType *t)
         case T_TUPLE:
             vector_each(t->u.u_tuple.elems, bd_type_destroy);
             break;
+        case T_LIST:
+            bd_type_destroy(t->u.u_list.elem);
+            break;
         case T_ARRAY:
             bd_type_destroy(t->u.u_array.elem);
             break;
@@ -84,6 +87,8 @@ BDType *bd_type_clone(BDType *t)
                 return bd_type_tuple(new_elems);
             }
             break;
+        case T_LIST:
+            return bd_type_var(bd_type_clone(t->u.u_list.elem));
         case T_ARRAY:
             return bd_type_var(bd_type_clone(t->u.u_array.elem));
         case T_VAR:
@@ -139,6 +144,13 @@ BDType *bd_type_tuple(Vector *elems)
         elems = vector_new();
     }
     t->u.u_tuple.elems = elems;
+    return t;
+}
+
+BDType *bd_type_list(BDType *elem)
+{
+    BDType *t = bd_type(T_LIST);
+    t->u.u_list.elem = elem;
     return t;
 }
 
@@ -229,11 +241,18 @@ void bd_type_to_string(BDType *t, StringBuffer *sb, Vector *vars)
                 sb_append(sb, ")");
                 return;
             }
-        case T_ARRAY:
+        case T_LIST:
             {
                 sb_append(sb, "[");
-                bd_type_to_string(t->u.u_array.elem, sb, vars);
+                bd_type_to_string(t->u.u_list.elem, sb, vars);
                 sb_append(sb, "]");
+                return;
+            }
+        case T_ARRAY:
+            {
+                sb_append(sb, "[|");
+                bd_type_to_string(t->u.u_array.elem, sb, vars);
+                sb_append(sb, "|]");
                 return;
             }
         case T_VAR:
