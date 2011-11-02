@@ -381,7 +381,11 @@ void unify(BDType *t1, BDType *t2)
     if((k1 == T_UNIT && k2 == T_UNIT) ||
             (k1 == T_BOOL && k2 == T_BOOL) ||
             (k1 == T_INT && k2 == T_INT) ||
-            (k1 == T_FLOAT && k2 == T_FLOAT)){
+            (k1 == T_FLOAT && k2 == T_FLOAT) ||
+            (k1 == T_CHAR && k2 == T_CHAR) ||
+            (k1 == T_STRING && k2 == T_STRING)
+      )
+    {
         return;
     }
 
