@@ -5,6 +5,8 @@ void compile(BDSProgram *prog)
 {
     try{
         bd_sprogram_show(prog);
+        bd_typing(prog);
+        //bd_sprogram_show(prog);
 
         /*
         BDSExpr *e1 = bd_typing(e);

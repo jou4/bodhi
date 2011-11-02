@@ -5,6 +5,8 @@
 #include <stdio.h>
 
 #include "type.h"
+#include "id.h"
+#include "env.h"
 #include "program.h"
 #include "expr.h"
 #include "sexpr.h"
@@ -12,8 +14,6 @@
 _include "expr2.h"
 _include "expr3.h"
 _include "asm.h"
-_include "env.h"
-_include "id.h"
 */
 
 void compile(BDSProgram *prog);

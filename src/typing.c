@@ -9,12 +9,12 @@
 #define ERROR_INVALID_ARGUMENT 104
 
 typedef struct {
-    BDExpr1 *e;
+    BDSExpr *e;
     BDType *t1;
     BDType *t2;
 } InferError;
 
-InferError *infer_error(BDExpr1 *e, BDType *t1, BDType *t2)
+InferError *infer_error(BDSExpr *e, BDType *t1, BDType *t2)
 {
     InferError *err = (InferError *)malloc(sizeof(InferError));
     err->e = e;
@@ -41,7 +41,7 @@ UnifyError *unify_error(BDType *t1, BDType *t2)
 
 BDType *deref_type(BDType *t, Vector *vars);
 BDExprIdent *deref_id_type(BDExprIdent *ident, Vector *vars);
-BDExpr1 *deref_term(BDExpr1 *e);
+BDSExpr *deref_term(BDSExpr *e);
 BDType *replace_freevars(BDType *t, Vector *freevars, Vector *freshvars);
 
 Vector *unknown_typevars_in_env(Env *env)
@@ -107,6 +107,8 @@ BDType *replace_freevars(BDType *t, Vector *freevars, Vector *freshvars)
         case T_BOOL:
         case T_INT:
         case T_FLOAT:
+        case T_CHAR:
+        case T_STRING:
             return t;
         case T_FUN:
             {
@@ -123,6 +125,14 @@ BDType *replace_freevars(BDType *t, Vector *freevars, Vector *freshvars)
                 Vector *elems = t->u.u_tuple.elems;
                 Vector *newelems = replace_freevars_in_vector(elems, freevars, freshvars);
                 return bd_type_tuple(newelems);
+            }
+        case T_LIST:
+            {
+                return bd_type_list(replace_freevars(t->u.u_list.elem, freevars, freshvars));
+            }
+        case T_ARRAY:
+            {
+                return bd_type_array(replace_freevars(t->u.u_array.elem, freevars, freshvars));
             }
         case T_VAR:
             {
@@ -222,7 +232,7 @@ BDExprIdent *deref_id_type(BDExprIdent *s, Vector *vars)
     return s;
 }
 
-BDExpr1 *deref_term(BDExpr1 *e)
+BDSExpr *deref_term(BDSExpr *e)
 {
     switch(e->kind)
     {
@@ -245,7 +255,7 @@ BDExpr1 *deref_term(BDExpr1 *e)
             break;
         case E_LETREC:
             {
-                BDExpr1Fundef *fundef = e->u.u_letrec.fundef;
+                BDSExprFundef *fundef = e->u.u_letrec.fundef;
                 fundef->ident = deref_id_type(fundef->ident, NULL);
 
                 int i;
@@ -402,6 +412,16 @@ void unify(BDType *t1, BDType *t2)
         return;
     }
 
+    if(k1 == T_LIST && k2 == T_LIST){
+        unify(t1->u.u_list.elem, t2->u.u_list.elem);
+        return;
+    }
+
+    if(k1 == T_ARRAY && k2 == T_ARRAY){
+        unify(t1->u.u_array.elem, t2->u.u_array.elem);
+        return;
+    }
+
     if(k1 == T_VAR && k2 == T_VAR){
         BDType *c1 = t1->u.u_var.content;
         BDType *c2 = t2->u.u_var.content;
@@ -446,7 +466,7 @@ void unify(BDType *t1, BDType *t2)
     throw(ERROR_UNIFY, unify_error(t1, t2));
 }
 
-BDType *typing(Env *env, BDExpr1 *e)
+BDType *typing(Env *env, BDSExpr *e)
 {
     try{
         switch(e->kind){
@@ -458,6 +478,12 @@ BDType *typing(Env *env, BDExpr1 *e)
                 return bd_type_int();
             case E_FLOAT:
                 return bd_type_float();
+            case E_CHAR:
+                return bd_type_char();
+            case E_STR:
+                return bd_type_string();
+            case E_NIL:
+                return bd_type_list(bd_type_var(NULL));
             case E_UNIOP:
                 {
                     BDType *expected;
@@ -484,6 +510,13 @@ BDType *typing(Env *env, BDExpr1 *e)
                         {
                             BDType *expected = bd_type_int();
                             unify(expected, typing(env, e->u.u_binop.l));
+                            unify(expected, typing(env, e->u.u_binop.r));
+                            return expected;
+                        }
+                    case OP_CONS:
+                        {
+                            BDType *elem = typing(env, e->u.u_binop.l);
+                            BDType *expected = bd_type_list(elem);
                             unify(expected, typing(env, e->u.u_binop.r));
                             return expected;
                         }
@@ -534,8 +567,8 @@ BDType *typing(Env *env, BDExpr1 *e)
                 }
             case E_LETREC:
                 {
-                    BDExpr1Fundef *fundef = e->u.u_letrec.fundef;
-                    BDExpr1 *body = e->u.u_letrec.body;
+                    BDSExprFundef *fundef = e->u.u_letrec.fundef;
+                    BDSExpr *body = e->u.u_letrec.body;
 
                     Env *local = env_local_new(env);
                     env_set(local, fundef->ident->name, bd_type_schema(vector_new(), fundef->ident->type));
@@ -589,8 +622,8 @@ BDType *typing(Env *env, BDExpr1 *e)
             case E_LETTUPLE:
                 {
                     Vector *idents = e->u.u_lettuple.idents;
-                    BDExpr1 *val = e->u.u_lettuple.val;
-                    BDExpr1 *body = e->u.u_lettuple.body;
+                    BDSExpr *val = e->u.u_lettuple.val;
+                    BDSExpr *body = e->u.u_lettuple.body;
 
                     Env *local = env_local_new(env);
                     Vector *elem_types = vector_new();
@@ -627,19 +660,75 @@ BDType *typing(Env *env, BDExpr1 *e)
     return NULL;
 }
 
-BDExpr1 *bd_typing(BDExpr1 *e)
+BDType *typing_fundef(Env *env, BDSExprFundef *fundef)
+{
+    int i;
+    BDExprIdent *ident;
+    Vector *formal_types = vector_new();
+    Env *funlocal = env_local_new(env);
+    for(i = 0; i < fundef->formals->length; i++){
+        ident = vector_get(fundef->formals, i);
+        vector_add(formal_types, ident->type);
+        env_set(funlocal, ident->name, bd_type_schema(vector_new(), ident->type));
+    }
+
+    unify(fundef->ident->type, bd_type_fun(formal_types, typing(funlocal, fundef->body)));
+}
+
+BDSProgram *bd_typing(BDSProgram *prog)
 {
     Env *env = env_new();
+    Vector *vec;
+    BDSExprFundef *def;
+    int i;
+
     try{
-        BDType *type = typing(env, e);
+
+        // add primitives
+
+        // add datadefs
+        vec = prog->datadefs;
+        for(i = 0; i < vec->length; i++){
+            def = vector_get(vec, i);
+            env_set(env, def->ident->name, bd_type_schema(vector_new(), def->ident->type));
+        }
+
+        // add fundefs
+        vec = prog->fundefs;
+        for(i = 0; i < vec->length; i++){
+            def = vector_get(vec, i);
+            env_set(env, def->ident->name, bd_type_schema(vector_new(), def->ident->type));
+        }
+
+        // typing datadefs
+        vec = prog->datadefs;
+        for(i = 0; i < vec->length; i++){
+            def = vector_get(vec, i);
+            unify(def->ident->type, typing(env, def->body));
+        }
+
+        // typing fundefs
+        vec = prog->fundefs;
+        for(i = 0; i < vec->length; i++){
+            def = vector_get(vec, i);
+            typing_fundef(env, def);
+        }
+
+        // typing main
+        BDType *type = typing(env, prog->maindef->body);
         env_destroy(env);
+        env = NULL;
 
-        printf("--- Type infered ---\n");
-        printf("%s\n", bd_type_show(type));
-        printf("\n");
+        if(type->kind != T_UNIT){
+            //throw(ERROR, "type of 'main' must be ().");
+        }
 
-        return deref_term(e);
+        return prog;
     }catch{
+        if(env != NULL){
+            env_destroy(env);
+        }
+
         switch(error_type){
             case ERROR:
                 printf("Error: %s\n", (char *)catch_error());
