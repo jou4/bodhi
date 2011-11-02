@@ -685,6 +685,16 @@ BDSProgram *bd_typing(BDSProgram *prog)
     try{
 
         // add primitives
+        vec = vector_new();
+        vector_add(vec, bd_type_int());
+        env_set(env, "print_int", bd_type_schema(vector_new(), bd_type_fun(vec, bd_type_unit())));
+
+        vec = vector_new();
+        BDType *t1 = bd_type_var(NULL);
+        BDType *t2 = bd_type_list(t1);
+        vector_add(vec, t1);
+        vector_add(vec, t2);
+        env_set(env, "cons", bd_type_schema(vector_new(), bd_type_fun(vec, bd_type_list(t1))));
 
         // add datadefs
         vec = prog->datadefs;
@@ -715,12 +725,12 @@ BDSProgram *bd_typing(BDSProgram *prog)
         }
 
         // typing main
-        BDType *type = typing(env, prog->maindef->body);
+        BDType *type = deref_type(typing(env, prog->maindef->body), NULL);
         env_destroy(env);
         env = NULL;
 
         if(type->kind != T_UNIT){
-            //throw(ERROR, "type of 'main' must be ().");
+            throw(ERROR, "type of 'main' must be ().");
         }
 
         return prog;

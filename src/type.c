@@ -88,9 +88,9 @@ BDType *bd_type_clone(BDType *t)
             }
             break;
         case T_LIST:
-            return bd_type_var(bd_type_clone(t->u.u_list.elem));
+            return bd_type_list(bd_type_clone(t->u.u_list.elem));
         case T_ARRAY:
-            return bd_type_var(bd_type_clone(t->u.u_array.elem));
+            return bd_type_array(bd_type_clone(t->u.u_array.elem));
         case T_VAR:
             return bd_type_var(bd_type_clone(t->u.u_var.content));
     }
