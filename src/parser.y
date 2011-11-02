@@ -96,9 +96,9 @@
 
 
 %type <fundef> fundef
-%type <vec> formal_args actual_args elems pat
+%type <vec> formal_args actual_args t_elems pat
 %type <ident> formal_arg
-%type <t> exp simple_exp uniop_exp binop_exp
+%type <t> exp simple_exp uniop_exp binop_exp l_elems
 %start input
 
 %%
@@ -124,12 +124,12 @@ toplevel
 simple_exp
 : LPAREN exp RPAREN
     { $$ = $2; }
-| LPAREN elems RPAREN
+| LPAREN t_elems RPAREN
     { $$ = bd_sexpr_tuple($2); }
 | LPAREN RPAREN
     { $$ = bd_sexpr_unit(); }
-| LBRACKET elems RBRACKET
-    { $$ = NULL; }
+| LBRACKET l_elems RBRACKET
+    { $$ = $2; }
 | LBRACKET RBRACKET
     { $$ = bd_sexpr_nil(); }
 | IDENT
@@ -233,11 +233,18 @@ actual_args
     { vector_add($1, $2); $$ = $1; }
 ;
 
-elems
-: elems COMMA exp
+t_elems
+: t_elems COMMA exp
     { vector_add($1, $3); $$ = $1; }
 | exp COMMA exp
     { Vector *vec = vector_new(); vector_add(vec, $1); vector_add(vec, $3); $$ = vec; }
+;
+
+l_elems
+: exp COMMA l_elems
+    { $$ = bd_sexpr_binop(OP_CONS, $1, $3); }
+| exp
+    { $$ = bd_sexpr_binop(OP_CONS, $1, bd_sexpr_nil()); }
 ;
 
 pat

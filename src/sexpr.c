@@ -276,6 +276,9 @@ void _bd_sexpr_show(BDSExpr *e, int depth)
                 case OP_LE:
                     printf(" <= ");
                     break;
+                case OP_CONS:
+                    printf(" : ");
+                    break;
             }
             _bd_sexpr_show(e->u.u_binop.r, 0);
             break;
