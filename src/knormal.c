@@ -2,11 +2,11 @@
 
 
 typedef struct {
-    BDExpr2 *e;
+    BDNExpr *e;
     BDType *t;
 } Pair;
 
-Pair pair(BDExpr2 *e, BDType *t)
+Pair pair(BDNExpr *e, BDType *t)
 {
     Pair p;
     p.e = e;
@@ -17,7 +17,7 @@ Pair pair(BDExpr2 *e, BDType *t)
 
 typedef struct {
     char *name;
-    BDExpr2 *let;
+    BDNExpr *let;
 } InsertLetResult;
 
 InsertLetResult insert_let(Pair p)
@@ -31,13 +31,13 @@ InsertLetResult insert_let(Pair p)
     }
     else{
         ret.name = bd_generate_id(p.t);
-        ret.let = bd_expr2_let(bd_expr_ident(ret.name, bd_type_clone(p.t)), p.e, NULL);
+        ret.let = bd_nexpr_let(bd_expr_ident(ret.name, bd_type_clone(p.t)), p.e, NULL);
     }
 
     return ret;
 }
 
-BDExpr2 *combine_let_body(BDExpr2 *e1, BDExpr2 *e2)
+BDNExpr *combine_let_body(BDNExpr *e1, BDNExpr *e2)
 {
     if(e1 == NULL){
         return e2;
@@ -49,9 +49,9 @@ BDExpr2 *combine_let_body(BDExpr2 *e1, BDExpr2 *e2)
 }
 
 
-Pair normalize(Env *env, BDExpr1 *e);
+Pair normalize(Env *env, BDSExpr *e);
 
-Pair normalize_uniop(Env *env, BDExpr1 *src, BDExpr2 *dest, BDType *t)
+Pair normalize_uniop(Env *env, BDSExpr *src, BDNExpr *dest, BDType *t)
 {
     Pair p = normalize(env, src->u.u_uniop.val);
     InsertLetResult x = insert_let(p);
@@ -61,10 +61,11 @@ Pair normalize_uniop(Env *env, BDExpr1 *src, BDExpr2 *dest, BDType *t)
     return pair(combine_let_body(x.let, dest), t);
 }
 
-Pair normalize_binop(Env *env, BDExpr1 *src, BDExpr2 *dest, BDType *t)
+Pair normalize_binop(Env *env, BDSExpr *src, BDNExpr *dest)
 {
     Pair p1, p2;
     InsertLetResult x, y;
+    BDType *t;
 
     p1 = normalize(env, src->u.u_binop.l);
     p2 = normalize(env, src->u.u_binop.r);
@@ -75,10 +76,22 @@ Pair normalize_binop(Env *env, BDExpr1 *src, BDExpr2 *dest, BDType *t)
     dest->u.u_binop.l = x.name;
     dest->u.u_binop.r = y.name;
 
+    switch(src->u.u_binop.kind){
+        case OP_ADD:
+        case OP_SUB:
+        case OP_MUL:
+        case OP_DIV:
+            t = p1.t;
+            break;
+        case OP_CONS:
+            t = bd_type_list(p1.t);
+            break;
+    }
+
     return pair(combine_let_body(x.let, combine_let_body(y.let, dest)), t);
 }
 
-Pair normalize_if(Env *env, BDExpr1 *src, BDExpr2 *dest)
+Pair normalize_if(Env *env, BDSExpr *src, BDNExpr *dest)
 {
     Pair p1, p2, p3, p4;
     InsertLetResult x, y;
@@ -99,47 +112,61 @@ Pair normalize_if(Env *env, BDExpr1 *src, BDExpr2 *dest)
     return pair(combine_let_body(x.let, combine_let_body(y.let, dest)), p3.t);
 }
 
-Pair normalize(Env *env, BDExpr1 *e)
+Pair normalize(Env *env, BDSExpr *e)
 {
     switch(e->kind){
         case E_UNIT:
-            return pair(bd_expr2_unit(), bd_type_unit());
+            return pair(bd_nexpr_unit(), bd_type_unit());
         case E_BOOL:
         case E_INT:
-            return pair(bd_expr2_int(e->u.u_int), bd_type_int());
+            return pair(bd_nexpr_int(e->u.u_int), bd_type_int());
         case E_FLOAT:
-            return pair(bd_expr2_float(e->u.u_double), bd_type_float());
+            return pair(bd_nexpr_float(e->u.u_double), bd_type_float());
+        case E_CHAR:
+            return pair(bd_nexpr_char(e->u.u_char), bd_type_char());
+        case E_STR:
+            {
+                char *str = e->u.u_str;
+                e->u.u_str = NULL;
+                return pair(bd_nexpr_str(str), bd_type_string());
+            }
+        case E_NIL:
+            return pair(bd_nexpr_nil(), bd_type_list(bd_type_var(NULL)));
         case E_UNIOP:
             switch(e->u.u_uniop.kind){
                 case OP_NOT:
-                    return normalize(env, bd_expr1_if(e->u.u_uniop.val, bd_expr1_bool(0), bd_expr1_bool(1)));
+                    return normalize(env, bd_sexpr_if(e->u.u_uniop.val, bd_sexpr_bool(0), bd_sexpr_bool(1)));
                 case OP_NEG:
-                    return normalize_uniop(env, e, bd_expr2_uniop(e->u.u_uniop.kind, NULL), bd_type_int());
+                    return normalize_uniop(env, e, bd_nexpr_uniop(e->u.u_uniop.kind, NULL), bd_type_int());
             }
+            break;
         case E_BINOP:
             switch(e->u.u_binop.kind){
                 case OP_ADD:
                 case OP_SUB:
                 case OP_MUL:
                 case OP_DIV:
-                    return normalize_binop(env, e, bd_expr2_binop(e->u.u_binop.kind, NULL, NULL), bd_type_int());
+                    return normalize_binop(env, e, bd_nexpr_binop(e->u.u_binop.kind, NULL, NULL));
                 case OP_EQ:
                 case OP_LE:
-                    return normalize(env, bd_expr1_if(e, bd_expr1_bool(1), bd_expr1_bool(0)));
+                    return normalize(env, bd_sexpr_if(e, bd_sexpr_bool(1), bd_sexpr_bool(0)));
+                case OP_CONS:
+                    return normalize_binop(env, e, bd_nexpr_binop(e->u.u_binop.kind, NULL, NULL));
             }
+            break;
         case E_IF:
             {
-                BDExpr1 *pred = e->u.u_if.pred;
+                BDSExpr *pred = e->u.u_if.pred;
 
                 if(pred->kind == E_UNIOP && pred->u.u_uniop.kind == OP_NOT){
-                    return normalize(env, bd_expr1_if(pred->u.u_uniop.val, e->u.u_if.f, e->u.u_if.t));
+                    return normalize(env, bd_sexpr_if(pred->u.u_uniop.val, e->u.u_if.f, e->u.u_if.t));
                 }
                 else if(pred->kind == E_BINOP){
-                    return normalize_if(env, e, bd_expr2_if(pred->u.u_binop.kind, NULL, NULL, NULL, NULL));
+                    return normalize_if(env, e, bd_nexpr_if(pred->u.u_binop.kind, NULL, NULL, NULL, NULL));
                 }
 
-                BDExpr1 *alt_if = bd_expr1_if(
-                        bd_expr1_binop(OP_EQ, pred, bd_expr1_bool(0)),
+                BDSExpr *alt_if = bd_sexpr_if(
+                        bd_sexpr_binop(OP_EQ, pred, bd_sexpr_bool(0)),
                         e->u.u_if.f,
                         e->u.u_if.t);
                 return normalize(env, alt_if);
@@ -155,7 +182,7 @@ Pair normalize(Env *env, BDExpr1 *e)
 
                 Pair p2 = normalize(local, e->u.u_let.body);
 
-                return pair(bd_expr2_let(
+                return pair(bd_nexpr_let(
                             bd_expr_ident(ident->name, bd_type_clone(ident->type)), p1.e, p2.e),
                         p2.t);
             }
@@ -169,11 +196,11 @@ Pair normalize(Env *env, BDExpr1 *e)
                     // TODO External reference
                 }
 
-                return pair(bd_expr2_var(name), bd_type_clone(type));
+                return pair(bd_nexpr_var(name), bd_type_clone(type));
             }
         case E_LETREC:
             {
-                BDExpr1Fundef *fundef = e->u.u_letrec.fundef;
+                BDSExprFundef *fundef = e->u.u_letrec.fundef;
                 BDExprIdent *ident = fundef->ident;
                 Vector *formals = fundef->formals;
                 Vector *new_formals = vector_new();
@@ -196,8 +223,8 @@ Pair normalize(Env *env, BDExpr1 *e)
                 env_local_destroy(funlocal);
                 env_local_destroy(local);
 
-                return pair(bd_expr2_letrec(
-                            bd_expr2_fundef(
+                return pair(bd_nexpr_letrec(
+                            bd_nexpr_fundef(
                                 bd_expr_ident(ident->name, bd_type_clone(ident->type)),
                                 new_formals,
                                 p1.e),
@@ -216,7 +243,7 @@ Pair normalize(Env *env, BDExpr1 *e)
                 Vector *actuals = e->u.u_app.actuals;
                 Vector *new_actuals = vector_new();
                 int i;
-                BDExpr1 *tmp;
+                BDSExpr *tmp;
                 for(i = 0; i < actuals->length; i++){
                     p = normalize(env, vector_get(actuals, i));
                     x = insert_let(p);
@@ -225,8 +252,8 @@ Pair normalize(Env *env, BDExpr1 *e)
                     vector_add(new_actuals, x.name);
                 }
 
-                BDExpr2 *curr = NULL;
-                curr = bd_expr2_app(f.name, new_actuals);
+                BDNExpr *curr = NULL;
+                curr = bd_nexpr_app(f.name, new_actuals);
 
                 for(i = lets->length - 1; i >= 0; i--){
                     curr = combine_let_body(vector_get(lets, i), curr);
@@ -253,7 +280,7 @@ Pair normalize(Env *env, BDExpr1 *e)
                     vector_add(new_types, p.t);
                 }
 
-                BDExpr2 *curr = bd_expr2_tuple(new_elems);
+                BDNExpr *curr = bd_nexpr_tuple(new_elems);
                 for(i = elems->length - 1; i >= 0; i--){
                     curr = combine_let_body(vector_get(lets, i), curr);
                 }
@@ -285,21 +312,88 @@ Pair normalize(Env *env, BDExpr1 *e)
 
                 return pair(combine_let_body(
                             x.let,
-                            bd_expr2_lettuple(new_idents, x.name, p.e)),
+                            bd_nexpr_lettuple(new_idents, x.name, p.e)),
                         p.t);
             }
     }
 }
 
-BDExpr2 *bd_knormalize(BDExpr1 *e)
+void bd_idents_env(Env *env, Vector *idents)
 {
-    Env *env = env_new();
-    Pair p = normalize(env, e);
+    int i;
+    BDExprIdent *ident;
+
+    for(i = 0; i < idents->length; i++){
+        ident = vector_get(idents, i);
+        env_set(env, ident->name, ident->type);
+    }
+}
+
+BDNProgram *bd_knormalize(BDSProgram *prog)
+{
+    Vector *vec;
+    BDSExprFundef *def;
+    BDNExprFundef *ndef;
+    int i;
+    Pair p;
+    Env *env, *funlocal;
+
+    BDNProgram *nprog = malloc(sizeof(BDNProgram));
+    bd_nprogram_init(nprog);
+
+    env = env_new();
+
+    // add primitives
+    Vector *prims = primitives();
+    PrimSig *sig;
+    for(i = 0; i < prims->length; i++){
+        sig = vector_get(prims, i);
+        env_set(env, sig->name, sig->type);
+        free(sig);
+    }
+    vector_destroy(prims);
+
+    // add toplevels
+    bd_sprogram_toplevels(env, prog);
+
+    vec = prog->datadefs;
+    for(i = 0; i < vec->length; i++){
+        def = vector_get(vec, i);
+        p = normalize(env, def->body);
+        ndef = bd_nexpr_fundef(
+                bd_expr_ident_clone(def->ident),
+                NULL,
+                p.e);
+        vector_add(nprog->datadefs, ndef);
+    }
+
+    vec = prog->fundefs;
+    for(i = 0; i < vec->length; i++){
+        def = vector_get(vec, i);
+        funlocal = env_local_new(env);
+        bd_idents_env(funlocal, def->formals);
+        p = normalize(funlocal, def->body);
+        ndef = bd_nexpr_fundef(
+                bd_expr_ident_clone(def->ident),
+                bd_expr_idents_clone(def->formals),
+                p.e);
+        vector_add(nprog->fundefs, ndef);
+        env_local_destroy(funlocal);
+    }
+
+    def = prog->maindef;
+    p = normalize(env, def->body);
+    ndef = bd_nexpr_fundef(
+            bd_expr_ident_clone(def->ident),
+            NULL,
+            p.e);
+    nprog->maindef = ndef;
+
     env_destroy(env);
 
     printf("--- K normalized --- \n");
-    bd_expr2_show(p.e);
+    bd_nprogram_show(nprog);
     printf("\n");
 
-    return p.e;
+    return nprog;
 }

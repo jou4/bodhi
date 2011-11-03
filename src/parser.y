@@ -114,11 +114,11 @@ input
 
 toplevel
 : DEF IDENT EQUAL exp
-    { add_datadef(bd_sexpr_fundef(bd_expr_ident_typevar($2), vector_new(), $4)); }
+    { add_datadef(bd_sexpr_fundef(bd_expr_ident_typevar($2), NULL, $4)); }
 | DEF IDENT formal_args EQUAL exp
     { add_fundef(bd_sexpr_fundef(bd_expr_ident_typevar($2), $3, $5)); }
 | DEF MAIN EQUAL exp
-    { set_maindef(bd_sexpr_fundef(bd_expr_ident("main", bd_type_unit()), vector_new(), $4)); }
+    { set_maindef(bd_sexpr_fundef(bd_expr_ident("main", bd_type_unit()), NULL, $4)); }
 ;
 
 simple_exp
@@ -165,9 +165,11 @@ exp
 | LET LPAREN pat RPAREN EQUAL exp IN exp
     %prec prec_let
     { $$ = bd_sexpr_lettuple($3, $6, $8); }
+/*
 | FUN IDENT formal_args ARROW exp
     %prec prec_lambda
     { $$ = NULL; }
+*/
 ;
 
 uniop_exp

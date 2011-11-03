@@ -1,12 +1,15 @@
 #include "compile.h"
 #include "util.h"
 
-void compile(BDSProgram *prog)
+void compile(BDSProgram *sprog)
 {
     try{
-        bd_sprogram_show(prog);
-        bd_typing(prog);
-        //bd_sprogram_show(prog);
+
+        printf("--- Parsed ---\n");
+        bd_sprogram_show(sprog);
+
+        bd_typing(sprog);
+        BDNProgram *nprog = bd_knormalize(sprog);
 
         /*
         BDSExpr *e1 = bd_typing(e);

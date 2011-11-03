@@ -12,6 +12,23 @@ BDExprIdent *bd_expr_ident(const char *name, BDType *type)
     return ident;
 }
 
+BDExprIdent *bd_expr_ident_clone(BDExprIdent *ident)
+{
+    return bd_expr_ident(ident->name, bd_type_clone(ident->type));
+}
+
+Vector *bd_expr_idents_clone(Vector *idents)
+{
+    Vector *new_idents = vector_new();
+    BDExprIdent *ident;
+    int i;
+    for(i = 0; i < idents->length; i++){
+        ident = vector_get(idents, i);
+        vector_add(new_idents, bd_expr_ident_clone(ident));
+    }
+    return new_idents;
+}
+
 BDExprIdent *bd_expr_ident_typevar(const char *name)
 {
     return bd_expr_ident(name, bd_type_var(NULL));

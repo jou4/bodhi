@@ -21,8 +21,8 @@ _include "asm.h"
 
 void compile(BDSProgram *prog);
 BDSProgram *bd_typing(BDSProgram *prog);
+BDNProgram *bd_knormalize(BDSProgram *prog);
 /*
-BDExpr2 *bd_knormalize(BDSExpr *e);
 BDExpr2 *bd_alpha_convert(BDExpr2 *e);
 BDExpr2 *bd_alpha(Env *env, BDExpr2 *e);
 BDExpr2 *bd_beta_reduce(BDExpr2 *e);

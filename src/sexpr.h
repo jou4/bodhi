@@ -83,6 +83,17 @@ struct BDSExpr {
     } u;
 };
 
+typedef struct {
+    Vector *fundefs;
+    Vector *datadefs;
+    BDSExprFundef *maindef;
+} BDSProgram;
+
+
+void bd_sprogram_init(BDSProgram *prog);
+void bd_sprogram_show(BDSProgram *prog);
+void bd_sprogram_toplevels(Env *env, BDSProgram *prog);
+
 BDSExpr *bd_sexpr(BDExprKind kind);
 void bd_sexpr_destroy(BDSExpr *e);
 void bd_sexpr_show(BDSExpr *e);

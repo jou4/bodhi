@@ -384,6 +384,70 @@ void bd_sexpr_show(BDSExpr *e)
     printf("\n");
 }
 
+void bd_sprogram_init(BDSProgram *prog)
+{
+    prog->fundefs = vector_new();
+    prog->datadefs = vector_new();
+    prog->maindef = NULL;
+}
+
+void bd_sprogram_toplevels(Env *env, BDSProgram *prog)
+{
+    Vector *vec;
+    int i;
+    BDSExprFundef *def;
+
+    vec = prog->datadefs;
+    for(i = 0; i < vec->length; i++){
+        def = vector_get(vec, i);
+        env_set(env, def->ident->name, def->ident->type);
+    }
+
+    vec = prog->fundefs;
+    for(i = 0; i < vec->length; i++){
+        def = vector_get(vec, i);
+        env_set(env, def->ident->name, def->ident->type);
+    }
+}
+
+void bd_sprogram_fundef_show(BDSExprFundef *fundef)
+{
+    Vector *vec;
+    int i;
+
+    bd_expr_ident_show(fundef->ident);
+    vec = fundef->formals;
+
+    if(vec != NULL){
+        for(i = 0; i < vec->length; i++){
+            printf(" ");
+            printf("(");
+            bd_expr_ident_show(vector_get(vec, i));
+            printf(")");
+        }
+    }
+    printf(" = ");
+    bd_sexpr_show(fundef->body);
+}
+
+void bd_sprogram_show(BDSProgram *prog)
+{
+    Vector *vec;
+    int i;
+
+    vec = prog->datadefs;
+    for(i = 0; i < vec->length; i++){
+        bd_sprogram_fundef_show(vector_get(vec, i));
+    }
+    vec = prog->fundefs;
+    for(i = 0; i < vec->length; i++){
+        bd_sprogram_fundef_show(vector_get(vec, i));
+    }
+    bd_sprogram_fundef_show(prog->maindef);
+
+    printf("\n");
+}
+
 
 /*
 int main()
