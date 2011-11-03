@@ -272,6 +272,23 @@ void bd_type_to_string(BDType *t, StringBuffer *sb, Vector *vars)
                 bd_type_to_string(t->u.u_var.content, sb, vars);
                 return;
             }
+        case T_SCHEMA:
+            {
+                Vector *vec = t->u.u_schema.vars;
+                int i;
+                for(i = 0; i < vec->length; i++){
+                    bd_type_to_string(vector_get(vec, i), sb, vars);
+                    if(i < vec->length - 1){
+                        sb_append(sb, ", ");
+                    }
+                    else{
+                        sb_append(sb, " => ");
+                    }
+                }
+
+                bd_type_to_string(t->u.u_schema.body, sb, vars);
+                return;
+            }
     }
 }
 
