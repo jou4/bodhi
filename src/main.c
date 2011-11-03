@@ -29,6 +29,11 @@ int main(int argc, char **argv)
         in = fopen("test/sample.txt", "r");
     }
 
+    if(in == NULL){
+        printf("Can not open the file.\n");
+        return 1;
+    }
+
     parser_init(&ps);
     lexer_init(&lexer);
     lexer_setin(&lexer, in);
