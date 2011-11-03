@@ -72,6 +72,10 @@ void bd_sexpr_destroy(BDSExpr *e)
             bd_sexpr_destroy(e->u.u_app.fun);
             vector_each(e->u.u_app.actuals, bd_sexpr_destroy);
             break;
+        case E_CCALL:
+            free(e->u.u_ccall.fun);
+            vector_each(e->u.u_ccall.actuals, bd_sexpr_destroy);
+            break;
         case E_TUPLE:
             vector_each(e->u.u_tuple.elems, bd_sexpr_destroy);
             break;
@@ -192,6 +196,14 @@ BDSExpr *bd_sexpr_app(BDSExpr *fun, Vector *actuals)
     BDSExpr *e = bd_sexpr(E_APP);
     e->u.u_app.fun = fun;
     e->u.u_app.actuals = actuals;
+    return e;
+}
+
+BDSExpr *bd_sexpr_ccall(const char *fun, Vector *actuals)
+{
+    BDSExpr *e = bd_sexpr(E_CCALL);
+    e->u.u_ccall.fun = mem_strdup(fun);
+    e->u.u_ccall.actuals = actuals;
     return e;
 }
 
@@ -367,6 +379,20 @@ void _bd_sexpr_show(BDSExpr *e, int col, int depth)
 
                 PRINT(col, "(");
                 _bd_sexpr_show(e->u.u_app.fun, col, depth);
+                for(i = 0; i < actuals->length; i++){
+                    PRINT(col, " ");
+                    _bd_sexpr_show(vector_get(actuals, i), col, depth);
+                }
+                PRINT(col, ")");
+            }
+            break;
+        case E_CCALL:
+            {
+                Vector *actuals = e->u.u_app.actuals;
+                int i;
+
+                PRINT(col, "(");
+                PRINT1(col, "CCALL %s", e->u.u_ccall.fun);
                 for(i = 0; i < actuals->length; i++){
                     PRINT(col, " ");
                     _bd_sexpr_show(vector_get(actuals, i), col, depth);

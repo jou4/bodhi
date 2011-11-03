@@ -39,6 +39,7 @@ upper [A-Z]
 <INITIAL>"not"      { return(NOT); }
 <INITIAL>"main"     { return(MAIN); }
 <INITIAL>"def"      { return(DEF); }
+<INITIAL>"ccall"    { return(CCALL); }
 <INITIAL>"\\"       { return(FUN); }
 <INITIAL>"->"       { return(ARROW); }
 

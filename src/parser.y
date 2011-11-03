@@ -79,6 +79,7 @@
 %token ARROW
 %token MAIN
 %token DEF
+%token CCALL
 
 %right prec_let
 %right prec_lambda
@@ -161,6 +162,9 @@ exp
 | simple_exp actual_args
     %prec prec_app
     { $$ = bd_sexpr_app($1, $2); }
+| CCALL IDENT actual_args
+    %prec prec_app
+    { $$ = bd_sexpr_ccall($2, $3); }
 | LET LPAREN pat RPAREN EQUAL exp IN exp
     %prec prec_let
     { $$ = bd_sexpr_lettuple($3, $6, $8); }

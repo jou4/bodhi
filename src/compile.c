@@ -10,6 +10,7 @@ void compile(BDSProgram *sprog)
 
         bd_typing(sprog);
         BDNProgram *nprog = bd_knormalize(sprog);
+        nprog = bd_alpha_convert(nprog);
 
         /*
         BDSExpr *e1 = bd_typing(e);

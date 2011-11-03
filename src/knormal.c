@@ -287,6 +287,33 @@ Pair normalize(Env *env, BDSExpr *e)
 
                 return pair(combine_let_body(f.let, curr), pf.t->u.u_fun.ret);
             }
+        case E_CCALL:
+            {
+                Pair p;
+                InsertLetResult f, x;
+                Vector *lets = vector_new();
+
+                Vector *actuals = e->u.u_app.actuals;
+                Vector *new_actuals = vector_new();
+                int i;
+                BDSExpr *tmp;
+                for(i = 0; i < actuals->length; i++){
+                    p = normalize(env, vector_get(actuals, i));
+                    x = insert_let(p);
+
+                    vector_add(lets, x.let);
+                    vector_add(new_actuals, x.name);
+                }
+
+                BDNExpr *curr = NULL;
+                curr = bd_nexpr_ccall(e->u.u_ccall.fun, new_actuals);
+
+                for(i = lets->length - 1; i >= 0; i--){
+                    curr = combine_let_body(vector_get(lets, i), curr);
+                }
+
+                return pair(curr, bd_type_var(NULL));
+            }
         case E_TUPLE:
             {
                 Pair p;
@@ -381,6 +408,7 @@ BDNProgram *bd_knormalize(BDSProgram *prog)
     // add toplevels
     bd_sprogram_toplevels(env, prog);
 
+    // normalize datadefs
     vec = prog->datadefs;
     for(i = 0; i < vec->length; i++){
         def = vector_get(vec, i);
@@ -392,6 +420,7 @@ BDNProgram *bd_knormalize(BDSProgram *prog)
         vector_add(nprog->datadefs, ndef);
     }
 
+    // normalize fundefs
     vec = prog->fundefs;
     for(i = 0; i < vec->length; i++){
         def = vector_get(vec, i);
@@ -406,6 +435,7 @@ BDNProgram *bd_knormalize(BDSProgram *prog)
         env_local_destroy(funlocal);
     }
 
+    // normalize maindef
     def = prog->maindef;
     p = normalize(env, def->body);
     ndef = bd_nexpr_fundef(

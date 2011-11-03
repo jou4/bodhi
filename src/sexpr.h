@@ -49,6 +49,11 @@ typedef struct {
 } BDSExprApp;
 
 typedef struct {
+    char *fun;
+    Vector *actuals;    // Vector<BDSExpr>
+} BDSExprCCall;
+
+typedef struct {
     Vector *elems;      // Vector<BDSExpr>
 } BDSExprTuple;
 
@@ -77,6 +82,7 @@ struct BDSExpr {
         BDSExprVar u_var;
         BDSExprLetRec u_letrec;
         BDSExprApp u_app;
+        BDSExprCCall u_ccall;
         BDSExprTuple u_tuple;
         BDSExprLetTuple u_lettuple;
         BDSExprFun u_fun;
@@ -113,6 +119,7 @@ BDSExpr *bd_sexpr_let(BDExprIdent *ident, BDSExpr *val, BDSExpr *body);
 BDSExpr *bd_sexpr_var(const char *name);
 BDSExpr *bd_sexpr_letrec(BDSExprFundef *fundef, BDSExpr *body);
 BDSExpr *bd_sexpr_app(BDSExpr *fun, Vector *actuals);
+BDSExpr *bd_sexpr_ccall(const char *fun, Vector *actuals);
 BDSExpr *bd_sexpr_tuple(Vector *elems);
 BDSExpr *bd_sexpr_lettuple(Vector *idents, BDSExpr *val, BDSExpr *body);
 

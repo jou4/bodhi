@@ -59,6 +59,7 @@ void bd_nexpr_destroy(BDNExpr *e)
             bd_nexpr_fundef_destroy(e->u.u_fun.fundef);
             break;
         case E_APP:
+        case E_CCALL:
             free(e->u.u_app.fun);
             vector_each(e->u.u_app.actuals, free);
             break;
@@ -180,6 +181,14 @@ BDNExpr *bd_nexpr_app(const char *fun, Vector *actuals)
     return e;
 }
 
+BDNExpr *bd_nexpr_ccall(const char *fun, Vector *actuals)
+{
+    BDNExpr *e = bd_nexpr(E_CCALL);
+    e->u.u_app.fun = mem_strdup(fun);
+    e->u.u_app.actuals = actuals;
+    return e;
+}
+
 BDNExpr *bd_nexpr_tuple(Vector *elems)
 {
     BDNExpr *e = bd_nexpr(E_TUPLE);
@@ -269,6 +278,7 @@ Set *bd_nexpr_freevars(BDNExpr *e)
                 return set;
             }
         case E_APP:
+        case E_CCALL:
             {
                 Set *set = set_of_list(e->u.u_app.actuals);
                 set_add(set, e->u.u_app.fun);
@@ -311,6 +321,15 @@ void bd_nprogram_init(BDNProgram *prog)
     prog->fundefs = vector_new();
     prog->datadefs = vector_new();
     prog->maindef = NULL;
+}
+
+void bd_nprogram_destroy(BDNProgram *prog)
+{
+    printf("\n");
+    printf("**************************\n");
+    printf("TODO bd_nprogram_destroy\n");
+    printf("**************************\n");
+    printf("\n");
 }
 
 void _bd_nexpr_show(BDNExpr *e, int col, int depth)
@@ -448,6 +467,7 @@ void _bd_nexpr_show(BDNExpr *e, int col, int depth)
                 BREAKLINE(col, depth);
                 _bd_nexpr_show(fundef->body, col, depth);
             }
+            break;
         case E_APP:
             {
                 Vector *actuals = e->u.u_app.actuals;
@@ -456,6 +476,21 @@ void _bd_nexpr_show(BDNExpr *e, int col, int depth)
 
                 PRINT(col, "(");
                 PRINT1(col, "%s", e->u.u_app.fun);
+                for(i = 0; i < actuals->length; i++){
+                    x = vector_get(actuals, i);
+                    PRINT1(col, " %s", x);
+                }
+                PRINT(col, ")");
+            }
+            break;
+        case E_CCALL:
+            {
+                Vector *actuals = e->u.u_app.actuals;
+                int i;
+                char *x;
+
+                PRINT(col, "(");
+                PRINT1(col, "CCALL %s", e->u.u_app.fun);
                 for(i = 0; i < actuals->length; i++){
                     x = vector_get(actuals, i);
                     PRINT1(col, " %s", x);

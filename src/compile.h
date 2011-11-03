@@ -22,14 +22,15 @@ _include "asm.h"
 void compile(BDSProgram *prog);
 BDSProgram *bd_typing(BDSProgram *prog);
 BDNProgram *bd_knormalize(BDSProgram *prog);
+BDNProgram *bd_alpha_convert(BDNProgram *prog);
+BDNExpr *bd_alpha(Env *env, BDNExpr *e);
+BDNProgram *bd_beta_reduce(BDNProgram *prog);
+BDNProgram *bd_flatten(BDNProgram *prog);
+BDNProgram *bd_inline_expand(int threashold, BDNProgram *prog);
+BDNProgram *bd_const_fold(BDNProgram *prog);
+BDNProgram *bd_elim(BDNProgram *prog);
+
 /*
-BDExpr2 *bd_alpha_convert(BDExpr2 *e);
-BDExpr2 *bd_alpha(Env *env, BDExpr2 *e);
-BDExpr2 *bd_beta_reduce(BDExpr2 *e);
-BDExpr2 *bd_flatten(BDExpr2 *e);
-BDExpr2 *bd_inline_expand(int threashold, BDExpr2 *e);
-BDExpr2 *bd_const_fold(BDExpr2 *e);
-BDExpr2 *bd_elim(BDExpr2 *e);
 BDProgram1 *bd_closure_transform(BDExpr2 *e);
 BDAsmProg *bd_virtual(BDProgram1 *prog);
 BDAsmProg *bd_register_allocate(BDAsmProg *prog);

@@ -96,6 +96,7 @@ typedef struct {
 void bd_nprogram_init(BDNProgram *prog);
 void bd_nprogram_show(BDNProgram *prog);
 void bd_nprogram_toplevels(Env *env, BDNProgram *prog);
+void bd_nprogram_destroy(BDNProgram *prog);
 
 
 BDNExpr *bd_nexpr(BDExprKind kind);
@@ -117,6 +118,7 @@ BDNExpr *bd_nexpr_let(BDExprIdent *ident, BDNExpr *val, BDNExpr *body);
 BDNExpr *bd_nexpr_var(const char *name);
 BDNExpr *bd_nexpr_letrec(BDNExprFundef *fundef, BDNExpr *body);
 BDNExpr *bd_nexpr_app(const char *fun, Vector *actuals);
+BDNExpr *bd_nexpr_ccall(const char *fun, Vector *actuals);
 BDNExpr *bd_nexpr_tuple(Vector *elems);
 BDNExpr *bd_nexpr_lettuple(Vector *idents, const char *val, BDNExpr *body);
 
