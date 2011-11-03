@@ -159,7 +159,7 @@ BDType *substitute_for_schema(BDType *t)
 {
     Vector *freevars = t->u.u_schema.vars;
 
-    if(freevars->length == 0){
+    if(freevars == NULL || freevars->length == 0){
         return t->u.u_schema.body;
     }
 
@@ -470,6 +470,8 @@ void unify(BDType *t1, BDType *t2)
     throw(ERROR_UNIFY, unify_error(t1, t2));
 }
 
+BDType *typing_fundef(Env *env, BDSExprFundef *fundef);
+
 BDType *typing(Env *env, BDSExpr *e)
 {
     try{
@@ -578,8 +580,10 @@ BDType *typing(Env *env, BDSExpr *e)
                     BDSExpr *body = e->u.u_letrec.body;
 
                     Env *local = env_local_new(env);
-                    env_set(local, fundef->ident->name, bd_type_schema(vector_new(), fundef->ident->type));
+                    env_set(local, fundef->ident->name, bd_type_schema(NULL, fundef->ident->type));
 
+                    typing_fundef(local, fundef);
+                    /*
                     int i;
                     BDExprIdent *ident;
                     Vector *formal_types = vector_new();
@@ -587,11 +591,12 @@ BDType *typing(Env *env, BDSExpr *e)
                     for(i = 0; i < fundef->formals->length; i++){
                         ident = vector_get(fundef->formals, i);
                         vector_add(formal_types, ident->type);
-                        env_set(funlocal, ident->name, bd_type_schema(vector_new(), ident->type));
+                        env_set(funlocal, ident->name, bd_type_schema(NULL, ident->type));
                     }
 
                     unify(fundef->ident->type, bd_type_fun(formal_types, typing(funlocal, fundef->body)));
                     env_local_destroy(funlocal);
+                    */
                     env_set(local, fundef->ident->name, create_type_schema(env, fundef->ident->type));
 
                     BDType *result = typing(local, body);
@@ -676,10 +681,11 @@ BDType *typing_fundef(Env *env, BDSExprFundef *fundef)
     for(i = 0; i < fundef->formals->length; i++){
         ident = vector_get(fundef->formals, i);
         vector_add(formal_types, ident->type);
-        env_set(funlocal, ident->name, bd_type_schema(vector_new(), ident->type));
+        env_set(funlocal, ident->name, bd_type_schema(NULL, ident->type));
     }
 
     unify(fundef->ident->type, bd_type_fun(formal_types, typing(funlocal, fundef->body)));
+    env_local_destroy(funlocal);
 }
 
 BDSProgram *bd_typing(BDSProgram *prog)
@@ -696,7 +702,7 @@ BDSProgram *bd_typing(BDSProgram *prog)
         PrimSig *sig;
         for(i = 0; i < prims->length; i++){
             sig = vector_get(prims, i);
-            env_set(env, sig->name, bd_type_schema(vector_new(), sig->type));
+            env_set(env, sig->name, bd_type_schema(NULL, sig->type));
             free(sig);
         }
         vector_destroy(prims);
@@ -705,14 +711,14 @@ BDSProgram *bd_typing(BDSProgram *prog)
         vec = prog->datadefs;
         for(i = 0; i < vec->length; i++){
             def = vector_get(vec, i);
-            env_set(env, def->ident->name, bd_type_schema(vector_new(), def->ident->type));
+            env_set(env, def->ident->name, bd_type_schema(NULL, def->ident->type));
         }
 
         // add fundefs
         vec = prog->fundefs;
         for(i = 0; i < vec->length; i++){
             def = vector_get(vec, i);
-            env_set(env, def->ident->name, bd_type_schema(vector_new(), def->ident->type));
+            env_set(env, def->ident->name, bd_type_schema(NULL, def->ident->type));
         }
 
         // typing datadefs
@@ -737,6 +743,28 @@ BDSProgram *bd_typing(BDSProgram *prog)
         if(type->kind != T_UNIT){
             throw(ERROR, "type of 'main' must be ().");
         }
+
+        // debug
+#ifdef DEBUG
+        printf("--- Typing ---\n");
+
+        vec = prog->datadefs;
+        for(i = 0; i < vec->length; i++){
+            def = vector_get(vec, i);
+            bd_expr_ident_show(def->ident);
+            printf("\n");
+        }
+
+        vec = prog->fundefs;
+        for(i = 0; i < vec->length; i++){
+            def = vector_get(vec, i);
+            bd_expr_ident_show(def->ident);
+            printf("\n");
+        }
+
+        bd_expr_ident_show(prog->maindef->ident);
+        printf("\n\n");
+#endif
 
         return prog;
     }catch{

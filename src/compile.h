@@ -1,6 +1,8 @@
 #ifndef _compile_h_
 #define _compile_h_
 
+#define DEBUG
+
 #include <stdlib.h>
 #include <stdio.h>
 

@@ -118,7 +118,7 @@ toplevel
 | DEF IDENT formal_args EQUAL exp
     { add_fundef(bd_sexpr_fundef(bd_expr_ident_typevar($2), $3, $5)); }
 | DEF MAIN EQUAL exp
-    { set_maindef(bd_sexpr_fundef(bd_expr_ident_typevar("main"), vector_new(), $4)); }
+    { set_maindef(bd_sexpr_fundef(bd_expr_ident("main", bd_type_unit()), vector_new(), $4)); }
 ;
 
 simple_exp
