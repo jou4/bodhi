@@ -1,10 +1,11 @@
 #include <stdio.h>
 #include "show.h"
 
-void bd_show_indent(int depth)
+int bd_show_indent(int depth)
 {
-    int i;
+    int i, acc = 0;
     for(i = 0; i < depth; i++){
-        printf("  ");
+        acc += printf("  ");
     }
+    return acc;
 }

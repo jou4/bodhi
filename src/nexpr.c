@@ -313,24 +313,222 @@ void bd_nprogram_init(BDNProgram *prog)
     prog->maindef = NULL;
 }
 
+void _bd_nexpr_show(BDNExpr *e, int col, int depth)
+{
+    if(e == NULL){ return; }
+
+    BREAKLINE(col, depth);
+
+    switch(e->kind){
+        case E_UNIT:
+            PRINT(col, "()");
+            break;
+        case E_INT:
+            PRINT1(col, "%d", e->u.u_int);
+            break;
+        case E_FLOAT:
+            PRINT1(col, "%.14g", e->u.u_double);
+            break;
+        case E_CHAR:
+            PRINT1(col, "'%c'", e->u.u_char);
+            break;
+        case E_STR:
+            PRINT1(col, "\"%s\"", e->u.u_str);
+            break;
+        case E_NIL:
+            PRINT(col, "[]");
+            break;
+        case E_UNIOP:
+            switch(e->u.u_uniop.kind){
+                case OP_NOT:
+                    PRINT1(col, "not %s", e->u.u_uniop.val);
+                    break;
+                case OP_NEG:
+                    PRINT1(col, "-%s", e->u.u_uniop.val);
+                    break;
+            }
+            break;
+        case E_BINOP:
+            PRINT1(col, "%s", e->u.u_binop.l);
+            switch(e->u.u_binop.kind){
+                case OP_ADD:
+                    PRINT(col, " + ");
+                    break;
+                case OP_SUB:
+                    PRINT(col, " - ");
+                    break;
+                case OP_MUL:
+                    PRINT(col, " * ");
+                    break;
+                case OP_DIV:
+                    PRINT(col, " / ");
+                    break;
+                case OP_CONS:
+                    PRINT(col, " : ");
+                    break;
+            }
+            PRINT1(col, "%s", e->u.u_binop.r);
+            break;
+        case E_IF:
+            PRINT(col, "if ");
+
+            PRINT1(col, "%s", e->u.u_binop.l);
+            switch(e->u.u_if.kind){
+                case OP_EQ:
+                    PRINT(col, " == ");
+                    break;
+                case OP_LE:
+                    PRINT(col, " <= ");
+                    break;
+            }
+            PRINT1(col, "%s", e->u.u_binop.r);
+
+            PRINT(col, "\n");
+            bd_show_indent(depth + 1);
+
+            PRINT(col, "then ");
+            _bd_nexpr_show(e->u.u_if.t, col, depth);
+
+            PRINT(col, "\n");
+            bd_show_indent(depth + 1);
+
+            PRINT(col, "else ");
+            _bd_nexpr_show(e->u.u_if.f, col, depth);
+            break;
+        case E_LET:
+            PRINT(col, "let ");
+            PRINT1(col, "%s", bd_expr_ident_show(e->u.u_let.ident));
+            PRINT(col, " = ");
+            _bd_nexpr_show(e->u.u_let.val, col, depth + 1);
+
+            PRINT(col, " in ");
+
+            DOBREAKLINE_NOSHIFT(col, depth);
+            _bd_nexpr_show(e->u.u_let.body, col, depth);
+            break;
+        case E_VAR:
+            PRINT1(col, "%s", e->u.u_var.name);
+            break;
+        case E_LETREC:
+            {
+                BDNExprFundef *fundef = e->u.u_letrec.fundef;
+                int i;
+
+                PRINT(col, "let rec ");
+                PRINT1(col, "%s", bd_expr_ident_show(fundef->ident));
+                for(i = 0; i < fundef->formals->length; i++){
+                    PRINT(col, " ");
+                    PRINT1(col, "%s", bd_expr_ident_show(vector_get(fundef->formals, i)));
+                }
+                PRINT(col, " = ");
+                _bd_nexpr_show(fundef->body, col, depth + 1);
+
+                PRINT(col, " in ");
+
+                DOBREAKLINE_NOSHIFT(col, depth);
+                _bd_nexpr_show(e->u.u_letrec.body, col, depth);
+            }
+            break;
+        case E_FUN:
+            {
+                BDNExprFundef *fundef = e->u.u_fun.fundef;
+                int i;
+
+                PRINT1(col, "(%s)", bd_type_show(fundef->ident->type));
+
+                PRINT(col, "\\");
+                for(i = 0; i < fundef->formals->length; i++){
+                    if(i > 0){
+                        PRINT(col, " ");
+                    }
+                    PRINT1(col, "%s", bd_expr_ident_show(vector_get(fundef->formals, i)));
+                }
+                PRINT(col, " -> ");
+
+                BREAKLINE(col, depth);
+                _bd_nexpr_show(fundef->body, col, depth);
+            }
+        case E_APP:
+            {
+                Vector *actuals = e->u.u_app.actuals;
+                int i;
+                char *x;
+
+                PRINT(col, "(");
+                PRINT1(col, "%s", e->u.u_app.fun);
+                for(i = 0; i < actuals->length; i++){
+                    x = vector_get(actuals, i);
+                    PRINT1(col, " %s", x);
+                }
+                PRINT(col, ")");
+            }
+            break;
+        case E_TUPLE:
+            {
+                Vector *elems = e->u.u_tuple.elems;
+                int i;
+                char *x;
+
+                PRINT(col, "(");
+                for(i = 0; i < elems->length; i++){
+                    if(i > 0){
+                        PRINT(col, ", ");
+                    }
+                    x = vector_get(elems, i);
+                    PRINT1(col, "%s", x);
+                }
+                PRINT(col, ")");
+            }
+            break;
+        case E_LETTUPLE:
+            {
+                Vector *idents = e->u.u_lettuple.idents;
+                int i;
+
+                PRINT(col, "let ");
+                PRINT(col, "(");
+                for(i = 0; i < idents->length; i++){
+                    if(i > 0){
+                        PRINT(col, ", ");
+                    }
+                    PRINT1(col, "%s", bd_expr_ident_show(vector_get(idents, i)));
+                }
+                PRINT1(col, ") = %s", e->u.u_lettuple.val);
+
+                PRINT(col, " in ");
+
+                DOBREAKLINE_NOSHIFT(col, depth);
+                _bd_nexpr_show(e->u.u_lettuple.body, col, depth);
+            }
+            break;
+    }
+}
+
+void bd_nexpr_show(BDNExpr *e)
+{
+    _bd_nexpr_show(e, 0, 0);
+    printf("\n");
+}
+
 void bd_nprogram_fundef_show(BDNExprFundef *fundef)
 {
     Vector *vec;
-    int i;
+    int i, col = 0, depth = 0;
 
-    bd_expr_ident_show(fundef->ident);
+    PRINT1(col, "%s", bd_expr_ident_show(fundef->ident));
     vec = fundef->formals;
 
     if(vec != NULL){
         for(i = 0; i < vec->length; i++){
-            printf(" ");
-            printf("(");
-            bd_expr_ident_show(vector_get(vec, i));
-            printf(")");
+            PRINT1(col, " (%s)", bd_expr_ident_show(vector_get(vec, i)));
         }
     }
-    printf(" = ");
-    bd_nexpr_show(fundef->body);
+    PRINT(col, " = ");
+
+    DOBREAKLINE(col, depth);
+    _bd_nexpr_show(fundef->body, col, depth);
+
+    PRINT(col, "\n");
 }
 
 void bd_nprogram_show(BDNProgram *prog)
@@ -348,198 +546,6 @@ void bd_nprogram_show(BDNProgram *prog)
     }
     bd_nprogram_fundef_show(prog->maindef);
 
-    printf("\n");
-}
-
-void _bd_nexpr_show(BDNExpr *e, int depth);
-
-void _bd_nexpr_lambda_show(BDNExprFundef *fundef)
-{
-    int i;
-
-    printf("(%s)", bd_type_show(fundef->ident->type));
-
-    printf("\\");
-    for(i = 0; i < fundef->formals->length; i++){
-        if(i > 0){
-            printf(" ");
-        }
-        bd_expr_ident_show(vector_get(fundef->formals, i));
-    }
-    printf("->");
-    _bd_nexpr_show(fundef->body, 0);
-}
-
-void _bd_nexpr_show(BDNExpr *e, int depth)
-{
-    if(e == NULL){ return; }
-
-    bd_show_indent(depth);
-
-    switch(e->kind){
-        case E_UNIT:
-            printf("()");
-            break;
-        case E_INT:
-            printf("%d", e->u.u_int);
-            break;
-        case E_FLOAT:
-            printf("%.14g", e->u.u_double);
-            break;
-        case E_CHAR:
-            printf("'%c'", e->u.u_char);
-            break;
-        case E_STR:
-            printf("\"%s\"", e->u.u_str);
-            break;
-        case E_NIL:
-            printf("[]");
-            break;
-        case E_UNIOP:
-            switch(e->u.u_uniop.kind){
-                case OP_NOT:
-                    printf("not %s", e->u.u_uniop.val);
-                    break;
-                case OP_NEG:
-                    printf("-%s", e->u.u_uniop.val);
-                    break;
-            }
-            break;
-        case E_BINOP:
-            printf("%s", e->u.u_binop.l);
-            switch(e->u.u_binop.kind){
-                case OP_ADD:
-                    printf(" + ");
-                    break;
-                case OP_SUB:
-                    printf(" - ");
-                    break;
-                case OP_MUL:
-                    printf(" * ");
-                    break;
-                case OP_DIV:
-                    printf(" / ");
-                    break;
-                case OP_CONS:
-                    printf(" : ");
-                    break;
-            }
-            printf("%s", e->u.u_binop.r);
-            break;
-        case E_IF:
-            printf("if ");
-
-            printf("%s", e->u.u_binop.l);
-            switch(e->u.u_if.kind){
-                case OP_EQ:
-                    printf(" == ");
-                    break;
-                case OP_LE:
-                    printf(" <= ");
-                    break;
-            }
-            printf("%s", e->u.u_binop.r);
-
-            printf("\n");
-            bd_show_indent(depth + 1);
-
-            printf("then ");
-            _bd_nexpr_show(e->u.u_if.t, 0);
-
-            printf("\n");
-            bd_show_indent(depth + 1);
-
-            printf("else ");
-            _bd_nexpr_show(e->u.u_if.f, 0);
-            break;
-        case E_LET:
-            printf("let ");
-            bd_expr_ident_show(e->u.u_let.ident);
-            printf(" = ");
-            _bd_nexpr_show(e->u.u_let.val, 0);
-
-            printf(" in\n");
-            _bd_nexpr_show(e->u.u_let.body, depth + 1);
-            break;
-        case E_VAR:
-            printf("%s", e->u.u_var.name);
-            break;
-        case E_LETREC:
-            {
-                BDNExprFundef *fundef = e->u.u_letrec.fundef;
-                int i;
-
-                printf("let rec ");
-                bd_expr_ident_show(fundef->ident);
-                for(i = 0; i < fundef->formals->length; i++){
-                    printf(" ");
-                    bd_expr_ident_show(vector_get(fundef->formals, i));
-                }
-                printf(" = ");
-                _bd_nexpr_show(fundef->body, 0);
-
-                printf(" in\n");
-                _bd_nexpr_show(e->u.u_letrec.body, depth + 1);
-            }
-            break;
-        case E_FUN:
-            _bd_nexpr_lambda_show(e->u.u_fun.fundef);
-            break;
-        case E_APP:
-            {
-                Vector *actuals = e->u.u_app.actuals;
-                int i;
-                char *x;
-
-                printf("%s", e->u.u_app.fun);
-                for(i = 0; i < actuals->length; i++){
-                    x = vector_get(actuals, i);
-                    printf(" %s", x);
-                }
-            }
-            break;
-        case E_TUPLE:
-            {
-                Vector *elems = e->u.u_tuple.elems;
-                int i;
-                char *x;
-
-                printf("(");
-                for(i = 0; i < elems->length; i++){
-                    if(i > 0){
-                        printf(", ");
-                    }
-                    x = vector_get(elems, i);
-                    printf("%s", x);
-                }
-                printf(")");
-            }
-            break;
-        case E_LETTUPLE:
-            {
-                Vector *idents = e->u.u_lettuple.idents;
-                int i;
-
-                printf("let ");
-                printf("(");
-                for(i = 0; i < idents->length; i++){
-                    if(i > 0){
-                        printf(", ");
-                    }
-                    bd_expr_ident_show(vector_get(idents, i));
-                }
-                printf(") = %s in\n", e->u.u_lettuple.val);
-
-                printf(" in\n");
-                _bd_nexpr_show(e->u.u_lettuple.body, depth + 1);
-            }
-            break;
-    }
-}
-
-void bd_nexpr_show(BDNExpr *e)
-{
-    _bd_nexpr_show(e, 0);
     printf("\n");
 }
 

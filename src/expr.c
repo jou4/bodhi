@@ -41,9 +41,11 @@ void bd_expr_ident_destroy(BDExprIdent *ident)
     free(ident);
 }
 
-void bd_expr_ident_show(BDExprIdent *ident)
+char *bd_expr_ident_show(BDExprIdent *ident)
 {
-    printf("%s::%s", ident->name, bd_type_show(ident->type));
+    char str[100];
+    sprintf(str, "%s::%s", ident->name, bd_type_show(ident->type));
+    return mem_strdup(str);
 }
 
 BDExprClosure *bd_expr_closure(const char *entry, Vector *freevars)

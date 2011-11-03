@@ -4,6 +4,7 @@
 #include "util.h"
 #include "env.h"
 #include "type.h"
+#include "show.h"
 
 typedef enum {
     E_UNIT,
@@ -59,7 +60,7 @@ BDExprIdent *bd_expr_ident_clone(BDExprIdent *ident);
 Vector *bd_expr_idents_clone(Vector *idents);
 BDExprIdent *bd_expr_ident_typevar(const char *name);
 void bd_expr_ident_destroy(BDExprIdent *ident);
-void bd_expr_ident_show(BDExprIdent *ident);
+char *bd_expr_ident_show(BDExprIdent *ident);
 
 BDExprClosure *bd_expr_closure(const char *entry, Vector *freevars);
 void bd_expr_closure_destroy(BDExprClosure *cls);

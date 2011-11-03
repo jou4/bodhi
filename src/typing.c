@@ -588,20 +588,6 @@ BDType *typing(Env *env, BDSExpr *e)
                     env_set(local, fundef->ident->name, bd_type_schema(NULL, fundef->ident->type));
 
                     typing_fundef(local, fundef);
-                    /*
-                    int i;
-                    BDExprIdent *ident;
-                    Vector *formal_types = vector_new();
-                    Env *funlocal = env_local_new(local);
-                    for(i = 0; i < fundef->formals->length; i++){
-                        ident = vector_get(fundef->formals, i);
-                        vector_add(formal_types, ident->type);
-                        env_set(funlocal, ident->name, bd_type_schema(NULL, ident->type));
-                    }
-
-                    unify(fundef->ident->type, bd_type_fun(formal_types, typing(funlocal, fundef->body)));
-                    env_local_destroy(funlocal);
-                    */
                     env_set(local, fundef->ident->name, create_type_schema(env, fundef->ident->type));
 
                     BDType *result = typing(local, body);
@@ -665,7 +651,7 @@ BDType *typing(Env *env, BDSExpr *e)
 
                     for(i = 0; i < idents->length; i++){
                         ident = vector_get(idents, i);
-                        env_set(local, ident->name, create_type_schema(env, ident->type));
+                        env_set(local, ident->name, bd_type_schema(NULL, ident->type));
                     }
 
                     BDType *result = typing(local, body);
@@ -769,18 +755,18 @@ BDSProgram *bd_typing(BDSProgram *prog)
         vec = prog->datadefs;
         for(i = 0; i < vec->length; i++){
             def = vector_get(vec, i);
-            bd_expr_ident_show(def->ident);
+            printf("%s", bd_expr_ident_show(def->ident));
             printf("\n");
         }
 
         vec = prog->fundefs;
         for(i = 0; i < vec->length; i++){
             def = vector_get(vec, i);
-            bd_expr_ident_show(def->ident);
+            printf("%s", bd_expr_ident_show(def->ident));
             printf("\n");
         }
 
-        bd_expr_ident_show(prog->maindef->ident);
+        printf("%s", bd_expr_ident_show(prog->maindef->ident));
         printf("\n\n");
 #endif
 
