@@ -81,7 +81,7 @@
 %token DEF
 
 %right prec_let
-%right SEMICOLON
+%right prec_lambda
 %right COLON
 %right prec_if
 %right LESS_MINUS
@@ -90,7 +90,6 @@
 %left  PLUS MINUS PLUS_DOT MINUS_DOT
 %left  AST SLASH
 %left  prec_unary_minus
-%left  prec_lambda
 %left  prec_app
 %left  DOT
 
@@ -165,11 +164,9 @@ exp
 | LET LPAREN pat RPAREN EQUAL exp IN exp
     %prec prec_let
     { $$ = bd_sexpr_lettuple($3, $6, $8); }
-/*
-| FUN IDENT formal_args ARROW exp
+| FUN formal_args ARROW exp
     %prec prec_lambda
-    { $$ = NULL; }
-*/
+    { $$ = bd_sexpr_fun(bd_sexpr_fundef(bd_expr_ident_typevar(NULL), $2, $4)); }
 ;
 
 uniop_exp

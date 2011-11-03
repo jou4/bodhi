@@ -15,6 +15,4 @@ export UTILS=../util/mem.c\ $UTILS
 
 bison -d -y parser.y
 flex lexer.l
-gcc -g -o bd $UTILS y.tab.c lex.yy.c type.c env.c id.c show.c main.c compile.c primitives.c
-
-#expr.c sexpr.c typing.c nexpr.c knormal.c
+gcc -g -o bd $UTILS y.tab.c lex.yy.c type.c env.c id.c show.c main.c compile.c primitives.c expr.c sexpr.c typing.c nexpr.c knormal.c

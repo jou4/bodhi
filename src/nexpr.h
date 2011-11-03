@@ -62,6 +62,10 @@ typedef struct {
     BDNExpr *body;
 } BDNExprLetTuple;
 
+typedef struct {
+    BDNExprFundef *fundef;
+} BDNExprFun;
+
 
 struct BDNExpr {
     BDExprKind kind;
@@ -79,6 +83,7 @@ struct BDNExpr {
         BDNExprApp u_app;
         BDNExprTuple u_tuple;
         BDNExprLetTuple u_lettuple;
+        BDNExprFun u_fun;
     } u;
 };
 
@@ -104,6 +109,7 @@ BDNExpr *bd_nexpr_float(double val);
 BDNExpr *bd_nexpr_char(char val);
 BDNExpr *bd_nexpr_str(char *val);
 BDNExpr *bd_nexpr_nil();
+BDNExpr *bd_nexpr_fun(BDNExprFundef *fundef);
 BDNExpr *bd_nexpr_uniop(BDOpKind kind, const char *val);
 BDNExpr *bd_nexpr_binop(BDOpKind kind, const char *l, const char *r);
 BDNExpr *bd_nexpr_if(BDOpKind kind, const char *l, const char *r, BDNExpr *t, BDNExpr *f);

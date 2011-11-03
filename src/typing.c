@@ -609,6 +609,14 @@ BDType *typing(Env *env, BDSExpr *e)
 
                     return result;
                 }
+            case E_FUN:
+                {
+                    BDSExprFundef *fundef = e->u.u_letrec.fundef;
+                    Env *local = env_local_new(env);
+                    typing_fundef(local, fundef);
+                    env_local_destroy(local);
+                    return fundef->ident->type;
+                }
             case E_APP:
                 {
                     BDType *expected = bd_type_var(NULL);
@@ -694,6 +702,8 @@ BDType *typing_fundef(Env *env, BDSExprFundef *fundef)
     env_local_destroy(funlocal);
 }
 
+extern Vector *primsigs;
+
 BDSProgram *bd_typing(BDSProgram *prog)
 {
     Env *env = env_new();
@@ -704,14 +714,11 @@ BDSProgram *bd_typing(BDSProgram *prog)
     try{
 
         // add primitives
-        Vector *prims = primitives();
         PrimSig *sig;
-        for(i = 0; i < prims->length; i++){
-            sig = vector_get(prims, i);
+        for(i = 0; i < primsigs->length; i++){
+            sig = vector_get(primsigs, i);
             env_set(env, sig->name, create_type_schema(env, sig->type));
-            free(sig);
         }
-        vector_destroy(prims);
 
         // add datadefs
         vec = prog->datadefs;
@@ -732,6 +739,7 @@ BDSProgram *bd_typing(BDSProgram *prog)
         for(i = 0; i < vec->length; i++){
             def = vector_get(vec, i);
             unify(def->ident->type, typing(env, def->body));
+            def->body = deref_term(def->body);
         }
 
         // typing fundefs
@@ -739,16 +747,20 @@ BDSProgram *bd_typing(BDSProgram *prog)
         for(i = 0; i < vec->length; i++){
             def = vector_get(vec, i);
             typing_fundef(env, def);
+            def->body = deref_term(def->body);
         }
 
         // typing main
-        BDType *type = deref_type(typing(env, prog->maindef->body), NULL);
+        def = prog->maindef;
+        BDType *type = deref_type(typing(env, def->body), NULL);
         env_destroy(env);
         env = NULL;
 
         if(type->kind != T_UNIT){
             throw(ERROR, "type of 'main' must be ().");
         }
+
+        def->body = deref_term(def->body);
 
         // debug
 #ifdef DEBUG

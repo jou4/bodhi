@@ -65,6 +65,9 @@ void bd_sexpr_destroy(BDSExpr *e)
             bd_sexpr_fundef_destroy(e->u.u_letrec.fundef);
             bd_sexpr_destroy(e->u.u_letrec.body);
             break;
+        case E_FUN:
+            bd_sexpr_fundef_destroy(e->u.u_fun.fundef);
+            break;
         case E_APP:
             bd_sexpr_destroy(e->u.u_app.fun);
             vector_each(e->u.u_app.actuals, bd_sexpr_destroy);
@@ -124,6 +127,13 @@ BDSExpr *bd_sexpr_str(char *val)
 BDSExpr *bd_sexpr_nil()
 {
     BDSExpr *e = bd_sexpr(E_NIL);
+    return e;
+}
+
+BDSExpr *bd_sexpr_fun(BDSExprFundef *fundef)
+{
+    BDSExpr *e = bd_sexpr(E_FUN);
+    e->u.u_fun.fundef = fundef;
     return e;
 }
 
@@ -201,6 +211,24 @@ BDSExpr *bd_sexpr_lettuple(Vector *idents, BDSExpr *val, BDSExpr *body)
     return e;
 }
 
+void _bd_sexpr_show(BDSExpr *e, int depth);
+
+void _bd_sexpr_lambda_show(BDSExprFundef *fundef)
+{
+    int i;
+
+    printf("(%s)", bd_type_show(fundef->ident->type));
+
+    printf("\\");
+    for(i = 0; i < fundef->formals->length; i++){
+        if(i > 0){
+            printf(" ");
+        }
+        bd_expr_ident_show(vector_get(fundef->formals, i));
+    }
+    printf("->");
+    _bd_sexpr_show(fundef->body, 0);
+}
 
 void _bd_sexpr_show(BDSExpr *e, int depth)
 {
@@ -327,6 +355,11 @@ void _bd_sexpr_show(BDSExpr *e, int depth)
                 printf(" in\n");
                 _bd_sexpr_show(e->u.u_letrec.body, depth + 1);
             }
+            break;
+        case E_FUN:
+            printf("(");
+            _bd_sexpr_lambda_show(e->u.u_fun.fundef);
+            printf(")");
             break;
         case E_APP:
             {

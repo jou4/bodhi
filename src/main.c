@@ -1,5 +1,8 @@
 #include "lexer.h"
 #include "parser.h"
+#include "primitives.h"
+
+Vector *primsigs;
 
 void prompt(int level)
 {
@@ -13,6 +16,8 @@ void prompt(int level)
 
 int main(int argc, char **argv)
 {
+    primsigs = primitives();
+
     Parser ps;
     Lexer lexer;
     FILE *in;

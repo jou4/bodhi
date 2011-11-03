@@ -12,11 +12,6 @@ typedef struct {
 } BDSExprFundef;
 
 typedef struct {
-    BDExprIdent *ident;
-    BDSExpr *body;
-} BDSExprDatadef;
-
-typedef struct {
     BDOpKind kind;
     BDSExpr *val;
 } BDSExprUniOp;
@@ -63,6 +58,10 @@ typedef struct {
     BDSExpr *body;
 } BDSExprLetTuple;
 
+typedef struct {
+    BDSExprFundef *fundef;
+} BDSExprFun;
+
 
 struct BDSExpr {
     BDExprKind kind;
@@ -80,6 +79,7 @@ struct BDSExpr {
         BDSExprApp u_app;
         BDSExprTuple u_tuple;
         BDSExprLetTuple u_lettuple;
+        BDSExprFun u_fun;
     } u;
 };
 
@@ -104,6 +104,7 @@ BDSExpr *bd_sexpr_int(int val);
 BDSExpr *bd_sexpr_float(double val);
 BDSExpr *bd_sexpr_char(char val);
 BDSExpr *bd_sexpr_str(char *val);
+BDSExpr *bd_sexpr_fun(BDSExprFundef *fundef);
 BDSExpr *bd_sexpr_nil();
 BDSExpr *bd_sexpr_uniop(BDOpKind kind, BDSExpr *val);
 BDSExpr *bd_sexpr_binop(BDOpKind kind, BDSExpr *l, BDSExpr *r);

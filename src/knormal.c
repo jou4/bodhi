@@ -231,6 +231,32 @@ Pair normalize(Env *env, BDSExpr *e)
                             p2.e),
                         p2.t);
             }
+        case E_FUN:
+            {
+                BDSExprFundef *fundef = e->u.u_fun.fundef;
+                BDExprIdent *ident = fundef->ident;
+                Vector *formals = fundef->formals;
+                Vector *new_formals = vector_new();
+
+                Env *funlocal = env_local_new(env);
+                int i;
+                BDExprIdent *formal;
+                for(i = 0; i < formals->length; i++){
+                    formal = vector_get(formals, i);
+                    env_set(funlocal, formal->name, formal->type);
+                    vector_add(new_formals, bd_expr_ident(formal->name, bd_type_clone(formal->type)));
+                }
+
+                Pair p1 = normalize(funlocal, fundef->body);
+                env_local_destroy(funlocal);
+
+                return pair(bd_nexpr_fun(
+                            bd_nexpr_fundef(
+                                bd_expr_ident_clone(ident),
+                                new_formals,
+                                p1.e)),
+                        p1.t);
+            }
         case E_APP:
             {
                 Pair pf, p;
@@ -329,6 +355,8 @@ void bd_idents_env(Env *env, Vector *idents)
     }
 }
 
+extern Vector *primsigs;
+
 BDNProgram *bd_knormalize(BDSProgram *prog)
 {
     Vector *vec;
@@ -344,14 +372,11 @@ BDNProgram *bd_knormalize(BDSProgram *prog)
     env = env_new();
 
     // add primitives
-    Vector *prims = primitives();
     PrimSig *sig;
-    for(i = 0; i < prims->length; i++){
-        sig = vector_get(prims, i);
+    for(i = 0; i < primsigs->length; i++){
+        sig = vector_get(primsigs, i);
         env_set(env, sig->name, sig->type);
-        free(sig);
     }
-    vector_destroy(prims);
 
     // add toplevels
     bd_sprogram_toplevels(env, prog);

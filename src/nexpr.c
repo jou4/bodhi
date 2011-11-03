@@ -55,6 +55,9 @@ void bd_nexpr_destroy(BDNExpr *e)
             bd_nexpr_fundef_destroy(e->u.u_letrec.fundef);
             bd_nexpr_destroy(e->u.u_letrec.body);
             break;
+        case E_FUN:
+            bd_nexpr_fundef_destroy(e->u.u_fun.fundef);
+            break;
         case E_APP:
             free(e->u.u_app.fun);
             vector_each(e->u.u_app.actuals, free);
@@ -107,6 +110,13 @@ BDNExpr *bd_nexpr_str(char *val)
 BDNExpr *bd_nexpr_nil()
 {
     BDNExpr *e = bd_nexpr(E_NIL);
+    return e;
+}
+
+BDNExpr *bd_nexpr_fun(BDNExprFundef *fundef)
+{
+    BDNExpr *e = bd_nexpr(E_FUN);
+    e->u.u_fun.fundef = fundef;
     return e;
 }
 
@@ -341,6 +351,25 @@ void bd_nprogram_show(BDNProgram *prog)
     printf("\n");
 }
 
+void _bd_nexpr_show(BDNExpr *e, int depth);
+
+void _bd_nexpr_lambda_show(BDNExprFundef *fundef)
+{
+    int i;
+
+    printf("(%s)", bd_type_show(fundef->ident->type));
+
+    printf("\\");
+    for(i = 0; i < fundef->formals->length; i++){
+        if(i > 0){
+            printf(" ");
+        }
+        bd_expr_ident_show(vector_get(fundef->formals, i));
+    }
+    printf("->");
+    _bd_nexpr_show(fundef->body, 0);
+}
+
 void _bd_nexpr_show(BDNExpr *e, int depth)
 {
     if(e == NULL){ return; }
@@ -452,6 +481,9 @@ void _bd_nexpr_show(BDNExpr *e, int depth)
                 printf(" in\n");
                 _bd_nexpr_show(e->u.u_letrec.body, depth + 1);
             }
+            break;
+        case E_FUN:
+            _bd_nexpr_lambda_show(e->u.u_fun.fundef);
             break;
         case E_APP:
             {
