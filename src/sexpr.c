@@ -3,20 +3,18 @@
 #include "sexpr.h"
 
 
-BDSExprFundef *bd_sexpr_fundef(BDExprIdent *ident, Vector *formals, BDSExpr *body)
+BDSExprDef *bd_sexpr_def(BDExprIdent *ident, BDSExpr *body)
 {
-    BDSExprFundef *fundef = malloc(sizeof(BDSExprFundef));
-    fundef->ident = ident;
-    fundef->formals = formals;
-    fundef->body = body;
-    return fundef;
+    BDSExprDef *def = malloc(sizeof(BDSExprDef));
+    def->ident = ident;
+    def->body = body;
+    return def;
 }
 
-void bd_sexpr_fundef_destroy(BDSExprFundef *fundef)
+void bd_sexpr_def_destroy(BDSExprDef *def)
 {
-    bd_expr_ident_destroy(fundef->ident);
-    vector_each(fundef->formals, bd_expr_ident_destroy);
-    bd_sexpr_destroy(fundef->body);
+    bd_expr_ident_destroy(def->ident);
+    bd_sexpr_destroy(def->body);
 }
 
 BDSExpr *bd_sexpr(BDExprKind kind)
@@ -62,11 +60,13 @@ void bd_sexpr_destroy(BDSExpr *e)
             free(e->u.u_var.name);
             break;
         case E_LETREC:
-            bd_sexpr_fundef_destroy(e->u.u_letrec.fundef);
+            bd_expr_ident_destroy(e->u.u_letrec.ident);
+            bd_sexpr_destroy(e->u.u_letrec.fun);
             bd_sexpr_destroy(e->u.u_letrec.body);
             break;
         case E_FUN:
-            bd_sexpr_fundef_destroy(e->u.u_fun.fundef);
+            vector_each(e->u.u_fun.formals, bd_expr_ident_destroy);
+            bd_sexpr_destroy(e->u.u_fun.body);
             break;
         case E_APP:
             bd_sexpr_destroy(e->u.u_app.fun);
@@ -134,10 +134,12 @@ BDSExpr *bd_sexpr_nil()
     return e;
 }
 
-BDSExpr *bd_sexpr_fun(BDSExprFundef *fundef)
+BDSExpr *bd_sexpr_fun(BDType *type, Vector *formals, BDSExpr *body)
 {
     BDSExpr *e = bd_sexpr(E_FUN);
-    e->u.u_fun.fundef = fundef;
+    e->u.u_fun.type = type;
+    e->u.u_fun.formals = formals;
+    e->u.u_fun.body = body;
     return e;
 }
 
@@ -183,10 +185,11 @@ BDSExpr *bd_sexpr_var(const char *name)
     return e;
 }
 
-BDSExpr *bd_sexpr_letrec(BDSExprFundef *fundef, BDSExpr *body)
+BDSExpr *bd_sexpr_letrec(BDExprIdent *ident, BDSExpr *fun, BDSExpr *body)
 {
     BDSExpr *e = bd_sexpr(E_LETREC);
-    e->u.u_letrec.fundef = fundef;
+    e->u.u_letrec.ident = ident;
+    e->u.u_letrec.fun = fun;
     e->u.u_letrec.body = body;
     return e;
 }
@@ -334,42 +337,49 @@ void _bd_sexpr_show(BDSExpr *e, int col, int depth)
             break;
         case E_LETREC:
             {
-                BDSExprFundef *fundef = e->u.u_letrec.fundef;
+                BDExprIdent *ident = e->u.u_letrec.ident;
+                BDSExpr *fun = e->u.u_letrec.fun;
+                BDSExpr *body = e->u.u_letrec.body;
+                Vector *formals = e->u.u_fun.formals;
+                BDSExpr *funbody = e->u.u_fun.body;
                 int i;
 
                 PRINT(col, "let rec ");
-                PRINT1(col, "%s", bd_expr_ident_show(fundef->ident));
-                for(i = 0; i < fundef->formals->length; i++){
+                PRINT1(col, "%s", bd_expr_ident_show(ident));
+                for(i = 0; i < formals->length; i++){
                     PRINT(col, " ");
-                    PRINT1(col, "%s", bd_expr_ident_show(vector_get(fundef->formals, i)));
+                    PRINT1(col, "%s", bd_expr_ident_show(vector_get(formals, i)));
                 }
                 PRINT(col, " = ");
-                _bd_sexpr_show(fundef->body, col, depth + 1);
+                _bd_sexpr_show(funbody, col, depth + 1);
 
                 PRINT(col, " in ");
 
                 DOBREAKLINE_NOSHIFT(col, depth);
-                _bd_sexpr_show(e->u.u_letrec.body, col, depth);
+                _bd_sexpr_show(body, col, depth);
             }
             break;
         case E_FUN:
             {
-                BDSExprFundef *fundef = e->u.u_fun.fundef;
+                BDType *type = e->u.u_fun.type;
+                Vector *formals = e->u.u_fun.formals;
+                BDSExpr *body = e->u.u_fun.body;
                 int i;
 
-                PRINT1(col, "(%s)", bd_type_show(fundef->ident->type));
+                PRINT1(col, "(%s)", bd_type_show(type));
+                DOBREAKLINE_NOSHIFT(col, depth);
 
                 PRINT(col, "\\");
-                for(i = 0; i < fundef->formals->length; i++){
+                for(i = 0; i < formals->length; i++){
                     if(i > 0){
                         PRINT(col, " ");
                     }
-                    PRINT1(col, "%s", bd_expr_ident_show(vector_get(fundef->formals, i)));
+                    PRINT1(col, "%s", bd_expr_ident_show(vector_get(formals, i)));
                 }
                 PRINT(col, " -> ");
 
                 BREAKLINE(col, depth);
-                _bd_sexpr_show(fundef->body, col, depth);
+                _bd_sexpr_show(body, col, depth);
             }
             break;
         case E_APP:
@@ -448,8 +458,7 @@ void bd_sexpr_show(BDSExpr *e)
 
 void bd_sprogram_init(BDSProgram *prog)
 {
-    prog->fundefs = vector_new();
-    prog->datadefs = vector_new();
+    prog->defs = vector_new();
     prog->maindef = NULL;
 }
 
@@ -457,38 +466,25 @@ void bd_sprogram_toplevels(Env *env, BDSProgram *prog)
 {
     Vector *vec;
     int i;
-    BDSExprFundef *def;
+    BDSExprDef *def;
 
-    vec = prog->datadefs;
-    for(i = 0; i < vec->length; i++){
-        def = vector_get(vec, i);
-        env_set(env, def->ident->name, def->ident->type);
-    }
-
-    vec = prog->fundefs;
+    vec = prog->defs;
     for(i = 0; i < vec->length; i++){
         def = vector_get(vec, i);
         env_set(env, def->ident->name, def->ident->type);
     }
 }
 
-void bd_sprogram_fundef_show(BDSExprFundef *fundef)
+void bd_sprogram_def_show(BDSExprDef *def)
 {
     Vector *vec;
     int i, col = 0, depth = 0;
 
-    PRINT1(col, "%s", bd_expr_ident_show(fundef->ident));
-
-    vec = fundef->formals;
-    if(vec != NULL){
-        for(i = 0; i < vec->length; i++){
-            PRINT1(col, " (%s)", bd_expr_ident_show(vector_get(vec, i)));
-        }
-    }
+    PRINT1(col, "%s", bd_expr_ident_show(def->ident));
     PRINT(col, " = ");
 
     DOBREAKLINE(col, depth);
-    _bd_sexpr_show(fundef->body, col, depth);
+    _bd_sexpr_show(def->body, col, depth);
 
     PRINT(col, "\n");
 }
@@ -498,112 +494,11 @@ void bd_sprogram_show(BDSProgram *prog)
     Vector *vec;
     int i;
 
-    vec = prog->datadefs;
+    vec = prog->defs;
     for(i = 0; i < vec->length; i++){
-        bd_sprogram_fundef_show(vector_get(vec, i));
+        bd_sprogram_def_show(vector_get(vec, i));
     }
-    vec = prog->fundefs;
-    for(i = 0; i < vec->length; i++){
-        bd_sprogram_fundef_show(vector_get(vec, i));
-    }
-    bd_sprogram_fundef_show(prog->maindef);
+    bd_sprogram_def_show(prog->maindef);
 
     printf("\n");
 }
-
-
-/*
-int main()
-{
-    BDSExpr *s1, *s2, *s3;
-    Vector *vec1, *vec2;
-
-    s1 = bd_sexpr_unit();
-    bd_sexpr_show(s1);
-    bd_sexpr_destroy(s1);
-
-    s1 = bd_sexpr_bool(0);
-    bd_sexpr_show(s1);
-    bd_sexpr_destroy(s1);
-
-    s1 = bd_sexpr_int(100);
-    bd_sexpr_show(s1);
-    bd_sexpr_destroy(s1);
-
-    s1 = bd_sexpr_float(1.23);
-    bd_sexpr_show(s1);
-    bd_sexpr_destroy(s1);
-
-    s1 = bd_sexpr_uniop(OP_NOT, bd_sexpr_bool(1));
-    bd_sexpr_show(s1);
-    bd_sexpr_destroy(s1);
-
-    s1 = bd_sexpr_uniop(OP_NEG, bd_sexpr_int(50));
-    bd_sexpr_show(s1);
-    bd_sexpr_destroy(s1);
-
-    s1 = bd_sexpr_uniop(OP_NEG, bd_sexpr_float(3.14));
-    bd_sexpr_show(s1);
-    bd_sexpr_destroy(s1);
-
-    s1 = bd_sexpr_binop(OP_SUB, bd_sexpr_int(100), bd_sexpr_binop(OP_ADD, bd_sexpr_int(10), bd_sexpr_int(20)));
-    bd_sexpr_show(s1);
-    bd_sexpr_destroy(s1);
-
-    s1 = bd_sexpr_if(bd_sexpr_binop(OP_LE, bd_sexpr_int(0), bd_sexpr_int(1)), bd_sexpr_int(10), bd_sexpr_int(20));
-    bd_sexpr_show(s1);
-    bd_sexpr_destroy(s1);
-
-    s1 = bd_sexpr_let(bd_expr_ident(mem_strdup("abc"), bd_type_int()), bd_sexpr_int(10),
-            bd_sexpr_binop(OP_ADD, bd_sexpr_var(mem_strdup("abc")), bd_sexpr_int(20)));
-    bd_sexpr_show(s1);
-    bd_sexpr_destroy(s1);
-
-    vec1 = vector_new();
-    vector_add(vec1, bd_expr_ident(mem_strdup("n"), bd_type_int()));
-    vec2 = vector_new();
-    vector_add(vec2, bd_sexpr_int(100));
-    s1 = bd_sexpr_letrec(
-            bd_sexpr_fundef(bd_expr_ident(mem_strdup("f"), bd_type_int()), vec1,
-                bd_sexpr_binop(OP_ADD, bd_sexpr_var(mem_strdup("n")), bd_sexpr_int(1))),
-            bd_sexpr_app(bd_sexpr_var(mem_strdup("f")), vec2));
-    bd_sexpr_show(s1);
-    bd_sexpr_destroy(s1);
-
-    vec1 = vector_new();
-    vector_add(vec1, bd_sexpr_bool(1));
-    vector_add(vec1, bd_sexpr_int(10));
-    vector_add(vec1, bd_sexpr_float(1.23));
-    s1 = bd_sexpr_tuple(vec1);
-    bd_sexpr_show(s1);
-    bd_sexpr_destroy(s1);
-
-    vec1 = vector_new();
-    vector_add(vec1, bd_expr_ident(mem_strdup("a"), bd_type_bool()));
-    vector_add(vec1, bd_expr_ident(mem_strdup("b"), bd_type_int()));
-    vector_add(vec1, bd_expr_ident(mem_strdup("c"), bd_type_float()));
-    vec2 = vector_new();
-    vector_add(vec2, bd_sexpr_bool(1));
-    vector_add(vec2, bd_sexpr_int(10));
-    vector_add(vec2, bd_sexpr_float(1.23));
-    s1 = bd_sexpr_lettuple(vec1, bd_sexpr_tuple(vec2), bd_sexpr_var(mem_strdup("b")));
-    bd_sexpr_show(s1);
-    bd_sexpr_destroy(s1);
-
-    //s1 = bd_sexpr_array(bd_sexpr_int(100), bd_sexpr_bool(1));
-    //bd_sexpr_show(s1);
-    //bd_sexpr_destroy(s1);
-
-    //s1 = bd_sexpr_array(bd_sexpr_int(100), bd_sexpr_bool(1));
-    //s2 = bd_sexpr_get(s1, bd_sexpr_int(50));
-    //bd_sexpr_show(s2, 0);
-    //bd_sexpr_destroy(s2);
-
-    //s1 = bd_sexpr_array(bd_sexpr_int(100), bd_sexpr_bool(1));
-    //s2 = bd_sexpr_put(s1, bd_sexpr_int(50), bd_sexpr_bool(0));
-    //bd_sexpr_show(s2, 0);
-    //bd_sexpr_destroy(s2);
-
-    return 0;
-}
-*/

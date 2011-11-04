@@ -7,8 +7,7 @@
 #define YYDEBUG 1
 #define YYLEX_PARAM lexer->scanner, lexer
 
-#define add_fundef(def) vector_add(ps->prog.fundefs, def)
-#define add_datadef(def) vector_add(ps->prog.datadefs, def)
+#define add_def(def) vector_add(ps->prog.defs, def)
 #define set_maindef(def) ps->prog.maindef = def
 
 %}
@@ -32,7 +31,6 @@
   char *s_val;
   StringBuffer* buf;
   BDSExpr* t;
-  BDSExprFundef *fundef;
   BDExprIdent *ident;
   Vector *vec;
 }
@@ -95,7 +93,6 @@
 %left  DOT
 
 
-%type <fundef> fundef
 %type <vec> formal_args actual_args t_elems pat
 %type <ident> formal_arg
 %type <t> exp simple_exp uniop_exp binop_exp l_elems
@@ -114,11 +111,11 @@ input
 
 toplevel
 : DEF IDENT EQUAL exp
-    { add_datadef(bd_sexpr_fundef(bd_expr_ident_typevar($2), NULL, $4)); }
+    { add_def(bd_sexpr_def(bd_expr_ident_typevar($2), $4)); }
 | DEF IDENT formal_args EQUAL exp
-    { add_fundef(bd_sexpr_fundef(bd_expr_ident_typevar($2), $3, $5)); }
+    { add_def(bd_sexpr_def(bd_expr_ident_typevar($2), bd_sexpr_fun(bd_type_var(NULL), $3, $5))); }
 | DEF MAIN EQUAL exp
-    { set_maindef(bd_sexpr_fundef(bd_expr_ident("main", bd_type_unit()), NULL, $4)); }
+    { set_maindef(bd_sexpr_def(bd_expr_ident("main", bd_type_unit()), $4)); }
 ;
 
 simple_exp
@@ -156,9 +153,9 @@ exp
 | LET IDENT EQUAL exp IN exp
     %prec prec_let
     { $$ = bd_sexpr_let(bd_expr_ident_typevar($2), $4, $6); }
-| LET REC fundef IN exp
+| LET REC IDENT formal_args EQUAL exp IN exp
     %prec prec_let
-    { $$ = bd_sexpr_letrec($3, $5); }
+    { $$ = bd_sexpr_letrec(bd_expr_ident_typevar($3), bd_sexpr_fun(bd_type_var(NULL), $4, $6), $8); }
 | simple_exp actual_args
     %prec prec_app
     { $$ = bd_sexpr_app($1, $2); }
@@ -170,7 +167,7 @@ exp
     { $$ = bd_sexpr_lettuple($3, $6, $8); }
 | FUN formal_args ARROW exp
     %prec prec_lambda
-    { $$ = bd_sexpr_fun(bd_sexpr_fundef(bd_expr_ident_typevar(NULL), $2, $4)); }
+    { $$ = bd_sexpr_fun(bd_type_var(NULL), $2, $4); }
 ;
 
 uniop_exp
@@ -207,11 +204,6 @@ binop_exp
     { $$ = bd_sexpr_binop(OP_CONS, $1, $3); }
 ;
 
-
-fundef
-: IDENT formal_args EQUAL exp
-    { $$ = bd_sexpr_fundef(bd_expr_ident_typevar($1), $2, $4); }
-;
 
 formal_args
 : formal_arg

@@ -7,9 +7,8 @@ typedef struct BDSExpr BDSExpr;
 
 typedef struct {
     BDExprIdent *ident;
-    Vector *formals;    // Vector<BDExprIdent>
     BDSExpr *body;
-} BDSExprFundef;
+} BDSExprDef;
 
 typedef struct {
     BDOpKind kind;
@@ -39,7 +38,8 @@ typedef struct {
 } BDSExprVar;
 
 typedef struct {
-    BDSExprFundef *fundef;
+    BDExprIdent *ident;
+    BDSExpr *fun;
     BDSExpr *body;
 } BDSExprLetRec;
 
@@ -64,7 +64,9 @@ typedef struct {
 } BDSExprLetTuple;
 
 typedef struct {
-    BDSExprFundef *fundef;
+    BDType *type;
+    Vector *formals;    // Vector<BDExprIdent>
+    BDSExpr *body;
 } BDSExprFun;
 
 
@@ -90,9 +92,8 @@ struct BDSExpr {
 };
 
 typedef struct {
-    Vector *fundefs;
-    Vector *datadefs;
-    BDSExprFundef *maindef;
+    Vector *defs;       // Vector<BDSExprdef>
+    BDSExprDef *maindef;
 } BDSProgram;
 
 
@@ -110,20 +111,24 @@ BDSExpr *bd_sexpr_int(int val);
 BDSExpr *bd_sexpr_float(double val);
 BDSExpr *bd_sexpr_char(char val);
 BDSExpr *bd_sexpr_str(char *val);
-BDSExpr *bd_sexpr_fun(BDSExprFundef *fundef);
+BDSExpr *bd_sexpr_fun(BDType *type, Vector *formals, BDSExpr *body);
 BDSExpr *bd_sexpr_nil();
 BDSExpr *bd_sexpr_uniop(BDOpKind kind, BDSExpr *val);
 BDSExpr *bd_sexpr_binop(BDOpKind kind, BDSExpr *l, BDSExpr *r);
 BDSExpr *bd_sexpr_if(BDSExpr *pred, BDSExpr *t, BDSExpr *f);
 BDSExpr *bd_sexpr_let(BDExprIdent *ident, BDSExpr *val, BDSExpr *body);
 BDSExpr *bd_sexpr_var(const char *name);
-BDSExpr *bd_sexpr_letrec(BDSExprFundef *fundef, BDSExpr *body);
+BDSExpr *bd_sexpr_letrec(BDExprIdent *ident, BDSExpr *fun, BDSExpr *body);
 BDSExpr *bd_sexpr_app(BDSExpr *fun, Vector *actuals);
 BDSExpr *bd_sexpr_ccall(const char *fun, Vector *actuals);
 BDSExpr *bd_sexpr_tuple(Vector *elems);
 BDSExpr *bd_sexpr_lettuple(Vector *idents, BDSExpr *val, BDSExpr *body);
 
+/*
 BDSExprFundef *bd_sexpr_fundef(BDExprIdent *ident, Vector *formals, BDSExpr *body);
 void bd_sexpr_fundef_destroy(BDSExprFundef *fundef);
+*/
+BDSExprDef *bd_sexpr_def(BDExprIdent *ident, BDSExpr *body);
+void bd_sexpr_def_destroy(BDSExprDef *def);
 
 #endif

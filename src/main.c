@@ -39,9 +39,9 @@ int main(int argc, char **argv)
     lexer_setin(&lexer, in);
 
 //yydebug = 1;
-    yyparse(&ps, &lexer, "input");
-
-    compile(&ps.prog);
+    if(yyparse(&ps, &lexer, "input") == 0){
+        compile(&ps.prog);
+    }
 
     fclose(in);
 
