@@ -44,7 +44,7 @@ void bd_type_destroy(BDType *t)
     free(t);
 }
 
-BDType *bd_type_clone(BDType *t)
+BDType *_bd_type_clone(BDType *t, Vector *oldvars, Vector *newvars)
 {
     if(t == NULL){ return NULL; }
 
@@ -68,10 +68,10 @@ BDType *bd_type_clone(BDType *t)
                 int i;
 
                 for(i = 0; i < old_formals->length; i++){
-                    vector_add(new_formals, bd_type_clone(vector_get(old_formals, i)));
+                    vector_add(new_formals, _bd_type_clone(vector_get(old_formals, i), oldvars, newvars));
                 }
 
-                return bd_type_fun(new_formals, bd_type_clone(t->u.u_fun.ret));
+                return bd_type_fun(new_formals, _bd_type_clone(t->u.u_fun.ret, oldvars, newvars));
             }
             break;
         case T_TUPLE:
@@ -81,19 +81,40 @@ BDType *bd_type_clone(BDType *t)
                 int i;
 
                 for(i = 0; i < old_elems->length; i++){
-                    vector_add(new_elems, bd_type_clone(vector_get(old_elems, i)));
+                    vector_add(new_elems, _bd_type_clone(vector_get(old_elems, i), oldvars, newvars));
                 }
 
                 return bd_type_tuple(new_elems);
             }
             break;
         case T_LIST:
-            return bd_type_list(bd_type_clone(t->u.u_list.elem));
+            return bd_type_list(_bd_type_clone(t->u.u_list.elem, oldvars, newvars));
         case T_ARRAY:
-            return bd_type_array(bd_type_clone(t->u.u_array.elem));
+            return bd_type_array(_bd_type_clone(t->u.u_array.elem, oldvars, newvars));
         case T_VAR:
-            return bd_type_var(bd_type_clone(t->u.u_var.content));
+            {
+                int index = vector_index_of(oldvars, t);
+                if(index < 0){
+                    BDType *newtype = bd_type_var(_bd_type_clone(t->u.u_var.content, oldvars, newvars));
+                    vector_add(oldvars, t);
+                    vector_add(newvars, newtype);
+                    return newtype;
+                }
+                else{
+                    return vector_get(newvars, index);
+                }
+            }
     }
+}
+
+BDType *bd_type_clone(BDType *t)
+{
+    Vector *oldvars = vector_new();
+    Vector *newvars = vector_new();
+    BDType *newtype = _bd_type_clone(t, oldvars, newvars);
+    vector_destroy(oldvars);
+    vector_destroy(newvars);
+    return newtype;
 }
 
 BDType *bd_type_unit()
