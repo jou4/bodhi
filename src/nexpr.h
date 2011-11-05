@@ -95,7 +95,6 @@ typedef struct {
 
 void bd_nprogram_init(BDNProgram *prog);
 void bd_nprogram_show(BDNProgram *prog);
-void bd_nprogram_toplevels(Env *env, BDNProgram *prog);
 void bd_nprogram_destroy(BDNProgram *prog);
 
 

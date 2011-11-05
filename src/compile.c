@@ -3,6 +3,9 @@
 
 void compile(BDSProgram *sprog)
 {
+    BDNProgram *nprog;
+    BDCProgram *cprog;
+
     try{
 
         bd_typing(sprog);
@@ -10,7 +13,7 @@ void compile(BDSProgram *sprog)
         printf("--- Parsed ---\n");
         bd_sprogram_show(sprog);
 
-        BDNProgram *nprog = bd_knormalize(sprog);
+        nprog = bd_knormalize(sprog);
         printf("--- K normalized --- \n");
         bd_nprogram_show(nprog);
 
@@ -21,6 +24,10 @@ void compile(BDSProgram *sprog)
         nprog = bd_flatten(nprog);
         printf("--- Nested let flatten --- \n");
         bd_nprogram_show(nprog);
+
+        cprog = bd_closure_transform(nprog);
+        printf("--- Closure transformed --- \n");
+        bd_cprogram_show(cprog);
 
         /*
         BDSExpr *e1 = bd_typing(e);

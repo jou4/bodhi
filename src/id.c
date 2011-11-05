@@ -27,3 +27,24 @@ char *bd_generate_id(BDType *type)
     sprintf(str, "T%s%d", typeid, counter);
     return str;
 }
+
+char *add_prefix(const char *prefix, const char *name)
+{
+    StringBuffer *sb = sb_new();
+    sb_append(sb, prefix);
+    sb_append(sb, name);
+    char *alt = sb_to_string(sb);
+    sb_destroy(sb);
+    return alt;
+}
+
+char *bd_generate_toplevel_lbl(const char *name)
+{
+    return add_prefix("bohdi_", name);
+}
+
+char *bd_generate_cfunc_lbl(const char *name)
+{
+    return add_prefix("_", name);
+}
+

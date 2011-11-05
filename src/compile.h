@@ -13,8 +13,8 @@
 #include "expr.h"
 #include "sexpr.h"
 #include "nexpr.h"
+#include "cexpr.h"
 /*
-_include "expr3.h"
 _include "asm.h"
 */
 
@@ -28,9 +28,9 @@ BDNProgram *bd_flatten(BDNProgram *prog);
 BDNProgram *bd_inline_expand(int threashold, BDNProgram *prog);
 BDNProgram *bd_const_fold(BDNProgram *prog);
 BDNProgram *bd_elim(BDNProgram *prog);
+BDCProgram *bd_closure_transform(BDNProgram *prog);
 
 /*
-BDProgram1 *bd_closure_transform(BDExpr2 *e);
 BDAsmProg *bd_virtual(BDProgram1 *prog);
 BDAsmProg *bd_register_allocate(BDAsmProg *prog);
 void bd_emit(BDAsmProg *prog);

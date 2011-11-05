@@ -23,6 +23,7 @@ typedef struct {
 
 typedef struct {
     char *name;
+    char *lbl;
     BDType *type;
 } PrimSig;
 

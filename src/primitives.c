@@ -1,5 +1,6 @@
 #include <stdarg.h>
 #include "util.h"
+#include "id.h"
 #include "type.h"
 #include "primitives.h"
 
@@ -162,6 +163,7 @@ PrimSig *prim_sig(char *name, int num, ...)
 
     PrimSig *sig = malloc(sizeof(PrimSig));
     sig->name = name;
+    sig->lbl = bd_generate_toplevel_lbl(name);
     sig->type = convert_prim_type(mem, fun);
 
     vector_destroy(mem);

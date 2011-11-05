@@ -700,8 +700,6 @@ BDType *typing_fun(Env *env, BDSExpr *fun)
     return funtype;
 }
 
-extern Vector *primsigs;
-
 void set_def_type(Env *env, BDSExprDef *def)
 {
     env_set(env, def->ident->name, bd_type_schema(NULL, def->ident->type));
@@ -729,6 +727,8 @@ void typing_defs(Env *env, Vector *defs)
         typing_def(env, vector_get(defs, i));
     }
 }
+
+extern Vector *primsigs;
 
 BDSProgram *bd_typing(BDSProgram *prog)
 {

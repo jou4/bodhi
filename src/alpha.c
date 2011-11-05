@@ -1,25 +1,5 @@
 #include "compile.h"
 
-char *add_prefix(char *prefix, char *name)
-{
-    StringBuffer *sb = sb_new();
-    sb_append(sb, prefix);
-    sb_append(sb, name);
-    char *alt = sb_to_string(sb);
-    sb_destroy(sb);
-    return alt;
-}
-
-char *make_toplevel_name(char *name)
-{
-    return add_prefix("bohdi_", name);
-}
-
-char *make_cfunc_name(char *name)
-{
-    return add_prefix("_", name);
-}
-
 char *find_alt_name(Env *env, char *name)
 {
     char *alt = env_get(env, name);
@@ -164,7 +144,7 @@ BDNExpr *bd_alpha(Env *env, BDNExpr *e)
                     vector_add(newactuals, find_alt_name(env, oldname));
                 }
 
-                return bd_nexpr_ccall(make_cfunc_name(e->u.u_app.fun), newactuals);
+                return bd_nexpr_ccall(bd_generate_cfunc_lbl(e->u.u_app.fun), newactuals);
             }
         case E_TUPLE:
             {
@@ -211,6 +191,8 @@ BDNExpr *bd_alpha(Env *env, BDNExpr *e)
     return NULL;
 }
 
+extern Vector *primsigs;
+
 BDNProgram *bd_alpha_convert(BDNProgram *prog)
 {
     BDNProgram *nprog = malloc(sizeof(BDNProgram));
@@ -221,11 +203,18 @@ BDNProgram *bd_alpha_convert(BDNProgram *prog)
     int i;
     Env *env = env_new();
 
+    // set primitive labels to env
+    PrimSig *sig;
+    for(i = 0; i < primsigs->length; i++){
+        sig = vector_get(primsigs, i);
+        env_set(env, sig->name, sig->lbl);
+    }
+
     // set toplevel names to env
     vec = prog->defs;
     for(i = 0; i < vec->length; i++){
         def = vector_get(vec, i);
-        env_set(env, def->ident->name, make_toplevel_name(def->ident->name));
+        env_set(env, def->ident->name, bd_generate_toplevel_lbl(def->ident->name));
     }
 
     // convert defs
@@ -242,7 +231,7 @@ BDNProgram *bd_alpha_convert(BDNProgram *prog)
     // convert maindef
     def = prog->maindef;
     nprog->maindef = bd_nexpr_def(
-            bd_expr_ident(make_toplevel_name(def->ident->name), bd_type_clone(def->ident->type)),
+            bd_expr_ident(bd_generate_toplevel_lbl(def->ident->name), bd_type_clone(def->ident->type)),
             bd_alpha(env, def->body)
             );
 
