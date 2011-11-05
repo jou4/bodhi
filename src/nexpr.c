@@ -2,20 +2,18 @@
 #include "nexpr.h"
 
 
-BDNExprFundef *bd_nexpr_fundef(BDExprIdent *ident, Vector *formals, BDNExpr *body)
+BDNExprDef *bd_nexpr_def(BDExprIdent *ident, BDNExpr *body)
 {
-    BDNExprFundef *fundef = malloc(sizeof(BDNExprFundef));
-    fundef->ident = ident;
-    fundef->formals = formals;
-    fundef->body = body;
-    return fundef;
+    BDNExprDef *def = malloc(sizeof(BDNExprDef));
+    def->ident = ident;
+    def->body = body;
+    return def;
 }
 
-void bd_nexpr_fundef_destroy(BDNExprFundef *fundef)
+void bd_nexpr_def_destroy(BDNExprDef *def)
 {
-    bd_expr_ident_destroy(fundef->ident);
-    vector_each(fundef->formals, bd_expr_ident_destroy);
-    bd_nexpr_destroy(fundef->body);
+    bd_expr_ident_destroy(def->ident);
+    bd_nexpr_destroy(def->body);
 }
 
 BDNExpr *bd_nexpr(BDExprKind kind)
@@ -52,11 +50,13 @@ void bd_nexpr_destroy(BDNExpr *e)
             free(e->u.u_var.name);
             break;
         case E_LETREC:
-            bd_nexpr_fundef_destroy(e->u.u_letrec.fundef);
+            bd_expr_ident_destroy(e->u.u_letrec.ident);
+            bd_nexpr_destroy(e->u.u_letrec.fun);
             bd_nexpr_destroy(e->u.u_letrec.body);
             break;
         case E_FUN:
-            bd_nexpr_fundef_destroy(e->u.u_fun.fundef);
+            vector_each(e->u.u_fun.formals, bd_expr_ident_destroy);
+            bd_nexpr_destroy(e->u.u_fun.body);
             break;
         case E_APP:
         case E_CCALL:
@@ -114,10 +114,12 @@ BDNExpr *bd_nexpr_nil()
     return e;
 }
 
-BDNExpr *bd_nexpr_fun(BDNExprFundef *fundef)
+BDNExpr *bd_nexpr_fun(BDType *type, Vector *formals, BDNExpr *body)
 {
     BDNExpr *e = bd_nexpr(E_FUN);
-    e->u.u_fun.fundef = fundef;
+    e->u.u_fun.type = type;
+    e->u.u_fun.formals = formals;
+    e->u.u_fun.body = body;
     return e;
 }
 
@@ -165,10 +167,11 @@ BDNExpr *bd_nexpr_var(const char *name)
     return e;
 }
 
-BDNExpr *bd_nexpr_letrec(BDNExprFundef *fundef, BDNExpr *body)
+BDNExpr *bd_nexpr_letrec(BDExprIdent *ident, BDNExpr *fun, BDNExpr *body)
 {
     BDNExpr *e = bd_nexpr(E_LETREC);
-    e->u.u_letrec.fundef = fundef;
+    e->u.u_letrec.ident = ident;
+    e->u.u_letrec.fun = fun;
     e->u.u_letrec.body = body;
     return e;
 }
@@ -254,29 +257,43 @@ Set *bd_nexpr_freevars(BDNExpr *e)
             }
         case E_LETREC:
             {
-                Set *s1 = bd_nexpr_freevars(e->u.u_letrec.fundef->body);
-                Set *s2 = set_new();
+                BDExprIdent *ident = e->u.u_letrec.ident;
+                BDNExpr *fun = e->u.u_letrec.fun;
+                BDNExpr *body = e->u.u_letrec.body;
 
-                Vector *formals = e->u.u_letrec.fundef->formals;
+                Set *s1 = bd_nexpr_freevars(fun);
+                Set *s2 = bd_nexpr_freevars(body);
+                Set *set = set_union(s1, s2);
+                set_remove(set, ident->name);
+
+                set_destroy(s1);
+                set_destroy(s2);
+
+                return set;
+            }
+        case E_FUN:
+            {
                 BDExprIdent *formal;
                 int i;
+
+                Vector *formals = e->u.u_fun.formals;
+                BDNExpr *body = e->u.u_fun.body;
+
+                Set *s1 = bd_nexpr_freevars(body);
+                Set *s2 = set_new();
+
                 for(i = 0; i < formals->length; i++){
                     formal = vector_get(formals, i);
                     set_add(s2, formal->name);
                 }
 
-                Set *s3 = set_diff(s1, s2);
-                Set *s4 = bd_nexpr_freevars(e->u.u_letrec.body);
-                Set *set = set_union(s3, s4);
-                set_remove(set, e->u.u_letrec.fundef->ident->name);
-
+                Set *set = set_diff(s1, s2);
                 set_destroy(s1);
                 set_destroy(s2);
-                set_destroy(s3);
-                set_destroy(s4);
 
                 return set;
             }
+            break;
         case E_APP:
         case E_CCALL:
             {
@@ -318,8 +335,7 @@ Set *bd_nexpr_freevars(BDNExpr *e)
 
 void bd_nprogram_init(BDNProgram *prog)
 {
-    prog->fundefs = vector_new();
-    prog->datadefs = vector_new();
+    prog->defs = vector_new();
     prog->maindef = NULL;
 }
 
@@ -430,42 +446,40 @@ void _bd_nexpr_show(BDNExpr *e, int col, int depth)
             break;
         case E_LETREC:
             {
-                BDNExprFundef *fundef = e->u.u_letrec.fundef;
-                int i;
+                BDExprIdent *ident = e->u.u_letrec.ident;
+                BDNExpr *fun = e->u.u_letrec.fun;
+                BDNExpr *body = e->u.u_letrec.body;
 
-                PRINT(col, "let rec ");
-                PRINT1(col, "%s", bd_expr_ident_show(fundef->ident));
-                for(i = 0; i < fundef->formals->length; i++){
-                    PRINT(col, " ");
-                    PRINT1(col, "%s", bd_expr_ident_show(vector_get(fundef->formals, i)));
-                }
-                PRINT(col, " = ");
-                _bd_nexpr_show(fundef->body, col, depth + 1);
+                PRINT1(col, "let rec %s = ", bd_expr_ident_show(ident));
+                _bd_nexpr_show(fun, col, depth + 1);
 
                 PRINT(col, " in ");
 
                 DOBREAKLINE_NOSHIFT(col, depth);
-                _bd_nexpr_show(e->u.u_letrec.body, col, depth);
+                _bd_nexpr_show(body, col, depth);
             }
             break;
         case E_FUN:
             {
-                BDNExprFundef *fundef = e->u.u_fun.fundef;
+                BDType *type = e->u.u_fun.type;
+                Vector *formals = e->u.u_fun.formals;
+                BDNExpr *body = e->u.u_fun.body;
                 int i;
 
-                PRINT1(col, "(%s)", bd_type_show(fundef->ident->type));
+                PRINT1(col, "(%s)", bd_type_show(type));
+                DOBREAKLINE_NOSHIFT(col, depth);
 
                 PRINT(col, "\\");
-                for(i = 0; i < fundef->formals->length; i++){
+                for(i = 0; i < formals->length; i++){
                     if(i > 0){
                         PRINT(col, " ");
                     }
-                    PRINT1(col, "%s", bd_expr_ident_show(vector_get(fundef->formals, i)));
+                    PRINT1(col, "%s", bd_expr_ident_show(vector_get(formals, i)));
                 }
                 PRINT(col, " -> ");
 
                 BREAKLINE(col, depth);
-                _bd_nexpr_show(fundef->body, col, depth);
+                _bd_nexpr_show(body, col, depth);
             }
             break;
         case E_APP:
@@ -545,23 +559,16 @@ void bd_nexpr_show(BDNExpr *e)
     printf("\n");
 }
 
-void bd_nprogram_fundef_show(BDNExprFundef *fundef)
+void bd_nprogram_def_show(BDNExprDef *def)
 {
     Vector *vec;
     int i, col = 0, depth = 0;
 
-    PRINT1(col, "%s", bd_expr_ident_show(fundef->ident));
-    vec = fundef->formals;
-
-    if(vec != NULL){
-        for(i = 0; i < vec->length; i++){
-            PRINT1(col, " (%s)", bd_expr_ident_show(vector_get(vec, i)));
-        }
-    }
+    PRINT1(col, "%s", bd_expr_ident_show(def->ident));
     PRINT(col, " = ");
 
     DOBREAKLINE(col, depth);
-    _bd_nexpr_show(fundef->body, col, depth);
+    _bd_nexpr_show(def->body, col, depth);
 
     PRINT(col, "\n");
 }
@@ -571,15 +578,11 @@ void bd_nprogram_show(BDNProgram *prog)
     Vector *vec;
     int i;
 
-    vec = prog->datadefs;
+    vec = prog->defs;
     for(i = 0; i < vec->length; i++){
-        bd_nprogram_fundef_show(vector_get(vec, i));
+        bd_nprogram_def_show(vector_get(vec, i));
     }
-    vec = prog->fundefs;
-    for(i = 0; i < vec->length; i++){
-        bd_nprogram_fundef_show(vector_get(vec, i));
-    }
-    bd_nprogram_fundef_show(prog->maindef);
+    bd_nprogram_def_show(prog->maindef);
 
     printf("\n");
 }

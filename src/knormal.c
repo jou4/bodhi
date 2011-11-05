@@ -200,61 +200,43 @@ Pair normalize(Env *env, BDSExpr *e)
             }
         case E_LETREC:
             {
-                BDSExprFundef *fundef = e->u.u_letrec.fundef;
-                BDExprIdent *ident = fundef->ident;
-                Vector *formals = fundef->formals;
-                Vector *new_formals = vector_new();
+                BDExprIdent *ident = e->u.u_letrec.ident;
+                BDSExpr *fun = e->u.u_letrec.fun;
+                BDSExpr *body = e->u.u_letrec.body;
 
                 Env *local = env_local_new(env);
                 env_set(local, ident->name, ident->type);
 
-                Env *funlocal = env_local_new(local);
-                int i;
-                BDExprIdent *formal;
-                for(i = 0; i < formals->length; i++){
-                    formal = vector_get(formals, i);
-                    env_set(funlocal, formal->name, formal->type);
-                    vector_add(new_formals, bd_expr_ident(formal->name, bd_type_clone(formal->type)));
-                }
+                Pair p1 = normalize(local, fun);
+                Pair p2 = normalize(local, body);
 
-                Pair p1 = normalize(funlocal, fundef->body);
-                Pair p2 = normalize(local, e->u.u_letrec.body);
-
-                env_local_destroy(funlocal);
                 env_local_destroy(local);
 
                 return pair(bd_nexpr_letrec(
-                            bd_nexpr_fundef(
-                                bd_expr_ident(ident->name, bd_type_clone(ident->type)),
-                                new_formals,
-                                p1.e),
+                            bd_expr_ident_clone(ident),
+                            p1.e,
                             p2.e),
                         p2.t);
             }
         case E_FUN:
             {
-                BDSExprFundef *fundef = e->u.u_fun.fundef;
-                BDExprIdent *ident = fundef->ident;
-                Vector *formals = fundef->formals;
-                Vector *new_formals = vector_new();
+                BDType *type = e->u.u_fun.type;
+                Vector *formals = e->u.u_fun.formals;
+                BDSExpr *body = e->u.u_fun.body;
 
                 Env *funlocal = env_local_new(env);
-                int i;
-                BDExprIdent *formal;
-                for(i = 0; i < formals->length; i++){
-                    formal = vector_get(formals, i);
-                    env_set(funlocal, formal->name, formal->type);
-                    vector_add(new_formals, bd_expr_ident(formal->name, bd_type_clone(formal->type)));
-                }
+                Vector *new_formals = bd_expr_idents_clone(formals);
 
-                Pair p1 = normalize(funlocal, fundef->body);
+                // set formal-types to env of function body
+                bd_set_env_expr_idents(funlocal, formals);
+
+                Pair p1 = normalize(funlocal, body);
                 env_local_destroy(funlocal);
 
                 return pair(bd_nexpr_fun(
-                            bd_nexpr_fundef(
-                                bd_expr_ident_clone(ident),
-                                new_formals,
-                                p1.e)),
+                            bd_type_clone(type),
+                            new_formals,
+                            p1.e),
                         p1.t);
             }
         case E_APP:
@@ -387,8 +369,8 @@ extern Vector *primsigs;
 BDNProgram *bd_knormalize(BDSProgram *prog)
 {
     Vector *vec;
-    BDSExprFundef *def;
-    BDNExprFundef *ndef;
+    BDSExprDef *def;
+    BDNExprDef *ndef;
     int i;
     Pair p;
     Env *env, *funlocal;
@@ -406,49 +388,32 @@ BDNProgram *bd_knormalize(BDSProgram *prog)
     }
 
     // add toplevels
-    bd_sprogram_toplevels(env, prog);
+    vec = prog->defs;
+    for(i = 0; i < vec->length; i++){
+        def = vector_get(vec, i);
+        env_set(env, def->ident->name, def->ident->type);
+    }
 
-    // normalize datadefs
-    vec = prog->datadefs;
+    // normalize defs
+    vec = prog->defs;
     for(i = 0; i < vec->length; i++){
         def = vector_get(vec, i);
         p = normalize(env, def->body);
-        ndef = bd_nexpr_fundef(
+        ndef = bd_nexpr_def(
                 bd_expr_ident_clone(def->ident),
-                NULL,
                 p.e);
-        vector_add(nprog->datadefs, ndef);
-    }
-
-    // normalize fundefs
-    vec = prog->fundefs;
-    for(i = 0; i < vec->length; i++){
-        def = vector_get(vec, i);
-        funlocal = env_local_new(env);
-        bd_idents_env(funlocal, def->formals);
-        p = normalize(funlocal, def->body);
-        ndef = bd_nexpr_fundef(
-                bd_expr_ident_clone(def->ident),
-                bd_expr_idents_clone(def->formals),
-                p.e);
-        vector_add(nprog->fundefs, ndef);
-        env_local_destroy(funlocal);
+        vector_add(nprog->defs, ndef);
     }
 
     // normalize maindef
     def = prog->maindef;
     p = normalize(env, def->body);
-    ndef = bd_nexpr_fundef(
+    ndef = bd_nexpr_def(
             bd_expr_ident_clone(def->ident),
-            NULL,
             p.e);
     nprog->maindef = ndef;
 
     env_destroy(env);
-
-    printf("--- K normalized --- \n");
-    bd_nprogram_show(nprog);
-    printf("\n");
 
     return nprog;
 }

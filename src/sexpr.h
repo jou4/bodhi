@@ -98,8 +98,8 @@ typedef struct {
 
 
 void bd_sprogram_init(BDSProgram *prog);
+void bd_sprogram_destroy(BDSProgram *prog);
 void bd_sprogram_show(BDSProgram *prog);
-void bd_sprogram_toplevels(Env *env, BDSProgram *prog);
 
 BDSExpr *bd_sexpr(BDExprKind kind);
 void bd_sexpr_destroy(BDSExpr *e);
@@ -124,10 +124,6 @@ BDSExpr *bd_sexpr_ccall(const char *fun, Vector *actuals);
 BDSExpr *bd_sexpr_tuple(Vector *elems);
 BDSExpr *bd_sexpr_lettuple(Vector *idents, BDSExpr *val, BDSExpr *body);
 
-/*
-BDSExprFundef *bd_sexpr_fundef(BDExprIdent *ident, Vector *formals, BDSExpr *body);
-void bd_sexpr_fundef_destroy(BDSExprFundef *fundef);
-*/
 BDSExprDef *bd_sexpr_def(BDExprIdent *ident, BDSExpr *body);
 void bd_sexpr_def_destroy(BDSExprDef *def);
 

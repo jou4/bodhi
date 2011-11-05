@@ -10,8 +10,11 @@ void compile(BDSProgram *sprog)
         printf("--- Parsed ---\n");
         bd_sprogram_show(sprog);
 
-        /*
         BDNProgram *nprog = bd_knormalize(sprog);
+        printf("--- K normalized --- \n");
+        bd_nprogram_show(nprog);
+
+        /*
         nprog = bd_alpha_convert(nprog);
         */
 

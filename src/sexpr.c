@@ -340,18 +340,9 @@ void _bd_sexpr_show(BDSExpr *e, int col, int depth)
                 BDExprIdent *ident = e->u.u_letrec.ident;
                 BDSExpr *fun = e->u.u_letrec.fun;
                 BDSExpr *body = e->u.u_letrec.body;
-                Vector *formals = e->u.u_fun.formals;
-                BDSExpr *funbody = e->u.u_fun.body;
-                int i;
 
-                PRINT(col, "let rec ");
-                PRINT1(col, "%s", bd_expr_ident_show(ident));
-                for(i = 0; i < formals->length; i++){
-                    PRINT(col, " ");
-                    PRINT1(col, "%s", bd_expr_ident_show(vector_get(formals, i)));
-                }
-                PRINT(col, " = ");
-                _bd_sexpr_show(funbody, col, depth + 1);
+                PRINT1(col, "let rec %s = ", bd_expr_ident_show(ident));
+                _bd_sexpr_show(fun, col, depth + 1);
 
                 PRINT(col, " in ");
 
@@ -462,17 +453,13 @@ void bd_sprogram_init(BDSProgram *prog)
     prog->maindef = NULL;
 }
 
-void bd_sprogram_toplevels(Env *env, BDSProgram *prog)
+void bd_sprogram_destroy(BDSProgram *prog)
 {
-    Vector *vec;
-    int i;
-    BDSExprDef *def;
-
-    vec = prog->defs;
-    for(i = 0; i < vec->length; i++){
-        def = vector_get(vec, i);
-        env_set(env, def->ident->name, def->ident->type);
-    }
+    printf("\n");
+    printf("**************************\n");
+    printf("TODO bd_sprogram_destroy\n");
+    printf("**************************\n");
+    printf("\n");
 }
 
 void bd_sprogram_def_show(BDSExprDef *def)

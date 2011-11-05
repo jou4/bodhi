@@ -59,6 +59,7 @@ typedef struct {
 BDExprIdent *bd_expr_ident(const char *name, BDType *type);
 BDExprIdent *bd_expr_ident_clone(BDExprIdent *ident);
 Vector *bd_expr_idents_clone(Vector *idents);
+void bd_set_env_expr_idents(Env *env, Vector *idents);
 BDExprIdent *bd_expr_ident_typevar(const char *name);
 void bd_expr_ident_destroy(BDExprIdent *ident);
 char *bd_expr_ident_show(BDExprIdent *ident);

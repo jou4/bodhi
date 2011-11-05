@@ -29,6 +29,16 @@ Vector *bd_expr_idents_clone(Vector *idents)
     return new_idents;
 }
 
+void bd_set_env_expr_idents(Env *env, Vector *idents)
+{
+    BDExprIdent *ident;
+    int i;
+    for(i = 0; i < idents->length; i++){
+        ident = vector_get(idents, i);
+        env_set(env, ident->name, ident->type);
+    }
+}
+
 BDExprIdent *bd_expr_ident_typevar(const char *name)
 {
     return bd_expr_ident(name, bd_type_var(NULL));

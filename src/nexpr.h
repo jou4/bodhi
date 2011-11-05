@@ -8,10 +8,8 @@ typedef struct BDNExpr BDNExpr;
 
 typedef struct {
     BDExprIdent *ident;
-    Vector *formals;    // Vector<BDExprIdent>
     BDNExpr *body;
-} BDNExprFundef;
-
+} BDNExprDef;
 
 typedef struct {
     BDOpKind kind;
@@ -43,7 +41,8 @@ typedef struct {
 } BDNExprVar;
 
 typedef struct {
-    BDNExprFundef *fundef;
+    BDExprIdent *ident;
+    BDNExpr *fun;
     BDNExpr *body;
 } BDNExprLetRec;
 
@@ -63,7 +62,9 @@ typedef struct {
 } BDNExprLetTuple;
 
 typedef struct {
-    BDNExprFundef *fundef;
+    BDType *type;
+    Vector *formals;    // Vector<BDExprIdent>
+    BDNExpr *body;
 } BDNExprFun;
 
 
@@ -88,9 +89,8 @@ struct BDNExpr {
 };
 
 typedef struct {
-    Vector *fundefs;
-    Vector *datadefs;
-    BDNExprFundef *maindef;
+    Vector *defs;       // Vector<BDNExprdef>
+    BDNExprDef *maindef;
 } BDNProgram;
 
 void bd_nprogram_init(BDNProgram *prog);
@@ -110,19 +110,19 @@ BDNExpr *bd_nexpr_float(double val);
 BDNExpr *bd_nexpr_char(char val);
 BDNExpr *bd_nexpr_str(char *val);
 BDNExpr *bd_nexpr_nil();
-BDNExpr *bd_nexpr_fun(BDNExprFundef *fundef);
+BDNExpr *bd_nexpr_fun(BDType *type, Vector *formals, BDNExpr *body);
 BDNExpr *bd_nexpr_uniop(BDOpKind kind, const char *val);
 BDNExpr *bd_nexpr_binop(BDOpKind kind, const char *l, const char *r);
 BDNExpr *bd_nexpr_if(BDOpKind kind, const char *l, const char *r, BDNExpr *t, BDNExpr *f);
 BDNExpr *bd_nexpr_let(BDExprIdent *ident, BDNExpr *val, BDNExpr *body);
 BDNExpr *bd_nexpr_var(const char *name);
-BDNExpr *bd_nexpr_letrec(BDNExprFundef *fundef, BDNExpr *body);
+BDNExpr *bd_nexpr_letrec(BDExprIdent *ident, BDNExpr *fun, BDNExpr *body);
 BDNExpr *bd_nexpr_app(const char *fun, Vector *actuals);
 BDNExpr *bd_nexpr_ccall(const char *fun, Vector *actuals);
 BDNExpr *bd_nexpr_tuple(Vector *elems);
 BDNExpr *bd_nexpr_lettuple(Vector *idents, const char *val, BDNExpr *body);
 
-BDNExprFundef *bd_nexpr_fundef(BDExprIdent *ident, Vector *formals, BDNExpr *body);
-void bd_nexpr_fundef_destroy(BDNExprFundef *fundef);
+BDNExprDef *bd_nexpr_def(BDExprIdent *ident, BDNExpr *body);
+void bd_nexpr_def_destroy(BDNExprDef *fundef);
 
 #endif
