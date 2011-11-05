@@ -20,13 +20,6 @@ char *make_cfunc_name(char *name)
     return add_prefix("_", name);
 }
 
-void convert_to_toplevel_name(BDNExprFundef *fundef)
-{
-    char *newname = make_toplevel_name(fundef->ident->name);
-    free(fundef->ident->name);
-    fundef->ident->name = newname;
-}
-
 char *find_alt_name(Env *env, char *name)
 {
     char *alt = env_get(env, name);
@@ -34,27 +27,7 @@ char *find_alt_name(Env *env, char *name)
         return alt;
     }
 
-    return make_toplevel_name(name);
-}
-
-void make_alt_fundef_formals(Env *env, Vector *idents, Vector *newidents)
-{
-    int i;
-    BDExprIdent *ident;
-    char *oldname, *newname;
-
-    if(idents == NULL){
-        return;
-    }
-
-    for(i = 0; i < idents->length; i++){
-        ident = vector_get(idents, i);
-        oldname = ident->name;
-        newname = bd_generate_id(ident->type);
-
-        vector_add(newidents, bd_expr_ident(newname, bd_type_clone(ident->type)));
-        env_set(env, oldname, newname);
-    }
+    return name;
 }
 
 BDNExpr *bd_alpha(Env *env, BDNExpr *e)
@@ -110,57 +83,61 @@ BDNExpr *bd_alpha(Env *env, BDNExpr *e)
             return bd_nexpr_var(find_alt_name(env, e->u.u_var.name));
         case E_LETREC:
             {
-                BDNExprFundef *fundef = e->u.u_letrec.fundef;
-                char *oldfunname = fundef->ident->name;
-                char *newfunname = bd_generate_id(fundef->ident->type);
+                BDExprIdent *ident = e->u.u_letrec.ident;
+                BDNExpr *fun = e->u.u_letrec.fun;
+                BDNExpr *body = e->u.u_letrec.body;
 
-                // create local env of letrec-body
+                char *oldname = ident->name;
+                char *newname = bd_generate_id(ident->type);
+
+                // create local env
                 Env *local = env_local_new(env);
-                env_set(local, oldfunname, newfunname);
+                env_set(local, oldname, newname);
 
-                // create local env of function-body
-                Env *funlocal = env_local_new(local);
-                Vector *newformals = vector_new();
-                make_alt_fundef_formals(funlocal, fundef->formals, newformals);
+                // convert function
+                BDNExpr *new_fun = bd_alpha(local, fun);
 
-                // convert function-body and create new-funciton
-                BDNExprFundef *newfundef = bd_nexpr_fundef(
-                        bd_expr_ident(newfunname, bd_type_clone(fundef->ident->type))
-                        , newformals
-                        , bd_alpha(funlocal, fundef->body));
-
-                // destroy local env of function-body
-                env_local_destroy(funlocal);
-
-                // convert letrec-body and create new-letrec
+                // create new-letrec
                 BDNExpr *newexpr = bd_nexpr_letrec(
-                        newfundef
-                        , bd_alpha(local, e->u.u_letrec.body));
+                        bd_expr_ident(newname, bd_type_clone(ident->type)),
+                        new_fun,
+                        bd_alpha(local, body));
 
-                // destroy local env of letrec-body
+                // destroy local env
                 env_local_destroy(local);
 
                 return newexpr;
             }
         case E_FUN:
             {
-                BDNExprFundef *fundef = e->u.u_fun.fundef;
+                BDType *type = e->u.u_fun.type;
+                Vector *formals = e->u.u_fun.formals;
+                BDNExpr *body = e->u.u_fun.body;
+                BDExprIdent *ident;
+                char *oldname, *newname;
+                int i;
 
                 // create local env of function-body
                 Env *funlocal = env_local_new(env);
-                Vector *newformals = vector_new();
-                make_alt_fundef_formals(funlocal, fundef->formals, newformals);
+                Vector *new_formals = vector_new();
+                for(i = 0; i < formals->length; i++){
+                    ident = vector_get(formals, i);
+                    oldname = ident->name;
+                    newname = bd_generate_id(ident->type);
+                    vector_add(new_formals, bd_expr_ident(newname, bd_type_clone(ident->type)));
+                    env_set(funlocal, oldname, newname);
+                }
 
                 // convert function-body and create new-funciton
-                BDNExprFundef *newfundef = bd_nexpr_fundef(
-                        bd_expr_ident_clone(fundef->ident)
-                        , newformals
-                        , bd_alpha(funlocal, fundef->body));
+                BDNExpr *new_fun = bd_nexpr_fun(
+                        bd_type_clone(type),
+                        new_formals,
+                        bd_alpha(funlocal, body));
 
                 // destroy local env of function-body
                 env_local_destroy(funlocal);
 
-                return bd_nexpr_fun(newfundef);
+                return new_fun;
             }
             break;
         case E_APP:
@@ -239,57 +216,44 @@ BDNProgram *bd_alpha_convert(BDNProgram *prog)
     BDNProgram *nprog = malloc(sizeof(BDNProgram));
     bd_nprogram_init(nprog);
 
-    Vector *vec, formals;
-    BDNExpr *tmpfun, *fun;
+    Vector *vec;
+    BDNExprDef *def;
     int i;
-    char *newname;
     Env *env = env_new();
 
-    // convert datadefs
-    vec = prog->datadefs;
+    // set toplevel names to env
+    vec = prog->defs;
     for(i = 0; i < vec->length; i++){
-        tmpfun = bd_nexpr_fun(vector_get(vec, i));
-        fun = bd_alpha(env, tmpfun);
-
-        // add
-        vector_add(nprog->datadefs, fun->u.u_fun.fundef);
-        // destory
-        free(tmpfun);
-        free(fun);
+        def = vector_get(vec, i);
+        env_set(env, def->ident->name, make_toplevel_name(def->ident->name));
     }
 
-    // convert fundefs
-    vec = prog->fundefs;
+    // convert defs
+    vec = prog->defs;
     for(i = 0; i < vec->length; i++){
-        tmpfun = bd_nexpr_fun(vector_get(vec, i));
-        fun = bd_alpha(env, tmpfun);
-
-        // rename toplevels funciton
-        convert_to_toplevel_name(fun->u.u_fun.fundef);
-        // add
-        vector_add(nprog->fundefs, fun->u.u_fun.fundef);
-        // destroy
-        free(tmpfun);
-        free(fun);
+        def = vector_get(vec, i);
+        vector_add(nprog->defs,
+                bd_nexpr_def(
+                    bd_expr_ident(find_alt_name(env, def->ident->name), bd_type_clone(def->ident->type)),
+                    bd_alpha(env, def->body)
+                    ));
     }
 
     // convert maindef
-    tmpfun = bd_nexpr_fun(prog->maindef);
-    fun = bd_alpha(env, tmpfun);
-    // rename toplevels funciton
-    convert_to_toplevel_name(fun->u.u_fun.fundef);
-    // add
-    nprog->maindef = fun->u.u_fun.fundef;
-    // destroy
-    free(tmpfun);
-    free(fun);
+    def = prog->maindef;
+    nprog->maindef = bd_nexpr_def(
+            bd_expr_ident(make_toplevel_name(def->ident->name), bd_type_clone(def->ident->type)),
+            bd_alpha(env, def->body)
+            );
 
+    // destroy
+    vec = prog->defs;
+    for(i = 0; i < vec->length; i++){
+        def = vector_get(vec, i);
+        free(env_get(env, def->ident->name));
+    }
     env_destroy(env);
     bd_nprogram_destroy(prog);
 
-    printf("--- α converted --- \n");
-    bd_nprogram_show(nprog);
-    printf("\n");
-
-    return prog;
+    return nprog;
 }

@@ -14,9 +14,9 @@ void compile(BDSProgram *sprog)
         printf("--- K normalized --- \n");
         bd_nprogram_show(nprog);
 
-        /*
         nprog = bd_alpha_convert(nprog);
-        */
+        printf("--- α converted --- \n");
+        bd_nprogram_show(nprog);
 
         /*
         BDSExpr *e1 = bd_typing(e);
