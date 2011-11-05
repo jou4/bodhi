@@ -18,6 +18,10 @@ void compile(BDSProgram *sprog)
         printf("--- α converted --- \n");
         bd_nprogram_show(nprog);
 
+        nprog = bd_flatten(nprog);
+        printf("--- Nested let flatten --- \n");
+        bd_nprogram_show(nprog);
+
         /*
         BDSExpr *e1 = bd_typing(e);
         BDExpr2 *e2;

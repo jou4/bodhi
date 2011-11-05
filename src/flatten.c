@@ -1,8 +1,8 @@
 #include "compile.h"
 
-BDExpr2 *flatten_nested_let(BDExpr2 *e);
+BDNExpr *flatten_nested_let(BDNExpr *e);
 
-BDExpr2 *flatten_insert(BDExpr2 *origin, BDExpr2 *val)
+BDNExpr *flatten_insert(BDNExpr *origin, BDNExpr *val)
 {
     switch(val->kind){
         case E_LET:
@@ -21,7 +21,7 @@ BDExpr2 *flatten_insert(BDExpr2 *origin, BDExpr2 *val)
     }
 }
 
-BDExpr2 *flatten_nested_let(BDExpr2 *e)
+BDNExpr *flatten_nested_let(BDNExpr *e)
 {
     switch(e->kind){
         case E_IF:
@@ -31,8 +31,11 @@ BDExpr2 *flatten_nested_let(BDExpr2 *e)
         case E_LET:
             return flatten_insert(e, flatten_nested_let(e->u.u_let.val));
         case E_LETREC:
-            e->u.u_letrec.fundef->body = flatten_nested_let(e->u.u_letrec.fundef->body);
+            e->u.u_letrec.fun = flatten_nested_let(e->u.u_letrec.fun);
             e->u.u_letrec.body = flatten_nested_let(e->u.u_letrec.body);
+            break;
+        case E_FUN:
+            e->u.u_fun.body = flatten_nested_let(e->u.u_fun.body);
             break;
         case E_LETTUPLE:
             e->u.u_lettuple.body = flatten_nested_let(e->u.u_lettuple.body);
@@ -41,13 +44,22 @@ BDExpr2 *flatten_nested_let(BDExpr2 *e)
     return e;
 }
 
-BDExpr2 *bd_flatten(BDExpr2 *e)
+BDNProgram *bd_flatten(BDNProgram *prog)
 {
-    BDExpr2 *ret = flatten_nested_let(e);
+    Vector *vec;
+    BDNExprDef *def;
+    int i;
 
-    printf("--- Nested let flatten --- \n");
-    bd_expr2_show(ret);
-    printf("\n");
+    // flatten defs
+    vec = prog->defs;
+    for(i = 0;i < vec->length; i++){
+        def = vector_get(vec, i);
+        def->body = flatten_nested_let(def->body);
+    }
 
-    return ret;
+    // flatten maindef
+    def = prog->maindef;
+    def->body = flatten_nested_let(def->body);
+
+    return prog;
 }
