@@ -401,17 +401,13 @@ void _bd_cexpr_show(BDCExpr *e, int col, int depth)
             }
             PRINT1(col, "%s", e->u.u_binop.r);
 
-            PRINT(col, "\n");
-            bd_show_indent(depth + 1);
+            DOBREAKLINE_NOSHIFT(col, depth);
+            PRINT(col, " then ");
+            _bd_cexpr_show(e->u.u_if.t, col, depth + 1);
 
-            PRINT(col, "then ");
-            _bd_cexpr_show(e->u.u_if.t, col, depth);
-
-            PRINT(col, "\n");
-            bd_show_indent(depth + 1);
-
-            PRINT(col, "else ");
-            _bd_cexpr_show(e->u.u_if.f, col, depth);
+            DOBREAKLINE_NOSHIFT(col, depth);
+            PRINT(col, " else ");
+            _bd_cexpr_show(e->u.u_if.f, col, depth + 1);
             break;
         case E_LET:
             PRINT(col, "let ");
@@ -581,17 +577,20 @@ void bd_cprogram_show(BDCProgram *prog)
     Vector *vec;
     int i;
 
+    printf("*data*\n");
     vec = prog->datadefs;
     for(i = 0; i < vec->length; i++){
         bd_cprogram_def_show(vector_get(vec, i));
     }
+    printf("\n");
 
+    printf("*function*\n");
     vec = prog->fundefs;
     for(i = 0; i < vec->length; i++){
         bd_cprogram_def_show(vector_get(vec, i));
     }
-    bd_cprogram_def_show(prog->maindef);
 
+    bd_cprogram_def_show(prog->maindef);
     printf("\n");
 }
 

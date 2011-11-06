@@ -309,17 +309,13 @@ void _bd_sexpr_show(BDSExpr *e, int col, int depth)
             PRINT(col ,"if ");
             _bd_sexpr_show(e->u.u_if.pred, col, depth);
 
-            PRINT(col ,"\n");
-            bd_show_indent(depth + 1);
+            DOBREAKLINE_NOSHIFT(col, depth);
+            PRINT(col, " then ");
+            _bd_sexpr_show(e->u.u_if.t, col, depth + 1);
 
-            PRINT(col ,"then ");
-            _bd_sexpr_show(e->u.u_if.t, col, depth);
-
-            PRINT(col, "\n");
-            bd_show_indent(depth + 1);
-
-            PRINT(col, "else ");
-            _bd_sexpr_show(e->u.u_if.f, col, depth);
+            DOBREAKLINE_NOSHIFT(col, depth);
+            PRINT(col, " else ");
+            _bd_sexpr_show(e->u.u_if.f, col, depth + 1);
             break;
         case E_LET:
             PRINT(col, "let ");

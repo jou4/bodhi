@@ -418,17 +418,13 @@ void _bd_nexpr_show(BDNExpr *e, int col, int depth)
             }
             PRINT1(col, "%s", e->u.u_binop.r);
 
-            PRINT(col, "\n");
-            bd_show_indent(depth + 1);
+            DOBREAKLINE_NOSHIFT(col, depth);
+            PRINT(col, " then ");
+            _bd_nexpr_show(e->u.u_if.t, col, depth + 1);
 
-            PRINT(col, "then ");
-            _bd_nexpr_show(e->u.u_if.t, col, depth);
-
-            PRINT(col, "\n");
-            bd_show_indent(depth + 1);
-
-            PRINT(col, "else ");
-            _bd_nexpr_show(e->u.u_if.f, col, depth);
+            DOBREAKLINE_NOSHIFT(col, depth);
+            PRINT(col, " else ");
+            _bd_nexpr_show(e->u.u_if.f, col, depth + 1);
             break;
         case E_LET:
             PRINT(col, "let ");

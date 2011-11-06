@@ -6,6 +6,7 @@
 #define PRINT(n, s) n += printf(s)
 #define PRINT1(n, t, p1) n += printf(t, p1)
 #define PRINT2(n, t, p1, p2) n += printf(t, p1, p2)
+#define PRINT3(n, t, p1, p2, p3) n += printf(t, p1, p2, p3)
 #define BREAKLINE(n, d) \
     if(n > SHOW_COLS){ \
         printf("\n"); n = bd_show_indent(++d); \
