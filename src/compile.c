@@ -31,7 +31,11 @@ void compile(BDSProgram *sprog)
         bd_cprogram_show(cprog);
 
         aprog = bd_virtual(cprog);
-        printf("--- Generated vm code. --- \n");
+        printf("--- Generated vm code --- \n");
+        bd_aprogram_show(aprog);
+
+        aprog = bd_regalloc(aprog);
+        printf("--- Allocated registers --- \n");
         bd_aprogram_show(aprog);
 
         /*

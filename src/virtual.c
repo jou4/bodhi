@@ -28,7 +28,7 @@ BDAExpr *virtual_expr(Env *env, BDCExpr *e)
             {
                 char *lbl = bd_generate_id(bd_type_float());
                 vector_add(consts, bd_aexpr_const_float(lbl, e->u.u_double));
-                return bd_aexpr_ans(bd_ainst_setl(lbl));
+                return bd_aexpr_ans(bd_ainst_mov(lbl));
             }
         case E_CHAR:
             return bd_aexpr_ans(bd_ainst_setc(e->u.u_char));
@@ -36,7 +36,7 @@ BDAExpr *virtual_expr(Env *env, BDCExpr *e)
             {
                 char *lbl = bd_generate_id(bd_type_string());
                 vector_add(consts, bd_aexpr_const_str(lbl, e->u.u_str));
-                return bd_aexpr_ans(bd_ainst_setl(lbl));
+                return bd_aexpr_ans(bd_ainst_mov(lbl));
             }
         case E_NIL:
             return bd_aexpr_ans(bd_ainst_seti(0));
@@ -124,24 +124,8 @@ BDAExpr *virtual_expr(Env *env, BDCExpr *e)
                 for(i = 0; i < freevars->length; i++){
                     fv = vector_get(freevars, i);
                     type = env_get(env, fv);
-                    switch(type->kind){
-                        case T_CHAR:
-                            vector_add(es, bd_ainst_pushfv_c(fv, fvs_size));
-                            fvs_size += SIZE_CHAR;
-                            break;
-                        case T_INT:
-                            vector_add(es, bd_ainst_pushfv_i(fv, fvs_size));
-                            fvs_size += SIZE_INT;
-                            break;
-                        case T_FLOAT:
-                            vector_add(es, bd_ainst_pushfv_f(fv, fvs_size));
-                            fvs_size += SIZE_FLOAT;
-                            break;
-                        default:
-                            vector_add(es, bd_ainst_pushfv_l(fv, fvs_size));
-                            fvs_size += SIZE_LBL;
-                            break;
-                    }
+                    vector_add(es, bd_ainst_pushfv(type, fv, fvs_size));
+                    fvs_size += bd_value_size(type);
                 }
 
                 Env *local = env_local_new(env);
@@ -202,17 +186,27 @@ BDAExpr *virtual_expr(Env *env, BDCExpr *e)
         case E_TUPLE:
             {
                 Vector *elems = e->u.u_tuple.elems;
-                Vector *newelems = vector_new();
 
                 char *elem;
                 int i;
 
-                for(i = 0; i < elems->length; i++){
+                char *newname = bd_generate_id(bd_type_tuple(NULL));
+
+                elem = vector_get(elems, elems->length - 1);
+                BDAExpr *result = bd_aexpr_ans(bd_ainst_mov(newname));
+
+                for(i = elems->length - 1; i >= 0; i--){
                     elem = vector_get(elems, i);
-                    vector_add(newelems, bd_expr_ident(elem, bd_type_clone(env_get(env, elem))));
+                    result = bd_aexpr_let(
+                            bd_expr_ident("", bd_type_unit()),
+                            bd_ainst_pushelm(elem, i),
+                            result);
                 }
 
-                return bd_aexpr_ans(bd_ainst_maketuple(newelems));
+                return bd_aexpr_let(
+                        bd_expr_ident_typevar(newname),
+                        bd_ainst_maketuple(elems->length),
+                        result);
             }
         case E_LETTUPLE:
             {

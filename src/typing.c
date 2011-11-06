@@ -715,6 +715,7 @@ void set_defs_type(Env *env, Vector *defs)
 BDType *typing_def(Env *env, BDSExprDef *def)
 {
     unify(def->ident->type, typing(env, def->body));
+    def->ident->type = deref_type(def->ident->type, NULL);
     def->body = deref_term(def->body);
     return def->ident->type;
 }

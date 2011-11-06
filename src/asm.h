@@ -9,6 +9,35 @@
 #define SIZE_LBL 8
 
 
+typedef enum {
+    RNONE,
+
+    RACC,
+    RBP,
+    RSP,
+    RHP,
+    RARG1,
+    RARG2,
+    RARG3,
+    RARG4,
+    RARG5,
+    RARG6,
+    RFARG1,
+    RFARG2,
+    RFARG3,
+    RFARG4,
+    RFARG5,
+    RFARG6,
+    RFARG7,
+    RFARG8,
+
+    REXT1,
+    REXT2,
+    REXT3,
+    REXT4,
+    REXT5,
+} BDReg;
+
 typedef char* Reg;
 
 #define reg_acc "%rax"
@@ -32,6 +61,12 @@ typedef char* Reg;
 #define reg_farg7 "%xmm6"
 #define reg_farg8 "%xmm7"
 
+#define reg_ext1 "%r10"
+#define reg_ext2 "%r11"
+#define reg_ext3 "%r12"
+#define reg_ext4 "%r13"
+#define reg_ext5 "%r14"
+
 typedef enum {
     AE_ANS,
     AE_LET,
@@ -42,7 +77,6 @@ typedef enum {
 
     AI_SET_C,
     AI_SET_I,
-    AI_SET_L,
 
     AI_SETGLOBAL,
 
@@ -66,6 +100,7 @@ typedef enum {
     AI_CALLCLS,
     AI_CALLDIR,
     AI_CCALL,
+    AI_CALL,
 
     AI_JMP,
     AI_JEQ,
@@ -205,7 +240,6 @@ BDAInst *bd_ainst(BDAInstKind kind);
 #define bd_ainst_nop() bd_ainst(AI_NOP)
 BDAInst *bd_ainst_setc(char val);
 BDAInst *bd_ainst_seti(int val);
-BDAInst *bd_ainst_setl(char *lbl);
 #define bd_ainst_setglobal(l, r) _ainst_binreg(AI_SETGLOBAL, l, r)
 BDAInst *bd_ainst_mov(char *lbl);
 BDAInst *_ainst_unireg(BDAInstKind kind, char *reg);
@@ -224,6 +258,7 @@ BDAInst *_ainst_if(BDAInstKind kind, char *l, char *r, BDAExpr *t, BDAExpr *f);
 #define bd_ainst_ifeq(l, r, t, f) _ainst_if(AI_IFEQ, l, r, t, f)
 #define bd_ainst_ifle(l, r, t, f) _ainst_if(AI_IFLE, l, r, t, f)
 BDAInst *_ainst_call(BDAInstKind kind, char *lbl, Vector *ilist, Vector *flist);
+#define bd_ainst_call(lbl) _ainst_call(AI_CALL, lbl, NULL, NULL)
 #define bd_ainst_callcls(lbl, ilist, flist) _ainst_call(AI_CALLCLS, lbl, ilist, flist)
 #define bd_ainst_calldir(lbl, ilist, flist) _ainst_call(AI_CALLDIR, lbl, ilist, flist)
 #define bd_ainst_ccall(lbl, ilist, flist) _ainst_call(AI_CCALL, lbl, ilist, flist)
@@ -231,41 +266,48 @@ BDAInst *bd_ainst_jmp(char *lbl);
 BDAInst *_ainst_jmpif(BDAInstKind kind, char *l, char *r, char *lbl);
 #define bd_ainst_jeq(l, r, lbl) _ainst_jmpif(AI_JEQ, l, r, lbl)
 #define bd_ainst_jle(l, r, lbl) _ainst_jmpif(AI_JLE, l, r, lbl)
-#define bd_ainst_pushlcl_c(reg) _ainst_unireg(AI_PUSHLCL_C, reg)
-#define bd_ainst_pushlcl_i(reg) _ainst_unireg(AI_PUSHLCL_I, reg)
-#define bd_ainst_pushlcl_f(reg) _ainst_unireg(AI_PUSHLCL_F, reg)
-#define bd_ainst_pushlcl_l(reg) _ainst_unireg(AI_PUSHLCL_L, reg)
-#define bd_ainst_getlcl_c(reg) _ainst_unireg(AI_GETLCL_C, reg)
-#define bd_ainst_getlcl_i(reg) _ainst_unireg(AI_GETLCL_I, reg)
-#define bd_ainst_getlcl_f(reg) _ainst_unireg(AI_GETLCL_F, reg)
-#define bd_ainst_getlcl_l(reg) _ainst_unireg(AI_GETLCL_L, reg)
-#define bd_ainst_pusharg_c(reg) _ainst_unireg(AI_PUSHARG_C, reg)
-#define bd_ainst_pusharg_i(reg) _ainst_unireg(AI_PUSHARG_I, reg)
-#define bd_ainst_pusharg_f(reg) _ainst_unireg(AI_PUSHARG_F, reg)
-#define bd_ainst_pusharg_l(reg) _ainst_unireg(AI_PUSHARG_L, reg)
-#define bd_ainst_getarg_c(reg) _ainst_unireg(AI_GETARG_C, reg)
-#define bd_ainst_getarg_i(reg) _ainst_unireg(AI_GETARG_I, reg)
-#define bd_ainst_getarg_f(reg) _ainst_unireg(AI_GETARG_F, reg)
-#define bd_ainst_getarg_l(reg) _ainst_unireg(AI_GETARG_L, reg)
+BDAInst *bd_ainst_pushlcl(BDType *type, char *reg, int offset);
+#define bd_ainst_pushlcl_c(reg, offset) _ainst_push_offset(AI_PUSHLCL_C, reg, offset)
+#define bd_ainst_pushlcl_i(reg, offset) _ainst_push_offset(AI_PUSHLCL_I, reg, offset)
+#define bd_ainst_pushlcl_f(reg, offset) _ainst_push_offset(AI_PUSHLCL_F, reg, offset)
+#define bd_ainst_pushlcl_l(reg, offset) _ainst_push_offset(AI_PUSHLCL_L, reg, offset)
+BDAInst *bd_ainst_getlcl(BDType *type, int offset);
+#define bd_ainst_getlcl_c(offset) _ainst_get_offset(AI_GETLCL_C, offset)
+#define bd_ainst_getlcl_i(offset) _ainst_get_offset(AI_GETLCL_I, offset)
+#define bd_ainst_getlcl_f(offset) _ainst_get_offset(AI_GETLCL_F, offset)
+#define bd_ainst_getlcl_l(offset) _ainst_get_offset(AI_GETLCL_L, offset)
+BDAInst *bd_ainst_pusharg(BDType *type, char *reg, int offset);
+#define bd_ainst_pusharg_c(reg, offset) _ainst_push_offset(AI_PUSHARG_C, reg, offset)
+#define bd_ainst_pusharg_i(reg, offset) _ainst_push_offset(AI_PUSHARG_I, reg, offset)
+#define bd_ainst_pusharg_f(reg, offset) _ainst_push_offset(AI_PUSHARG_F, reg, offset)
+#define bd_ainst_pusharg_l(reg, offset) _ainst_push_offset(AI_PUSHARG_L, reg, offset)
+BDAInst *bd_ainst_getarg(BDType *type, int offset);
+#define bd_ainst_getarg_c(offset) _ainst_get_offset(AI_GETARG_C, offset)
+#define bd_ainst_getarg_i(offset) _ainst_get_offset(AI_GETARG_I, offset)
+#define bd_ainst_getarg_f(offset) _ainst_get_offset(AI_GETARG_F, offset)
+#define bd_ainst_getarg_l(offset) _ainst_get_offset(AI_GETARG_L, offset)
 
 BDAInst *bd_ainst_makecls(char *lbl, int size);
 BDAInst *_ainst_push_offset(BDAInstKind kind, char *lbl, int offset);
 BDAInst *_ainst_get_offset(BDAInstKind kind, int offset);
 #define bd_ainst_loadfvs(lbl) _ainst_unireg(AI_LOADFVS, lbl)
 #define bd_ainst_getcls_entry(lbl) _ainst_unireg(AI_GETCLS_ENTRY, lbl)
+BDAInst *bd_ainst_pushfv(BDType *type, char *lbl, int offset);
 #define bd_ainst_pushfv_c(lbl, offset) _ainst_push_offset(AI_PUSHFV_C, lbl, offset)
 #define bd_ainst_pushfv_i(lbl, offset) _ainst_push_offset(AI_PUSHFV_I, lbl, offset)
 #define bd_ainst_pushfv_f(lbl, offset) _ainst_push_offset(AI_PUSHFV_F, lbl, offset)
 #define bd_ainst_pushfv_l(lbl, offset) _ainst_push_offset(AI_PUSHFV_L, lbl, offset)
+BDAInst *bd_ainst_getfv(BDType *type, int offset);
 #define bd_ainst_getfv_c(offset) _ainst_get_offset(AI_GETFV_C, offset)
 #define bd_ainst_getfv_i(offset) _ainst_get_offset(AI_GETFV_I, offset)
 #define bd_ainst_getfv_f(offset) _ainst_get_offset(AI_GETFV_F, offset)
 #define bd_ainst_getfv_l(offset) _ainst_get_offset(AI_GETFV_L, offset)
-BDAInst *bd_ainst_maketuple(Vector *elems);
+BDAInst *bd_ainst_maketuple(int size);
 #define bd_ainst_loadelms(lbl) _ainst_unireg(AI_LOADELMS, lbl)
 #define bd_ainst_pushelm(lbl, offset) _ainst_push_offset(AI_PUSHELM, lbl, offset)
 #define bd_ainst_getelm(offset) _ainst_get_offset(AI_GETELM, offset)
 
 BDAExpr *bd_aexpr_concat(BDAExpr *e1, BDExprIdent *ident, BDAExpr *e2);
+int bd_value_size(BDType *type);
 
 #endif

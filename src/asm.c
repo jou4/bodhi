@@ -109,13 +109,6 @@ BDAInst *bd_ainst_seti(int val)
     return inst;
 }
 
-BDAInst *bd_ainst_setl(char *lbl)
-{
-    BDAInst *inst = bd_ainst(AI_SET_L);
-    inst->lbl = lbl;
-    return inst;
-}
-
 BDAInst *bd_ainst_mov(char *lbl)
 {
     BDAInst *inst = bd_ainst(AI_MOV);
@@ -166,6 +159,90 @@ BDAInst *_ainst_jmpif(BDAInstKind kind, char *l, char *r, char *lbl)
     return inst;
 }
 
+BDAInst *bd_ainst_pushlcl(BDType *type, char *reg, int offset)
+{
+    switch(type->kind){
+        case T_CHAR:
+            return bd_ainst_pushlcl_c(reg, offset);
+        case T_INT:
+            return bd_ainst_pushlcl_i(reg, offset);
+        case T_FLOAT:
+            return bd_ainst_pushlcl_f(reg, offset);
+        default:
+            return bd_ainst_pushlcl_l(reg, offset);
+    }
+}
+
+BDAInst *bd_ainst_getlcl(BDType *type, int offset)
+{
+    switch(type->kind){
+        case T_CHAR:
+            return bd_ainst_getlcl_c(offset);
+        case T_INT:
+            return bd_ainst_getlcl_i(offset);
+        case T_FLOAT:
+            return bd_ainst_getlcl_f(offset);
+        default:
+            return bd_ainst_getlcl_l(offset);
+    }
+}
+
+BDAInst *bd_ainst_pusharg(BDType *type, char *reg, int offset)
+{
+    switch(type->kind){
+        case T_CHAR:
+            return bd_ainst_pusharg_c(reg, offset);
+        case T_INT:
+            return bd_ainst_pusharg_i(reg, offset);
+        case T_FLOAT:
+            return bd_ainst_pusharg_f(reg, offset);
+        default:
+            return bd_ainst_pusharg_l(reg, offset);
+    }
+}
+
+BDAInst *bd_ainst_getarg(BDType *type, int offset)
+{
+    switch(type->kind){
+        case T_CHAR:
+            return bd_ainst_getarg_c(offset);
+        case T_INT:
+            return bd_ainst_getarg_i(offset);
+        case T_FLOAT:
+            return bd_ainst_getarg_f(offset);
+        default:
+            return bd_ainst_getarg_l(offset);
+    }
+}
+
+BDAInst *bd_ainst_pushfv(BDType *type, char *lbl, int offset)
+{
+    switch(type->kind){
+        case T_CHAR:
+            return bd_ainst_pushfv_c(lbl, offset);
+        case T_INT:
+            return bd_ainst_pushfv_i(lbl, offset);
+        case T_FLOAT:
+            return bd_ainst_pushfv_f(lbl, offset);
+        default:
+            return bd_ainst_pushfv_l(lbl, offset);
+    }
+}
+
+BDAInst *bd_ainst_getfv(BDType *type, int offset)
+{
+    switch(type->kind){
+        case T_CHAR:
+            return bd_ainst_getfv_c(offset);
+        case T_INT:
+            return bd_ainst_getfv_i(offset);
+        case T_FLOAT:
+            return bd_ainst_getfv_f(offset);
+        default:
+            return bd_ainst_getfv_l(offset);
+    }
+}
+
 BDAInst *_ainst_unireg(BDAInstKind kind, char *reg)
 {
     BDAInst *inst = bd_ainst(kind);
@@ -196,10 +273,10 @@ BDAInst *_ainst_get_offset(BDAInstKind kind, int offset)
     return inst;
 }
 
-BDAInst *bd_ainst_maketuple(Vector *elems)
+BDAInst *bd_ainst_maketuple(int size)
 {
     BDAInst *inst = bd_ainst(AI_MAKETUPLE);
-    inst->u.u_elems = elems;
+    inst->u.u_int = size;
     return inst;
 }
 
@@ -217,9 +294,6 @@ void _bd_ainst_show(BDAInst *inst, int col, int depth)
             break;
         case AI_SET_I:
             PRINT1(col, "SET %d", inst->u.u_int);
-            break;
-        case AI_SET_L:
-            PRINT1(col, "SET %s", inst->lbl);
             break;
 
         case AI_SETGLOBAL:
@@ -312,6 +386,10 @@ void _bd_ainst_show(BDAInst *inst, int col, int depth)
             }
             break;
 
+        case AI_CALL:
+            PRINT1(col, "CALL %s", inst->lbl);
+            break;
+
         case AI_JMP:
             PRINT1(col, "JMP %s", inst->lbl);
             break;
@@ -323,55 +401,55 @@ void _bd_ainst_show(BDAInst *inst, int col, int depth)
             break;
 
         case AI_PUSHLCL_C:
-            PRINT1(col, "PUSHLCL_C %s", inst->lbl);
+            PRINT2(col, "PUSHLCL_C %s, %d", inst->lbl, inst->u.u_int);
             break;
         case AI_PUSHLCL_I:
-            PRINT1(col, "PUSHLCL_I %s", inst->lbl);
+            PRINT2(col, "PUSHLCL_I %s, %d", inst->lbl, inst->u.u_int);
             break;
         case AI_PUSHLCL_F:
-            PRINT1(col, "PUSHLCL_F %s", inst->lbl);
+            PRINT2(col, "PUSHLCL_F %s, %d", inst->lbl, inst->u.u_int);
             break;
         case AI_PUSHLCL_L:
-            PRINT1(col, "PUSHLCL_L %s", inst->lbl);
+            PRINT2(col, "PUSHLCL_L %s, %d", inst->lbl, inst->u.u_int);
             break;
 
         case AI_GETLCL_C:
-            PRINT1(col, "GETLCL_C %s", inst->lbl);
+            PRINT1(col, "GETLCL_C %d", inst->u.u_int);
             break;
         case AI_GETLCL_I:
-            PRINT1(col, "GETLCL_I %s", inst->lbl);
+            PRINT1(col, "GETLCL_I %d", inst->u.u_int);
             break;
         case AI_GETLCL_F:
-            PRINT1(col, "GETLCL_F %s", inst->lbl);
+            PRINT1(col, "GETLCL_F %d", inst->u.u_int);
             break;
         case AI_GETLCL_L:
-            PRINT1(col, "GETLCL_L %s", inst->lbl);
+            PRINT1(col, "GETLCL_L %d", inst->u.u_int);
             break;
 
         case AI_PUSHARG_C:
-            PRINT1(col, "PUSHARG_C %s", inst->lbl);
+            PRINT2(col, "PUSHARG_C %s, %d", inst->lbl, inst->u.u_int);
             break;
         case AI_PUSHARG_I:
-            PRINT1(col, "PUSHARG_I %s", inst->lbl);
+            PRINT2(col, "PUSHARG_I %s, %d", inst->lbl, inst->u.u_int);
             break;
         case AI_PUSHARG_F:
-            PRINT1(col, "PUSHARG_F %s", inst->lbl);
+            PRINT2(col, "PUSHARG_F %s, %d", inst->lbl, inst->u.u_int);
             break;
         case AI_PUSHARG_L:
-            PRINT1(col, "PUSHARG_L %s", inst->lbl);
+            PRINT2(col, "PUSHARG_L %s, %d", inst->lbl, inst->u.u_int);
             break;
 
         case AI_GETARG_C:
-            PRINT1(col, "GETARG_C %s", inst->lbl);
+            PRINT1(col, "GETARG_C %d", inst->u.u_int);
             break;
         case AI_GETARG_I:
-            PRINT1(col, "GETARG_I %s", inst->lbl);
+            PRINT1(col, "GETARG_I %d", inst->u.u_int);
             break;
         case AI_GETARG_F:
-            PRINT1(col, "GETARG_F %s", inst->lbl);
+            PRINT1(col, "GETARG_F %d", inst->u.u_int);
             break;
         case AI_GETARG_L:
-            PRINT1(col, "GETARG_L %s", inst->lbl);
+            PRINT1(col, "GETARG_L %d", inst->u.u_int);
             break;
 
         case AI_MAKECLS:
@@ -412,19 +490,7 @@ void _bd_ainst_show(BDAInst *inst, int col, int depth)
 
         case AI_MAKETUPLE:
             {
-                PRINT(col, "MAKETUPLE");
-
-                PRINT(col, "(");
-
-                Vector *elems = inst->u.u_elems;
-                BDExprIdent *ident;
-                int i;
-                for(i = 0; i < elems->length; i++){
-                    ident = vector_get(elems, i);
-                    PRINT1(col, " %s", bd_expr_ident_show(ident));
-                }
-
-                PRINT(col, " )");
+                PRINT1(col, "MAKETUPLE %d", inst->u.u_int);
             }
             break;
         case AI_LOADELMS:
@@ -488,7 +554,7 @@ void bd_aprogram_const_show(BDAExprConst *c)
             PRINT1(col, "%.14g", c->u.u_double);
             break;
         case AEC_STR:
-            PRINT1(col, "%s", c->u.u_str);
+            PRINT1(col, "\"%s\"", c->u.u_str);
             break;
     }
 
@@ -589,4 +655,18 @@ BDAExpr *bd_aexpr_concat(BDAExpr *e1, BDExprIdent *ident, BDAExpr *e2)
     }
     free(e1);
     return ret;
+}
+
+int bd_value_size(BDType *type)
+{
+    switch(type->kind){
+        case T_CHAR:
+            return SIZE_CHAR;
+        case T_INT:
+            return SIZE_INT;
+        case T_FLOAT:
+            return SIZE_FLOAT;
+        default:
+            return SIZE_LBL;
+    }
 }

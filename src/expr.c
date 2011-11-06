@@ -19,6 +19,8 @@ BDExprIdent *bd_expr_ident_clone(BDExprIdent *ident)
 
 Vector *bd_expr_idents_clone(Vector *idents)
 {
+    if(idents == NULL){ return NULL; }
+
     Vector *new_idents = vector_new();
     BDExprIdent *ident;
     int i;
