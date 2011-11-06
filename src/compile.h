@@ -29,7 +29,7 @@ BDNProgram *bd_const_fold(BDNProgram *prog);
 BDNProgram *bd_elim(BDNProgram *prog);
 BDCProgram *bd_closure_transform(BDNProgram *prog);
 BDAProgram *bd_virtual(BDCProgram *prog);
-BDAProgram *bd_register_allocate(BDAProgram *prog);
+BDAProgram *bd_regalloc(BDAProgram *prog);
 void bd_emit(BDAProgram *prog);
 
 #endif

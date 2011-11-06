@@ -8,6 +8,30 @@
 #define SIZE_FLOAT 8
 #define SIZE_LBL 8
 
+
+typedef char* Reg;
+
+#define reg_acc "%rax"
+#define reg_hp "%r15"
+#define reg_bp "%rbp"
+#define reg_sp "%rsp"
+
+#define reg_arg1 "%rdi"
+#define reg_arg2 "%rsi"
+#define reg_arg3 "%rdx"
+#define reg_arg4 "%rcx"
+#define reg_arg5 "%r8"
+#define reg_arg6 "%r9"
+
+#define reg_farg1 "%xmm0"
+#define reg_farg2 "%xmm1"
+#define reg_farg3 "%xmm2"
+#define reg_farg4 "%xmm3"
+#define reg_farg5 "%xmm4"
+#define reg_farg6 "%xmm5"
+#define reg_farg7 "%xmm6"
+#define reg_farg8 "%xmm7"
+
 typedef enum {
     AE_ANS,
     AE_LET,
