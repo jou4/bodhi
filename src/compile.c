@@ -5,6 +5,7 @@ void compile(BDSProgram *sprog)
 {
     BDNProgram *nprog;
     BDCProgram *cprog;
+    BDAProgram *aprog;
 
     try{
 
@@ -28,6 +29,10 @@ void compile(BDSProgram *sprog)
         cprog = bd_closure_transform(nprog);
         printf("--- Closure transformed --- \n");
         bd_cprogram_show(cprog);
+
+        aprog = bd_virtual(cprog);
+        printf("--- Generated vm code. --- \n");
+        bd_aprogram_show(aprog);
 
         /*
         BDSExpr *e1 = bd_typing(e);

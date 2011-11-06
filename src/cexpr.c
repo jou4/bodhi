@@ -482,7 +482,7 @@ void _bd_cexpr_show(BDCExpr *e, int col, int depth)
                 PRINT(col, " -> ");
 
                 BREAKLINE(col, depth);
-                _bd_nexpr_show(body, col, depth);
+                _bd_cexpr_show(body, col, depth);
             }
             break;
         case E_APPCLS:

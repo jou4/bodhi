@@ -1,6 +1,4 @@
-#include "util.h"
 #include "compile.h"
-
 
 static Vector *toplevels;
 
@@ -24,7 +22,17 @@ BDCExpr *closure_transform(Env *env, Set *known, BDNExpr *e)
         case E_UNIOP:
             return bd_cexpr_uniop(e->u.u_uniop.kind, e->u.u_uniop.val);
         case E_BINOP:
-            return bd_cexpr_binop(e->u.u_binop.kind, e->u.u_binop.l, e->u.u_binop.r);
+            switch(e->u.u_binop.kind){
+                case OP_CONS:
+                    {
+                        Vector *actuals = vector_new();
+                        vector_add(actuals, mem_strdup(e->u.u_binop.l));
+                        vector_add(actuals, mem_strdup(e->u.u_binop.r));
+                        return bd_cexpr_appdir("_bodhi_cons", actuals);
+                    }
+                default:
+                    return bd_cexpr_binop(e->u.u_binop.kind, e->u.u_binop.l, e->u.u_binop.r);
+            }
         case E_IF:
             return bd_cexpr_if(e->u.u_if.kind, e->u.u_if.l, e->u.u_if.r,
                     closure_transform(env, known, e->u.u_if.t),
@@ -97,15 +105,6 @@ BDCExpr *closure_transform(Env *env, Set *known, BDNExpr *e)
                 env_local_destroy(local);
 
                 return newexpr;
-            }
-        case E_FUN:
-            {
-                BDType *type = e->u.u_fun.type;
-                Vector *formals = e->u.u_fun.formals;
-                BDNExpr *body = e->u.u_fun.body;
-
-                Env *local = env_local_new(env);
-
             }
         case E_APP:
             {

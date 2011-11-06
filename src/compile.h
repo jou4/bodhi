@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include "util.h"
 #include "type.h"
 #include "id.h"
 #include "env.h"
@@ -14,9 +15,7 @@
 #include "sexpr.h"
 #include "nexpr.h"
 #include "cexpr.h"
-/*
-_include "asm.h"
-*/
+#include "asm.h"
 
 void compile(BDSProgram *prog);
 BDSProgram *bd_typing(BDSProgram *prog);
@@ -29,11 +28,8 @@ BDNProgram *bd_inline_expand(int threashold, BDNProgram *prog);
 BDNProgram *bd_const_fold(BDNProgram *prog);
 BDNProgram *bd_elim(BDNProgram *prog);
 BDCProgram *bd_closure_transform(BDNProgram *prog);
-
-/*
-BDAsmProg *bd_virtual(BDProgram1 *prog);
-BDAsmProg *bd_register_allocate(BDAsmProg *prog);
-void bd_emit(BDAsmProg *prog);
-*/
+BDAProgram *bd_virtual(BDCProgram *prog);
+BDAProgram *bd_register_allocate(BDAProgram *prog);
+void bd_emit(BDAProgram *prog);
 
 #endif
