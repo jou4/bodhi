@@ -1,5 +1,102 @@
 #include "asm.h"
 
+
+char *reg_name(BDReg reg)
+{
+    switch(reg){
+        case RACC:
+            return reg_acc;
+        case RBP:
+            return reg_bp;
+        case RSP:
+            return reg_sp;
+        case RHP:
+            return reg_hp;
+        case RARG1:
+            return reg_arg1;
+        case RARG2:
+            return reg_arg2;
+        case RARG3:
+            return reg_arg3;
+        case RARG4:
+            return reg_arg4;
+        case RARG5:
+            return reg_arg5;
+        case RARG6:
+            return reg_arg6;
+        case RFARG1:
+            return reg_farg1;
+        case RFARG2:
+            return reg_farg2;
+        case RFARG3:
+            return reg_farg3;
+        case RFARG4:
+            return reg_farg4;
+        case RFARG5:
+            return reg_farg5;
+        case RFARG6:
+            return reg_farg6;
+        case RFARG7:
+            return reg_farg7;
+        case RFARG8:
+            return reg_farg8;
+        case REXT1:
+            return reg_ext1;
+        case REXT2:
+            return reg_ext2;
+        case REXT3:
+            return reg_ext3;
+        case REXT4:
+            return reg_ext4;
+        case REXT5:
+            return reg_ext5;
+    }
+    return NULL;
+}
+
+BDReg argreg(int offset){
+    switch(offset){
+        case 0:
+            return RARG1;
+        case 1:
+            return RARG2;
+        case 2:
+            return RARG3;
+        case 3:
+            return RARG4;
+        case 4:
+            return RARG5;
+        case 5:
+            return RARG6;
+        default:
+            return RACC;
+    }
+}
+
+BDReg fargreg(int offset){
+    switch(offset){
+        case 0:
+            return RFARG1;
+        case 1:
+            return RFARG2;
+        case 2:
+            return RFARG3;
+        case 3:
+            return RFARG4;
+        case 4:
+            return RFARG5;
+        case 5:
+            return RFARG6;
+        case 6:
+            return RFARG7;
+        case 7:
+            return RFARG8;
+        default:
+            return RACC;
+    }
+}
+
+
 void bd_aprogram_init(BDAProgram *prog)
 {
     prog->consts = vector_new();
@@ -389,6 +486,9 @@ void _bd_ainst_show(BDAInst *inst, int col, int depth)
         case AI_CALL:
             PRINT1(col, "CALL %s", inst->lbl);
             break;
+        case AI_TAILCALLPOINT:
+            PRINT(col, "TAILCALLPOINT");
+            break;
 
         case AI_JMP:
             PRINT1(col, "JMP %s", inst->lbl);
@@ -518,14 +618,11 @@ void _bd_aexpr_show(BDAExpr *e, int col, int depth)
                 BDAInst *val = e->u.u_let.val;
                 BDAExpr *body = e->u.u_let.body;
 
-                if(ident->type->kind == T_UNIT){
-                    PRINT(col, "_ = ");
-                }
-                else{
+                if(ident->type->kind != T_UNIT){
                     PRINT1(col, "%s = ", bd_expr_ident_show(ident));
                 }
                 _bd_ainst_show(val, col, depth + 1);
-                PRINT(col, " in \n");
+                PRINT(col, "\n");
                 _bd_aexpr_show(body, col, depth);
             }
             break;

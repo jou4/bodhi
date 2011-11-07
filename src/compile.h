@@ -17,7 +17,7 @@
 #include "cexpr.h"
 #include "asm.h"
 
-void compile(BDSProgram *prog);
+void compile(FILE *ch, BDSProgram *prog);
 BDSProgram *bd_typing(BDSProgram *prog);
 BDNProgram *bd_knormalize(BDSProgram *prog);
 BDNProgram *bd_alpha_convert(BDNProgram *prog);
@@ -30,6 +30,6 @@ BDNProgram *bd_elim(BDNProgram *prog);
 BDCProgram *bd_closure_transform(BDNProgram *prog);
 BDAProgram *bd_virtual(BDCProgram *prog);
 BDAProgram *bd_regalloc(BDAProgram *prog);
-void bd_emit(BDAProgram *prog);
+void bd_emit(FILE *ch, BDAProgram *prog);
 
 #endif

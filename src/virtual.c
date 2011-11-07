@@ -328,6 +328,7 @@ BDAExpr *insert_initializer(BDAExpr *init, BDExprIdent *ident, BDAExpr *body)
         case AE_ANS:
             {
                 char *tmpname = bd_generate_id(ident->type);
+                printf("*****%s *****\n" , tmpname);
                 newexpr = bd_aexpr_let(
                         bd_expr_ident(tmpname, bd_type_clone(ident->type)),
                         init->u.u_ans.val,

@@ -4,7 +4,7 @@
 #include "expr.h"
 
 #define SIZE_CHAR 1
-#define SIZE_INT 4
+#define SIZE_INT 8
 #define SIZE_FLOAT 8
 #define SIZE_LBL 8
 
@@ -38,7 +38,6 @@ typedef enum {
     REXT5,
 } BDReg;
 
-typedef char* Reg;
 
 #define reg_acc "%rax"
 #define reg_hp "%r15"
@@ -66,6 +65,12 @@ typedef char* Reg;
 #define reg_ext3 "%r12"
 #define reg_ext4 "%r13"
 #define reg_ext5 "%r14"
+
+char *reg_name(BDReg reg);
+BDReg argreg(int offset);
+BDReg fargreg(int offset);
+
+
 
 typedef enum {
     AE_ANS,
@@ -101,6 +106,7 @@ typedef enum {
     AI_CALLDIR,
     AI_CCALL,
     AI_CALL,
+    AI_TAILCALLPOINT,
 
     AI_JMP,
     AI_JEQ,
@@ -144,6 +150,9 @@ typedef enum {
     AI_LOADELMS,
     AI_PUSHELM,
     AI_GETELM,
+
+    //AI_SAVE,
+    //AI_RESTORE,
 
 } BDAInstKind;
 
@@ -262,6 +271,7 @@ BDAInst *_ainst_call(BDAInstKind kind, char *lbl, Vector *ilist, Vector *flist);
 #define bd_ainst_callcls(lbl, ilist, flist) _ainst_call(AI_CALLCLS, lbl, ilist, flist)
 #define bd_ainst_calldir(lbl, ilist, flist) _ainst_call(AI_CALLDIR, lbl, ilist, flist)
 #define bd_ainst_ccall(lbl, ilist, flist) _ainst_call(AI_CCALL, lbl, ilist, flist)
+#define bd_ainst_tailcall_point() bd_ainst(AI_TAILCALLPOINT)
 BDAInst *bd_ainst_jmp(char *lbl);
 BDAInst *_ainst_jmpif(BDAInstKind kind, char *l, char *r, char *lbl);
 #define bd_ainst_jeq(l, r, lbl) _ainst_jmpif(AI_JEQ, l, r, lbl)
@@ -306,6 +316,8 @@ BDAInst *bd_ainst_maketuple(int size);
 #define bd_ainst_loadelms(lbl) _ainst_unireg(AI_LOADELMS, lbl)
 #define bd_ainst_pushelm(lbl, offset) _ainst_push_offset(AI_PUSHELM, lbl, offset)
 #define bd_ainst_getelm(offset) _ainst_get_offset(AI_GETELM, offset)
+//#define bd_ainst_save(lbl, reg) _ainst_binreg(lbl, reg)
+//#define bd_ainst_restore(lbl) _ainst_unireg(lbl)
 
 BDAExpr *bd_aexpr_concat(BDAExpr *e1, BDExprIdent *ident, BDAExpr *e2);
 int bd_value_size(BDType *type);

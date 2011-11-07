@@ -1,59 +1,6 @@
 #include "compile.h"
 
 
-char *reg_name(BDReg reg)
-{
-    switch(reg){
-        case RACC:
-            return reg_acc;
-        case RBP:
-            return reg_bp;
-        case RSP:
-            return reg_sp;
-        case RHP:
-            return reg_hp;
-        case RARG1:
-            return reg_arg1;
-        case RARG2:
-            return reg_arg2;
-        case RARG3:
-            return reg_arg3;
-        case RARG4:
-            return reg_arg4;
-        case RARG5:
-            return reg_arg5;
-        case RARG6:
-            return reg_arg6;
-        case RFARG1:
-            return reg_farg1;
-        case RFARG2:
-            return reg_farg2;
-        case RFARG3:
-            return reg_farg3;
-        case RFARG4:
-            return reg_farg4;
-        case RFARG5:
-            return reg_farg5;
-        case RFARG6:
-            return reg_farg6;
-        case RFARG7:
-            return reg_farg7;
-        case RFARG8:
-            return reg_farg8;
-        case REXT1:
-            return reg_ext1;
-        case REXT2:
-            return reg_ext2;
-        case REXT3:
-            return reg_ext3;
-        case REXT4:
-            return reg_ext4;
-        case REXT5:
-            return reg_ext5;
-    }
-    return NULL;
-}
-
 typedef enum {
     POS_REG,
     POS_LCL,
@@ -105,47 +52,6 @@ BDReg find_reg(char *lbl, BDAExpr *e)
     return RNONE;
 }
 
-BDReg argreg(int offset){
-    switch(offset){
-        case 0:
-            return RARG1;
-        case 1:
-            return RARG2;
-        case 2:
-            return RARG3;
-        case 3:
-            return RARG4;
-        case 4:
-            return RARG5;
-        case 5:
-            return RARG6;
-        default:
-            return RACC;
-    }
-}
-
-BDReg fargreg(int offset){
-    switch(offset){
-        case 0:
-            return RFARG1;
-        case 1:
-            return RFARG2;
-        case 2:
-            return RFARG3;
-        case 3:
-            return RFARG4;
-        case 4:
-            return RFARG5;
-        case 5:
-            return RFARG6;
-        case 6:
-            return RFARG7;
-        case 7:
-            return RFARG8;
-        default:
-            return RACC;
-    }
-}
 
 BDAExpr *resolve_lbl(Env *env, char *lbl, BDReg dst, BDAExpr *body)
 {
@@ -193,7 +99,7 @@ BDAExpr *resolve_lbl(Env *env, char *lbl, BDReg dst, BDAExpr *body)
     }
 }
 
-BDAExpr *regalloc_inst(AllocState *st, Env *env, BDAInst *inst)
+BDAExpr *regalloc_inst(AllocState *st, Env *env, BDAInst *inst, int tail)
 {
     switch(inst->kind){
         case AI_NOP:
@@ -296,6 +202,13 @@ BDAExpr *regalloc_inst(AllocState *st, Env *env, BDAInst *inst)
                                 body));
                 }
 
+                if(tail && ilist->length + flist->length < 20){
+                    body = bd_aexpr_let(
+                            bd_expr_ident("", bd_type_unit()),
+                            bd_ainst_tailcall_point(),
+                            body);
+                }
+
                 return body;
             }
             break;
@@ -339,7 +252,7 @@ BDAExpr *regalloc(AllocState *st, Env *env, BDAExpr *e)
 {
     switch(e->kind){
         case AE_ANS:
-            return regalloc_inst(st, env, e->u.u_ans.val);
+            return regalloc_inst(st, env, e->u.u_ans.val, 1);
         case AE_LET:
             {
                 BDExprIdent *ident = e->u.u_let.ident;
@@ -347,7 +260,7 @@ BDAExpr *regalloc(AllocState *st, Env *env, BDAExpr *e)
                 BDAExpr *body = e->u.u_let.body;
                 BDReg reg = find_reg(ident->name, body);
 
-                BDAExpr *newinst = regalloc_inst(st, env, inst);
+                BDAExpr *newinst = regalloc_inst(st, env, inst, 0);
                 BDAExpr *newbody;
 
                 if(ident->type->kind == T_UNIT){
@@ -412,13 +325,41 @@ BDAExprDef *regalloc_fundef(BDAExprDef *def)
         }
     }
 
+    BDAExpr *result, *newbody, *fv2reg, *reg2lcl, *tail = NULL;
     vec = freevars;
     if(vec != NULL){
         for(i = 0, offset = 0; i < vec->length; i++){
             formal = vector_get(vec, i);
-            env_set(env, formal->name, lbl_state_offset(formal->type, POS_FV, offset));
+
+            reg2lcl = bd_aexpr_let(
+                    bd_expr_ident("", bd_type_unit()),
+                    bd_ainst_pushlcl(formal->type, reg_name(RACC), offset),
+                    NULL);
+            fv2reg = bd_aexpr_let(
+                    bd_expr_ident(reg_name(RACC), formal->type),
+                    bd_ainst_getfv(formal->type, offset),
+                    reg2lcl);
+
+            if(i > 0){
+                tail->u.u_let.body = fv2reg;
+                tail = reg2lcl;
+            }
+            else{
+                result = fv2reg;
+                tail = reg2lcl;
+            }
+
+            env_set(env, formal->name, lbl_state_offset(formal->type, POS_LCL, i));
             offset += bd_value_size(formal->type);
         }
+    }
+
+    newbody = regalloc(st, env, body);
+    if(tail == NULL){
+        result = newbody;
+    }
+    else{
+        tail->u.u_let.body = newbody;
     }
 
     BDAExprDef *newdef = bd_aexpr_def(
@@ -426,7 +367,7 @@ BDAExprDef *regalloc_fundef(BDAExprDef *def)
             bd_expr_idents_clone(iformals),
             bd_expr_idents_clone(fformals),
             bd_expr_idents_clone(freevars),
-            regalloc(st, env, body)
+            result
             );
 
     env_destroy(env);

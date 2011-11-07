@@ -1,7 +1,7 @@
 #include "compile.h"
 #include "util.h"
 
-void compile(BDSProgram *sprog)
+void compile(FILE *ch, BDSProgram *sprog)
 {
     BDNProgram *nprog;
     BDCProgram *cprog;
@@ -37,6 +37,9 @@ void compile(BDSProgram *sprog)
         aprog = bd_regalloc(aprog);
         printf("--- Allocated registers --- \n");
         bd_aprogram_show(aprog);
+
+        printf("--- Emit code --- \n");
+        bd_emit(ch, aprog);
 
         /*
         BDSExpr *e1 = bd_typing(e);
