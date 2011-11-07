@@ -110,6 +110,7 @@ void emit_inst(EmitState *st, BDAInst *inst, char *dst)
 
         case AI_CALL:
             if(st->tailpoint){
+                fprintf(OC, "\tpopq %s\n", "%rbp");
                 fprintf(OC, "\tjmp %s\n", inst->lbl);
             }
             else{
@@ -120,6 +121,7 @@ void emit_inst(EmitState *st, BDAInst *inst, char *dst)
             {
                 if(inst->lbl[0] == '%'){
                     if(st->tailpoint){
+                        fprintf(OC, "\tpopq %s\n", "%rbp");
                         fprintf(OC, "\tjmp *%s\n", inst->lbl);
                     }
                     else{
@@ -128,6 +130,7 @@ void emit_inst(EmitState *st, BDAInst *inst, char *dst)
                 }
                 else{
                     if(st->tailpoint){
+                        fprintf(OC, "\tpopq %s\n", "%rbp");
                         fprintf(OC, "\tjmp *%s(%s)\n", inst->lbl, "%rip");
                     }
                     else{
@@ -139,7 +142,7 @@ void emit_inst(EmitState *st, BDAInst *inst, char *dst)
 
         case AI_TAILCALLPOINT:
             if( ! st->main){
-                fprintf(OC, "\tleave\n");
+                fprintf(OC, "\tmovq %s, %s\n", "%rbp", "%rsp");
                 st->tailpoint = 1;
             }
             return;
