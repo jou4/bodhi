@@ -256,6 +256,20 @@ BDAInst *_ainst_jmpif(BDAInstKind kind, char *l, char *r, char *lbl)
     return inst;
 }
 
+BDAInst *bd_ainst_setglobal(BDType *type, char *l, char *r)
+{
+    switch(type->kind){
+        case T_CHAR:
+            return bd_ainst_setglobal_c(l, r);
+        case T_INT:
+            return bd_ainst_setglobal_i(l, r);
+        case T_FLOAT:
+            return bd_ainst_setglobal_f(l, r);
+        default:
+            return bd_ainst_setglobal_l(l, r);
+    }
+}
+
 BDAInst *bd_ainst_pushlcl(BDType *type, char *reg, int offset)
 {
     switch(type->kind){
@@ -393,12 +407,27 @@ void _bd_ainst_show(BDAInst *inst, int col, int depth)
             PRINT1(col, "SET %d", inst->u.u_int);
             break;
 
-        case AI_SETGLOBAL:
-            PRINT2(col, "SETGLOBAL %s, %s", inst->u.u_bin.l, inst->u.u_bin.r);
+        case AI_SETGLOBAL_C:
+            PRINT2(col, "SETGLOBAL_C %s, %s", inst->u.u_bin.l, inst->u.u_bin.r);
+            break;
+        case AI_SETGLOBAL_I:
+            PRINT2(col, "SETGLOBAL_I %s, %s", inst->u.u_bin.l, inst->u.u_bin.r);
+            break;
+        case AI_SETGLOBAL_F:
+            PRINT2(col, "SETGLOBAL_F %s, %s", inst->u.u_bin.l, inst->u.u_bin.r);
+            break;
+        case AI_SETGLOBAL_L:
+            PRINT2(col, "SETGLOBAL_L %s, %s", inst->u.u_bin.l, inst->u.u_bin.r);
             break;
 
         case AI_MOV:
             PRINT1(col, "MOV %s", inst->lbl);
+            break;
+        case AI_MOVGLOBAL:
+            PRINT1(col, "MOVGLOBAL %s", inst->lbl);
+            break;
+        case AI_MOVGLOBAL_L:
+            PRINT1(col, "MOVGLOBAL_L %s", inst->lbl);
             break;
 
         case AI_ADD:
@@ -485,6 +514,9 @@ void _bd_ainst_show(BDAInst *inst, int col, int depth)
 
         case AI_CALL:
             PRINT1(col, "CALL %s", inst->lbl);
+            break;
+        case AI_CALLPTR:
+            PRINT1(col, "CALLPTR %s", inst->lbl);
             break;
         case AI_TAILCALLPOINT:
             PRINT(col, "TAILCALLPOINT");

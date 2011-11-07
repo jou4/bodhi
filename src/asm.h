@@ -83,9 +83,15 @@ typedef enum {
     AI_SET_C,
     AI_SET_I,
 
-    AI_SETGLOBAL,
+    AI_SETGLOBAL_C,
+    AI_SETGLOBAL_I,
+    AI_SETGLOBAL_F,
+    AI_SETGLOBAL_L,
 
     AI_MOV,
+    AI_MOV_L,
+    AI_MOVGLOBAL,
+    AI_MOVGLOBAL_L,
 
     AI_NEG,
     AI_ADD,
@@ -105,6 +111,8 @@ typedef enum {
     AI_CALLCLS,
     AI_CALLDIR,
     AI_CCALL,
+
+    AI_CALLPTR,
     AI_CALL,
     AI_TAILCALLPOINT,
 
@@ -249,8 +257,14 @@ BDAInst *bd_ainst(BDAInstKind kind);
 #define bd_ainst_nop() bd_ainst(AI_NOP)
 BDAInst *bd_ainst_setc(char val);
 BDAInst *bd_ainst_seti(int val);
-#define bd_ainst_setglobal(l, r) _ainst_binreg(AI_SETGLOBAL, l, r)
+BDAInst *bd_ainst_setglobal(BDType *type, char *l, char *r);
+#define bd_ainst_setglobal_c(l, r) _ainst_binreg(AI_SETGLOBAL_C, l, r)
+#define bd_ainst_setglobal_i(l, r) _ainst_binreg(AI_SETGLOBAL_I, l, r)
+#define bd_ainst_setglobal_f(l, r) _ainst_binreg(AI_SETGLOBAL_F, l, r)
+#define bd_ainst_setglobal_l(l, r) _ainst_binreg(AI_SETGLOBAL_L, l, r)
 BDAInst *bd_ainst_mov(char *lbl);
+#define bd_ainst_movglobal(lbl) _ainst_unireg(AI_MOVGLOBAL, lbl)
+#define bd_ainst_movglobal_l(lbl) _ainst_unireg(AI_MOVGLOBAL_L, lbl)
 BDAInst *_ainst_unireg(BDAInstKind kind, char *reg);
 BDAInst *_ainst_binreg(BDAInstKind kind, char *l, char *r);
 #define bd_ainst_neg(lbl) _ainst_unireg(AI_NEG, lbl)
@@ -268,6 +282,7 @@ BDAInst *_ainst_if(BDAInstKind kind, char *l, char *r, BDAExpr *t, BDAExpr *f);
 #define bd_ainst_ifle(l, r, t, f) _ainst_if(AI_IFLE, l, r, t, f)
 BDAInst *_ainst_call(BDAInstKind kind, char *lbl, Vector *ilist, Vector *flist);
 #define bd_ainst_call(lbl) _ainst_call(AI_CALL, lbl, NULL, NULL)
+#define bd_ainst_callptr(lbl) _ainst_call(AI_CALLPTR, lbl, NULL, NULL)
 #define bd_ainst_callcls(lbl, ilist, flist) _ainst_call(AI_CALLCLS, lbl, ilist, flist)
 #define bd_ainst_calldir(lbl, ilist, flist) _ainst_call(AI_CALLDIR, lbl, ilist, flist)
 #define bd_ainst_ccall(lbl, ilist, flist) _ainst_call(AI_CCALL, lbl, ilist, flist)

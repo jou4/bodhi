@@ -40,7 +40,7 @@ char *add_prefix(const char *prefix, const char *name)
 
 char *bd_generate_toplevel_lbl(const char *name)
 {
-    return add_prefix("_bohdi_", name);
+    return add_prefix("_bodhi_", name);
 }
 
 char *bd_generate_cfunc_lbl(const char *name)

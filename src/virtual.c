@@ -334,7 +334,7 @@ BDAExpr *insert_initializer(BDAExpr *init, BDExprIdent *ident, BDAExpr *body)
                         init->u.u_ans.val,
                         bd_aexpr_let(
                             bd_expr_ident("", bd_type_unit()),
-                            bd_ainst_setglobal(ident->name, tmpname),
+                            bd_ainst_setglobal(ident->type, ident->name, tmpname),
                             body));
             }
             break;
@@ -374,7 +374,21 @@ BDAProgram *bd_virtual(BDCProgram *prog)
     // Add primitives.
     for(i = 0; i < primsigs->length; i++){
         sig = vector_get(primsigs, i);
-        env_set(env, sig->name, sig->type);
+        env_set(env, sig->lbl, sig->type);
+    }
+
+    // Add consts.
+    vec = prog->datadefs;
+    for(i = 0; i < vec->length; i++){
+        def = vector_get(vec, i);
+        env_set(env, def->ident->name, def->ident->type);
+    }
+
+    // Add functions.
+    vec = prog->fundefs;
+    for(i = 0; i < vec->length; i++){
+        def = vector_get(vec, i);
+        env_set(env, def->ident->name, def->ident->type);
     }
 
     // consts or inits

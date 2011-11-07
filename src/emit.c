@@ -38,12 +38,32 @@ void emit_inst(EmitState *st, BDAInst *inst, char *dst)
             fprintf(OC, "\tmovq $%d, %s\n", inst->u.u_int, dst);
             break;
 
-        case AI_SETGLOBAL:
+        case AI_SETGLOBAL_C:
+            fprintf(OC, "\tmovb %s, %s(%s)\n", inst->u.u_bin.r, inst->u.u_bin.l, "%rip");
+            break;
+        case AI_SETGLOBAL_I:
+            fprintf(OC, "\tmovq %s, %s(%s)\n", inst->u.u_bin.r, inst->u.u_bin.l, "%rip");
+            break;
+        case AI_SETGLOBAL_F:
+            // TODO
+            break;
+        case AI_SETGLOBAL_L:
+            fprintf(OC, "\tmovq %s, %s(%s)\n", inst->u.u_bin.r, inst->u.u_bin.l, "%rip");
             break;
 
         case AI_MOV:
             if(strne(inst->lbl, dst)){
                 fprintf(OC, "\tmovq %s, %s\n", inst->lbl, dst);
+            }
+            break;
+        case AI_MOVGLOBAL:
+            if(strne(inst->lbl, dst)){
+                fprintf(OC, "\tmovq %s(%s), %s\n", inst->lbl, "%rip", dst);
+            }
+            break;
+        case AI_MOVGLOBAL_L:
+            if(strne(inst->lbl, dst)){
+                fprintf(OC, "\tleaq %s(%s), %s\n", inst->lbl, "%rip", dst);
             }
             break;
 
@@ -94,6 +114,26 @@ void emit_inst(EmitState *st, BDAInst *inst, char *dst)
             }
             else{
                 fprintf(OC, "\tcall %s\n", inst->lbl);
+            }
+            break;
+        case AI_CALLPTR:
+            {
+                if(inst->lbl[0] == '%'){
+                    if(st->tailpoint){
+                        fprintf(OC, "\tjmp *%s\n", inst->lbl);
+                    }
+                    else{
+                        fprintf(OC, "\tcall *%s\n", inst->lbl);
+                    }
+                }
+                else{
+                    if(st->tailpoint){
+                        fprintf(OC, "\tjmp *%s(%s)\n", inst->lbl, "%rip");
+                    }
+                    else{
+                        fprintf(OC, "\tcall *%s(%s)\n", inst->lbl, "%rip");
+                    }
+                }
             }
             break;
 
@@ -222,7 +262,23 @@ void emit(EmitState *st, BDAExpr *e)
 
 void emit_fundef(EmitState *st, BDAExprDef *def)
 {
-    fprintf(OC, "%s:\n", def->ident->name);
+    char *textlbl;
+    if(st->main){
+        textlbl = def->ident->name;
+    }
+    else{
+        textlbl = bd_generate_id(def->ident->type);
+
+        // .data(ptr to functoin)
+        fprintf(OC, "\t.data\n");
+        fprintf(OC, "%s:\n", def->ident->name);
+        fprintf(OC, "\t.quad %s\n", textlbl);
+
+    }
+
+    // .text
+    fprintf(OC, "\t.text\n");
+    fprintf(OC, "%s:\n", textlbl);
     fprintf(OC, "\tpushq %s\n", "%rbp");
     fprintf(OC, "\tmovq %s, %s\n", "%rsp", "%rbp");
     // TODO
@@ -237,16 +293,69 @@ void bd_emit(FILE *ch, BDAProgram *prog)
     EmitState *st = malloc(sizeof(EmitState));
     st->ch = ch;
 
+    BDAExprConst *c;
+    BDExprIdent *ident;
     BDAExprDef *def;
+
     Vector *vec;
     int i;
 
-    // TODO data section
+    // consts
+    vec = prog->consts;
+    for(i = 0; i < vec->length; i++){
+        c = vector_get(vec, i);
+        switch(c->kind){
+            case AEC_CHAR:
+                fprintf(OC, "\t.data\n");
+                fprintf(OC, "%s:\n", c->lbl);
+                fprintf(OC, "\t.byte %d\n", (int)c->u.u_char);
+                break;
+            case AEC_INT:
+                fprintf(OC, "\t.data\n");
+                fprintf(OC, "%s:\n", c->lbl);
+                fprintf(OC, "\t.long %d\n", c->u.u_int);
+                break;
+            case AEC_FLOAT:
+                // TODO
+                break;
+            case AEC_STR:
+                {
+                    char *tmpname = bd_generate_id(bd_type_string());
+                    fprintf(OC, "\t.cstring\n");
+                    fprintf(OC, "%s:\n", tmpname);
+                    fprintf(OC, "\t.ascii \"%s\\0\"\n", c->u.u_str);
+                    fprintf(OC, "\t.data\n");
+                    fprintf(OC, "%s:\n", c->lbl);
+                    fprintf(OC, "\t.quad %s\n", tmpname);
+                }
+                break;
+        }
+    }
 
-    // text section
-    fprintf(OC, ".text\n");
-    fprintf(OC, ".globl _main\n");
+    // globals
+    vec = prog->globals;
+    for(i = 0; i < vec->length; i++){
+        ident = vector_get(vec, i);
+        fprintf(OC, "\t.data\n");
+        fprintf(OC, "%s:\n", ident->name);
+        switch(ident->type->kind){
+            case AEC_CHAR:
+                fprintf(OC, "\t.byte\n");
+                break;
+            case AEC_INT:
+                fprintf(OC, "\t.long\n");
+                break;
+            case AEC_FLOAT:
+                // TODO
+                break;
+            default:
+                fprintf(OC, "\t.quad\n");
+                break;
+        }
+    }
 
+
+    // functions
     vec = prog->fundefs;
     for(i = 0; i < vec->length; i++){
         def = vector_get(vec, i);
@@ -255,6 +364,9 @@ void bd_emit(FILE *ch, BDAProgram *prog)
         emit_fundef(st, def);
     }
 
+    // main function
+    fprintf(OC, "\t.text\n");
+    fprintf(OC, ".globl _main\n");
     def = prog->maindef;
     st->tailpoint = 0;
     st->main = 1;

@@ -52,7 +52,7 @@ BDNExpr *bd_alpha(Env *env, BDNExpr *e)
                 env_set(local, oldname, newname);
 
                 BDNExpr *newexpr = bd_nexpr_let(newident
-                        , bd_alpha(local, e->u.u_let.val)
+                        , bd_alpha(env, e->u.u_let.val)
                         , bd_alpha(local, e->u.u_let.body));
 
                 env_local_destroy(local);
@@ -128,7 +128,7 @@ BDNExpr *bd_alpha(Env *env, BDNExpr *e)
                 char *oldname;
                 for(i = 0; i < actuals->length; i++){
                     oldname = vector_get(actuals, i);
-                    vector_add(newactuals, find_alt_name(env, oldname));
+                    vector_add(newactuals, mem_strdup(find_alt_name(env, oldname)));
                 }
 
                 return bd_nexpr_app(find_alt_name(env, e->u.u_app.fun), newactuals);
