@@ -1,7 +1,7 @@
 #include "compile.h"
 #include "util.h"
 
-void compile(FILE *ch, BDSProgram *sprog)
+int compile(FILE *ch, BDSProgram *sprog)
 {
     BDNProgram *nprog;
     BDCProgram *cprog;
@@ -41,6 +41,8 @@ void compile(FILE *ch, BDSProgram *sprog)
         printf("--- Emit code --- \n");
         bd_emit(ch, aprog);
 
+        return 0;
+
         /*
         BDSExpr *e1 = bd_typing(e);
         BDExpr2 *e2;
@@ -62,4 +64,6 @@ void compile(FILE *ch, BDSProgram *sprog)
         bd_emit(prog3);
         */
     }
+
+    return 1;
 }

@@ -1,12 +1,5 @@
 #include "compile.h"
 
-// Error
-
-#define ERROR 101
-#define ERROR_INFER 102
-#define ERROR_UNIFY 103
-#define ERROR_INVALID_ARGUMENT 104
-
 typedef struct {
     BDSExpr *e;
     BDType *t1;
@@ -433,8 +426,7 @@ void unify(BDType *t1, BDType *t2)
         BDType *c1 = t1->u.u_var.content;
         BDType *c2 = t2->u.u_var.content;
 
-        /*
-        if(c1 == NULL && c2 == NULL){
+        /*if(c1 == NULL && c2 == NULL){
             // Priority is given to the right type.
             t1->u.u_var.content = t2;
             return;
@@ -616,8 +608,8 @@ BDType *typing(Env *env, BDSExpr *e)
                         vector_add(actual_types, typing(env, vector_get(actuals, i)));
                     }
 
-                    //unify(bd_type_fun(actual_types, expected), typing(env, e->u.u_app.fun));
-                    unify(typing(env, e->u.u_app.fun), bd_type_fun(actual_types, expected));
+                    unify(bd_type_fun(actual_types, expected), typing(env, e->u.u_app.fun));
+                    //unify(typing(env, e->u.u_app.fun), bd_type_fun(actual_types, expected));
 
                     return expected;
                 }

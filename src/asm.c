@@ -69,7 +69,7 @@ BDReg argreg(int offset){
         case 5:
             return RARG6;
         default:
-            return RACC;
+            return RNONE;
     }
 }
 
@@ -92,7 +92,7 @@ BDReg fargreg(int offset){
         case 7:
             return RFARG8;
         default:
-            return RACC;
+            return RNONE;
     }
 }
 
@@ -430,6 +430,13 @@ void _bd_ainst_show(BDAInst *inst, int col, int depth)
             PRINT1(col, "MOVGLOBAL_L %s", inst->lbl);
             break;
 
+        case AI_NEG:
+            PRINT1(col, "NEG %s", inst->lbl);
+            break;
+        case AI_FNEG:
+            PRINT1(col, "FNEG %s", inst->lbl);
+            break;
+
         case AI_ADD:
             PRINT2(col, "ADD %s, %s", inst->u.u_bin.l, inst->u.u_bin.r);
             break;
@@ -459,11 +466,13 @@ void _bd_ainst_show(BDAInst *inst, int col, int depth)
         case AI_IFEQ:
             PRINT2(col, "IF %s == %s\n", inst->u.u_if.l, inst->u.u_if.r);
             _bd_aexpr_show(inst->u.u_if.t, col, depth + 1);
+            PRINT(col, "\n");
             _bd_aexpr_show(inst->u.u_if.f, col, depth + 1);
             break;
         case AI_IFLE:
             PRINT2(col, "IF %s <= %s\n", inst->u.u_if.l, inst->u.u_if.r);
             _bd_aexpr_show(inst->u.u_if.t, col, depth + 1);
+            PRINT(col, "\n");
             _bd_aexpr_show(inst->u.u_if.f, col, depth + 1);
             break;
 
@@ -633,6 +642,13 @@ void _bd_ainst_show(BDAInst *inst, int col, int depth)
             break;
         case AI_GETELM:
             PRINT1(col, "GETELM %d", inst->u.u_int);
+            break;
+
+        case AI_SAVE:
+            PRINT2(col, "SAVE %s, %s", inst->u.u_bin.l, inst->u.u_bin.r);
+            break;
+        case AI_RESTORE:
+            PRINT1(col, "RESTORE %s", inst->lbl);
             break;
 
     }

@@ -50,35 +50,46 @@ int main(int argc, char **argv)
 
     Parser ps;
     Lexer lexer;
-    char *filepath;
-    FILE *in, *out;
+    char *in, *out;
+    FILE *ic, *oc;
+    int comp;
 
     if(argc > 1){
-        filepath = argv[1];
+        in = argv[1];
     }
     else{
-        filepath = "test/sample.bd";
+        in = "test/sample.bd";
     }
 
-    in = fopen(filepath, "r");
-    if(in == NULL){
+    ic = fopen(in, "r");
+    if(ic == NULL){
         printf("Can not open the file.\n");
         return 1;
     }
 
-    out = fopen(outfile(filepath), "w");
-    //out = stdout;
-
     parser_init(&ps);
     lexer_init(&lexer);
-    lexer_setin(&lexer, in);
+    lexer_setin(&lexer, ic);
 
 //yydebug = 1;
-    if(yyparse(&ps, &lexer, "input") == 0){
-        compile(out, &ps.prog);
+    if(yyparse(&ps, &lexer, "input") != 0){
+        fclose(ic);
+        return;
     }
+    fclose(ic);
 
-    fclose(in);
+    out = outfile(in);
+    oc = fopen(out, "w");
+    //oc = stdout;
+
+    comp = compile(oc, &ps.prog);
+    fclose(oc);
+
+    if(comp == 0){
+        char cmd[100];
+        sprintf(cmd, "gcc %s %s", out, "test/core.c");
+        system(cmd);
+    }
 
     return 0;
 }

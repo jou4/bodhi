@@ -2,7 +2,12 @@
 
 static Vector *toplevels;
 
-Vector *closure_transform_fun(Env *env, Set *known, BDNExpr *e, BDExprIdent *ident);
+typedef struct {
+    char *newname;
+    Vector *fvs;
+} TransFunResult;
+
+TransFunResult *closure_transform_fun(Env *env, Set *known, BDNExpr *e, BDExprIdent *ident);
 
 BDCExpr *closure_transform(Env *env, Set *known, BDNExpr *e)
 {
@@ -47,8 +52,21 @@ BDCExpr *closure_transform(Env *env, Set *known, BDNExpr *e)
 
                 if(e->u.u_let.val->kind == E_FUN){
                     // ex) let a = \x y -> x + y in a 3 7
-                    closure_transform_fun(env, known, e->u.u_let.val, ident);
+                    TransFunResult *tr = closure_transform_fun(env, known, e->u.u_let.val, ident);
                     newexpr = closure_transform(local, known, e->u.u_let.body);
+                    Set *s1 = bd_cexpr_freevars(newexpr);
+                    if(set_has(s1, ident->name)){
+                        // The function appear as variable in body.
+                        // So create make-closure expression.
+                        newexpr = bd_cexpr_makecls(
+                                bd_expr_ident_clone(ident),
+                                bd_expr_closure(tr->newname, tr->fvs),
+                                newexpr);
+                    }
+                    else{
+                        vector_destroy(tr->fvs);
+                    }
+                    set_destroy(s1);
                 }
                 else{
                     newexpr = bd_cexpr_let(
@@ -79,7 +97,7 @@ BDCExpr *closure_transform(Env *env, Set *known, BDNExpr *e)
 
                 // Do closure-transform expression of the function.
                 knownlocal = set_clone(known);
-                fvs = closure_transform_fun(local, knownlocal, fun, ident);
+                TransFunResult *tr = closure_transform_fun(local, knownlocal, fun, ident);
 
                 // Transform body.
                 e1 = closure_transform(local, knownlocal, body);
@@ -90,7 +108,7 @@ BDCExpr *closure_transform(Env *env, Set *known, BDNExpr *e)
                     // So create make-closure expression.
                     newexpr = bd_cexpr_makecls(
                             bd_expr_ident_clone(ident),
-                            bd_expr_closure(ident->name, fvs),
+                            bd_expr_closure(tr->newname, tr->fvs),
                             e1);
                 }
                 else{
@@ -161,8 +179,10 @@ BDCExpr *closure_transform(Env *env, Set *known, BDNExpr *e)
     }
 }
 
-Vector *closure_transform_fun(Env *env, Set *known, BDNExpr *e, BDExprIdent *ident)
+TransFunResult *closure_transform_fun(Env *env, Set *known, BDNExpr *e, BDExprIdent *ident)
 {
+    TransFunResult *result = malloc(sizeof(TransFunResult));
+
     BDType *type = e->u.u_fun.type;
     Vector *formals = e->u.u_fun.formals;
     BDNExpr *body = e->u.u_fun.body;
@@ -236,9 +256,11 @@ Vector *closure_transform_fun(Env *env, Set *known, BDNExpr *e, BDExprIdent *ide
     Vector *newformals = bd_expr_idents_clone(formals);
 
     // Add to toplevel functions.
+    //char *newname = bd_generate_id(ident->type);
+    char *newname = ident->name;
     vector_add(toplevels,
             bd_cexpr_def(
-                bd_expr_ident_clone(ident),
+                bd_expr_ident(newname, bd_type_clone(ident->type)),
                 bd_cexpr_fun(
                     bd_type_clone(ident->type),
                     newformals,
@@ -251,7 +273,10 @@ Vector *closure_transform_fun(Env *env, Set *known, BDNExpr *e, BDExprIdent *ide
     set_destroy(s1);
     env_local_destroy(funlocal);
 
-    return fvs;
+    result->newname = newname;
+    result->fvs = fvs;
+
+    return result;
 }
 
 BDCExprDef *closure_transform_def(Env *env, Set *known, BDNExprDef *def)

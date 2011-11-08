@@ -17,6 +17,16 @@ void separete_idents(Vector *idents, Vector *ilist, Vector *flist)
     }
 }
 
+void idents_to_lbls(Vector *idents, Vector *lbls)
+{
+    BDExprIdent *ident;
+    int i;
+    for(i = 0; i < idents->length; i++){
+        ident = vector_get(idents, i);
+        vector_add(lbls, ident->name);
+    }
+}
+
 BDAExpr *virtual_expr(Env *env, BDCExpr *e)
 {
     switch(e->kind){
@@ -125,7 +135,7 @@ BDAExpr *virtual_expr(Env *env, BDCExpr *e)
                     fv = vector_get(freevars, i);
                     type = env_get(env, fv);
                     vector_add(es, bd_ainst_pushfv(type, fv, fvs_size));
-                    fvs_size += bd_value_size(type);
+                    fvs_size += SIZE_ALIGN;
                 }
 
                 Env *local = env_local_new(env);
@@ -144,7 +154,7 @@ BDAExpr *virtual_expr(Env *env, BDCExpr *e)
 
                 result = bd_aexpr_let(
                         bd_expr_ident_clone(ident),
-                        bd_ainst_makecls(ident->name, fvs_size),
+                        bd_ainst_makecls(closure->entry, fvs_size),
                         result);
 
                 return result;
@@ -165,8 +175,10 @@ BDAExpr *virtual_expr(Env *env, BDCExpr *e)
                     vector_add(idents, bd_expr_ident(name, env_get(env, name)));
                 }
 
+                BDExprIdent *ident;
                 Vector *ilist = vector_new();
                 Vector *flist = vector_new();
+
                 separete_idents(idents, ilist, flist);
 
                 vector_destroy(idents);

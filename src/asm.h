@@ -3,6 +3,7 @@
 
 #include "expr.h"
 
+#define SIZE_ALIGN 8
 #define SIZE_CHAR 1
 #define SIZE_INT 8
 #define SIZE_FLOAT 8
@@ -159,8 +160,8 @@ typedef enum {
     AI_PUSHELM,
     AI_GETELM,
 
-    //AI_SAVE,
-    //AI_RESTORE,
+    AI_SAVE,
+    AI_RESTORE,
 
 } BDAInstKind;
 
@@ -200,8 +201,8 @@ struct BDAInst {
             BDAExpr *f;
         } u_if;
         struct {
-            Vector *ilist;
-            Vector *flist;
+            Vector *ilist;  // Vector<BDExprIdent>
+            Vector *flist;  // Vector<BDExprIdent>
         } u_call;
     } u;
 };
@@ -331,8 +332,8 @@ BDAInst *bd_ainst_maketuple(int size);
 #define bd_ainst_loadelms(lbl) _ainst_unireg(AI_LOADELMS, lbl)
 #define bd_ainst_pushelm(lbl, offset) _ainst_push_offset(AI_PUSHELM, lbl, offset)
 #define bd_ainst_getelm(offset) _ainst_get_offset(AI_GETELM, offset)
-//#define bd_ainst_save(lbl, reg) _ainst_binreg(lbl, reg)
-//#define bd_ainst_restore(lbl) _ainst_unireg(lbl)
+#define bd_ainst_save(lbl, reg) _ainst_binreg(AI_SAVE, lbl, reg)
+#define bd_ainst_restore(lbl) _ainst_unireg(AI_RESTORE, lbl)
 
 BDAExpr *bd_aexpr_concat(BDAExpr *e1, BDExprIdent *ident, BDAExpr *e2);
 int bd_value_size(BDType *type);

@@ -17,7 +17,7 @@
 #include "cexpr.h"
 #include "asm.h"
 
-void compile(FILE *ch, BDSProgram *prog);
+int compile(FILE *ch, BDSProgram *prog);
 BDSProgram *bd_typing(BDSProgram *prog);
 BDNProgram *bd_knormalize(BDSProgram *prog);
 BDNProgram *bd_alpha_convert(BDNProgram *prog);
@@ -31,5 +31,11 @@ BDCProgram *bd_closure_transform(BDNProgram *prog);
 BDAProgram *bd_virtual(BDCProgram *prog);
 BDAProgram *bd_regalloc(BDAProgram *prog);
 void bd_emit(FILE *ch, BDAProgram *prog);
+
+// Error
+#define ERROR 101
+#define ERROR_INFER 102
+#define ERROR_UNIFY 103
+#define ERROR_INVALID_ARGUMENT 104
 
 #endif
