@@ -90,7 +90,6 @@ BDCExpr *closure_transform(Env *env, Set *known, BDNExpr *e)
 
                 BDCExpr *e1, *newexpr;
                 Set *knownlocal, *s1;
-                Vector *fvs;
 
                 Env *local = env_local_new(env);
                 env_set(local, ident->name, ident->type);
@@ -114,7 +113,7 @@ BDCExpr *closure_transform(Env *env, Set *known, BDNExpr *e)
                 else{
                     newexpr = e1;
 
-                    vector_destroy(fvs);
+                    vector_destroy(tr->fvs);
                 }
 
                 // Clean.

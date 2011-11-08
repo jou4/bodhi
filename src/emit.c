@@ -91,10 +91,10 @@ void emit_inst(EmitState *st, BDAInst *inst, char *dst)
                         op = "divq"; break;
                 }
 
+                fprintf(OC, "\t%s %s, %s\n", op, inst->u.u_bin.r, inst->u.u_bin.l);
                 if(strne(inst->u.u_bin.l, dst)){
                     fprintf(OC, "\tmovq %s, %s\n", inst->u.u_bin.l, dst);
                 }
-                fprintf(OC, "\t%s %s, %s\n", op, inst->u.u_bin.r, inst->u.u_bin.l);
             }
             break;
 
@@ -115,6 +115,9 @@ void emit_inst(EmitState *st, BDAInst *inst, char *dst)
             }
             else{
                 fprintf(OC, "\tcall %s\n", inst->lbl);
+                if(strne(reg_name(RACC), dst)){
+                    fprintf(OC, "\tmovq %s, %s\n", reg_name(RACC), dst);
+                }
             }
             break;
         case AI_CALLPTR:
@@ -126,6 +129,9 @@ void emit_inst(EmitState *st, BDAInst *inst, char *dst)
                     }
                     else{
                         fprintf(OC, "\tcall *%s\n", inst->lbl);
+                        if(strne(reg_name(RACC), dst)){
+                            fprintf(OC, "\tmovq %s, %s\n", reg_name(RACC), dst);
+                        }
                     }
                 }
                 else{
@@ -135,6 +141,9 @@ void emit_inst(EmitState *st, BDAInst *inst, char *dst)
                     }
                     else{
                         fprintf(OC, "\tcall *%s(%s)\n", inst->lbl, "%rip");
+                        if(strne(reg_name(RACC), dst)){
+                            fprintf(OC, "\tmovq %s, %s\n", reg_name(RACC), dst);
+                        }
                     }
                 }
             }
