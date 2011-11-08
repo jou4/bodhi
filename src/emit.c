@@ -8,6 +8,7 @@ typedef struct {
 } EmitState;
 
 #define OC st->ch
+#define TAILCALL st->tailpoint
 
 
 int strne(char *s1, char *s2)
@@ -23,6 +24,8 @@ int strne(char *s1, char *s2)
         return 1;
     }
 }
+
+void emit(EmitState *st, BDAExpr *e);
 
 void emit_inst(EmitState *st, BDAInst *inst, char *dst)
 {
@@ -86,9 +89,11 @@ void emit_inst(EmitState *st, BDAInst *inst, char *dst)
                     case AI_SUB:
                         op = "subq"; break;
                     case AI_MUL:
-                        op = "mulq"; break;
+                        op = "imulq"; break;
                     case AI_DIV:
-                        op = "divq"; break;
+                        op = "idivq";
+                        fprintf(OC, "\tmovq $0, %s\n", "%rdx");
+                        break;
                 }
 
                 fprintf(OC, "\t%s %s, %s\n", op, inst->u.u_bin.r, inst->u.u_bin.l);
@@ -103,13 +108,44 @@ void emit_inst(EmitState *st, BDAInst *inst, char *dst)
         case AI_FSUB:
         case AI_FMUL:
         case AI_FDIV:
+            // TODO
+            break;
 
         case AI_IFEQ:
         case AI_IFLE:
+            {
+                char *l = inst->u.u_if.l;
+                char *r = inst->u.u_if.r;
+                BDAExpr *t = inst->u.u_if.t;
+                BDAExpr *f = inst->u.u_if.f;
+
+                char *t_lbl = bd_generate_id(NULL);
+                char *f_lbl = bd_generate_id(NULL);
+                char *end_lbl = bd_generate_id(NULL);
+
+                fprintf(OC, "\tcmp %s, %s\n", r, l);
+                switch(inst->kind){
+                    case AI_IFEQ:
+                        fprintf(OC, "\tje %s\n", t_lbl);
+                        break;
+                    case AI_IFLE:
+                        fprintf(OC, "\tjle %s\n", t_lbl);
+                        break;
+                }
+
+                fprintf(OC, "%s:\n", f_lbl);
+                emit(st, f);
+                fprintf(OC, "\tjmp %s\n", end_lbl);
+
+                fprintf(OC, "%s:\n", t_lbl);
+                emit(st, t);
+
+                fprintf(OC, "%s:\n", end_lbl);
+            }
             break;
 
         case AI_CALL:
-            if(st->tailpoint){
+            if(TAILCALL){
                 fprintf(OC, "\tpopq %s\n", "%rbp");
                 fprintf(OC, "\tjmp %s\n", inst->lbl);
             }
@@ -123,7 +159,7 @@ void emit_inst(EmitState *st, BDAInst *inst, char *dst)
         case AI_CALLPTR:
             {
                 if(inst->lbl[0] == '%'){
-                    if(st->tailpoint){
+                    if(TAILCALL){
                         fprintf(OC, "\tpopq %s\n", "%rbp");
                         fprintf(OC, "\tjmp *%s\n", inst->lbl);
                     }
@@ -135,7 +171,7 @@ void emit_inst(EmitState *st, BDAInst *inst, char *dst)
                     }
                 }
                 else{
-                    if(st->tailpoint){
+                    if(TAILCALL){
                         fprintf(OC, "\tpopq %s\n", "%rbp");
                         fprintf(OC, "\tjmp *%s(%s)\n", inst->lbl, "%rip");
                     }
@@ -152,14 +188,9 @@ void emit_inst(EmitState *st, BDAInst *inst, char *dst)
         case AI_TAILCALLPOINT:
             if( ! st->main){
                 fprintf(OC, "\tmovq %s, %s\n", "%rbp", "%rsp");
-                st->tailpoint = 1;
+                TAILCALL = 1;
             }
             return;
-
-        case AI_JMP:
-        case AI_JEQ:
-        case AI_JLE:
-            break;
 
         case AI_PUSHLCL_C:
             fprintf(OC, "\tmovq %s, -%d(%s)\n", inst->lbl, inst->u.u_int + SIZE_ALIGN, "%rbp");
@@ -204,7 +235,7 @@ void emit_inst(EmitState *st, BDAInst *inst, char *dst)
                     return;
                 }
 
-                if(st->tailpoint){
+                if(TAILCALL){
                     offset = offset * 8 + 16;
                 }
                 else{
@@ -266,8 +297,15 @@ void emit(EmitState *st, BDAExpr *e)
             emit_inst(st, e->u.u_ans.val, "%rax");
             break;
         case AE_LET:
-            emit_inst(st, e->u.u_let.val, e->u.u_let.ident->name);
-            emit(st, e->u.u_let.body);
+            {
+                BDExprIdent *ident = e->u.u_let.ident;
+                char *dst = NULL;
+                if(ident->type->kind != T_UNIT){
+                    dst = ident->name;
+                }
+                emit_inst(st, e->u.u_let.val, dst);
+                emit(st, e->u.u_let.body);
+            }
             break;
     }
 }
@@ -285,7 +323,6 @@ void emit_fundef(EmitState *st, BDAExprDef *def)
         fprintf(OC, "\t.data\n");
         fprintf(OC, "%s:\n", def->ident->name);
         fprintf(OC, "\t.quad %s\n", textlbl);
-
     }
 
     // .text
@@ -371,8 +408,8 @@ void bd_emit(FILE *ch, BDAProgram *prog)
     vec = prog->fundefs;
     for(i = 0; i < vec->length; i++){
         def = vector_get(vec, i);
-        st->tailpoint = 0;
         st->main = 0;
+        st->tailpoint = 0;
         emit_fundef(st, def);
     }
 

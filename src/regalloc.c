@@ -387,7 +387,6 @@ AllocResult allocate_register(Env *regenv, char *lbl, BDAExpr *e, int restore)
 char *find_reg(Env *env, Env *regenv, char *lbl)
 {
     if(lbl[0] == '%'){
-        env_set(regenv, lbl, NULL);
         return lbl;
     }
 
@@ -398,8 +397,6 @@ char *find_reg(Env *env, Env *regenv, char *lbl)
         key = vector_get(keys, i);
         val = map_get(regenv, key);
         if(val != NULL && strcmp(val, lbl) == 0){
-            printf("free %s, %s\n", lbl, key);
-            env_set(regenv, key, NULL);
             return key;
         }
     }
@@ -409,8 +406,12 @@ char *find_reg(Env *env, Env *regenv, char *lbl)
 
 void *use_reg(Env *regenv, BDReg reg, char *lbl)
 {
-    printf("use_reg, %s, %s\n", lbl, reg_name(reg));
     env_set(regenv, reg_name(reg), lbl);
+}
+
+void *free_reg(Env *regenv, char *reg)
+{
+    env_set(regenv, reg, NULL);
 }
 
 BDAExpr *resolve_lbl(Env *env, char *lbl, BDReg dst, BDAExpr *body)
@@ -464,6 +465,8 @@ BDAExpr *resolve_lbl(Env *env, char *lbl, BDReg dst, BDAExpr *body)
     }
 }
 
+BDAExpr *regalloc(AllocState *st, Env *env, Env *regenv, BDAExpr *e, int tail);
+
 BDAExpr *regalloc_inst(AllocState *st, Env *env, Env *regenv, BDAInst *inst, int tail)
 {
     switch(inst->kind){
@@ -476,41 +479,110 @@ BDAExpr *regalloc_inst(AllocState *st, Env *env, Env *regenv, BDAInst *inst, int
             return bd_aexpr_ans(bd_ainst_seti(inst->u.u_int));
 
         case AI_SETGLOBAL_C:
-            return bd_aexpr_ans(bd_ainst_setglobal_c(inst->u.u_bin.l, find_reg(env, regenv, inst->u.u_bin.r)));
         case AI_SETGLOBAL_I:
-            return bd_aexpr_ans(bd_ainst_setglobal_i(inst->u.u_bin.l, find_reg(env, regenv, inst->u.u_bin.r)));
         case AI_SETGLOBAL_F:
-            return bd_aexpr_ans(bd_ainst_setglobal_f(inst->u.u_bin.l, find_reg(env, regenv, inst->u.u_bin.r)));
         case AI_SETGLOBAL_L:
-            return bd_aexpr_ans(bd_ainst_setglobal_l(inst->u.u_bin.l, find_reg(env, regenv, inst->u.u_bin.r)));
+            {
+                char *l = inst->u.u_bin.l;
+                char *r = find_reg(env, regenv, inst->u.u_bin.r);
+
+                switch(inst->kind){
+                    case AI_SETGLOBAL_C:
+                        return bd_aexpr_ans(bd_ainst_setglobal_c(inst->u.u_bin.l, r));
+                    case AI_SETGLOBAL_I:
+                        return bd_aexpr_ans(bd_ainst_setglobal_i(inst->u.u_bin.l, r));
+                    case AI_SETGLOBAL_F:
+                        return bd_aexpr_ans(bd_ainst_setglobal_f(inst->u.u_bin.l, r));
+                    case AI_SETGLOBAL_L:
+                        return bd_aexpr_ans(bd_ainst_setglobal_l(inst->u.u_bin.l, r));
+                }
+            }
 
         case AI_MOV:
-            return bd_aexpr_ans(bd_ainst_mov(find_reg(env, regenv, inst->lbl)));
-
         case AI_NEG:
-            return bd_aexpr_ans(bd_ainst_neg(find_reg(env, regenv, inst->lbl)));
+            {
+                char *lbl = find_reg(env, regenv, inst->lbl);
+                free_reg(regenv, lbl);
+
+                switch(inst->kind){
+                    case AI_MOV:
+                        return bd_aexpr_ans(bd_ainst_mov(lbl));
+                    case AI_NEG:
+                        return bd_aexpr_ans(bd_ainst_neg(lbl));
+                }
+            }
+
         case AI_ADD:
-            return bd_aexpr_ans(bd_ainst_add(
-                        find_reg(env, regenv, inst->u.u_bin.l), find_reg(env, regenv, inst->u.u_bin.r)));
         case AI_SUB:
-            return bd_aexpr_ans(bd_ainst_sub(
-                        find_reg(env, regenv, inst->u.u_bin.l), find_reg(env, regenv, inst->u.u_bin.r)));
         case AI_MUL:
-            return bd_aexpr_ans(bd_ainst_mul(
-                        find_reg(env, regenv, inst->u.u_bin.l), find_reg(env, regenv, inst->u.u_bin.r)));
         case AI_DIV:
-            return bd_aexpr_ans(bd_ainst_div(
-                        find_reg(env, regenv, inst->u.u_bin.l), find_reg(env, regenv, inst->u.u_bin.r)));
+            {
+                char *l = find_reg(env, regenv, inst->u.u_bin.l);
+                char *r = find_reg(env, regenv, inst->u.u_bin.r);
+
+                free_reg(regenv, l);
+                free_reg(regenv, r);
+
+                switch(inst->kind){
+                    case AI_ADD:
+                        return bd_aexpr_ans(bd_ainst_add(l, r));
+                    case AI_SUB:
+                        return bd_aexpr_ans(bd_ainst_sub(l, r));
+                    case AI_MUL:
+                        return bd_aexpr_ans(bd_ainst_mul(l, r));
+                    case AI_DIV:
+                        return bd_aexpr_ans(bd_ainst_div(l, r));
+                }
+            }
 
         case AI_FNEG:
         case AI_FADD:
         case AI_FSUB:
         case AI_FMUL:
         case AI_FDIV:
+            // TODO
             break;
 
         case AI_IFEQ:
         case AI_IFLE:
+            {
+                char *l = find_reg(env, regenv, inst->u.u_if.l);
+                char *r = find_reg(env, regenv, inst->u.u_if.r);
+
+                free_reg(regenv, l);
+                free_reg(regenv, r);
+
+                BDAExpr *t;
+                BDAExpr *f;
+
+                AllocState *local_st = malloc(sizeof(AllocState));
+                Env *local_env;
+                Env *local_regenv;
+
+                *local_st = *st;
+                local_env = env_local_new(env);
+                local_regenv = env_local_new(regenv);
+                t = regalloc(local_st, local_env, local_regenv, inst->u.u_if.t, tail);
+                env_local_destroy(local_env);
+                env_local_destroy(local_regenv);
+
+                *local_st = *st;
+                local_env = env_local_new(env);
+                local_regenv = env_local_new(regenv);
+                f = regalloc(local_st, local_env, local_regenv, inst->u.u_if.f, tail);
+                env_local_destroy(local_env);
+                env_local_destroy(local_regenv);
+
+                free(local_st);
+
+                switch(inst->kind){
+                    case AI_IFEQ:
+                        return bd_aexpr_ans(bd_ainst_ifeq(l, r, t, f));
+                    case AI_IFLE:
+                    default:
+                        return bd_aexpr_ans(bd_ainst_ifle(l, r, t, f));
+                }
+            }
             break;
 
         case AI_CALLCLS:
@@ -549,6 +621,7 @@ BDAExpr *regalloc_inst(AllocState *st, Env *env, Env *regenv, BDAInst *inst, int
                 BDExprIdent *ident;
                 int i, stack = (ilist->length - 6) + (flist->length - 8) - 1;
                 BDReg target;
+                char *reg;
 
                 for(i = flist->length - 1; i >= 0; i--){
                     ident = vector_get(flist, i);
@@ -563,9 +636,12 @@ BDAExpr *regalloc_inst(AllocState *st, Env *env, Env *regenv, BDAInst *inst, int
                         stack--;
                     }
                     else{
+                        reg = find_reg(env, regenv, ident->name);
+                        free_reg(regenv, reg);
+
                         body = bd_aexpr_let(
                                 bd_expr_ident("", bd_type_unit()),
-                                bd_ainst_pusharg(ident->type, find_reg(env, regenv, ident->name), i),
+                                bd_ainst_pusharg(ident->type, reg, i),
                                 body);
                     }
                 }
@@ -583,9 +659,12 @@ BDAExpr *regalloc_inst(AllocState *st, Env *env, Env *regenv, BDAInst *inst, int
                         stack--;
                     }
                     else{
+                        reg = find_reg(env, regenv, ident->name);
+                        free_reg(regenv, reg);
+
                         body = bd_aexpr_let(
                                 bd_expr_ident("", bd_type_unit()),
-                                bd_ainst_pusharg(ident->type, find_reg(env, regenv, ident->name), i),
+                                bd_ainst_pusharg(ident->type, reg, i),
                                 body);
                     }
                 }
@@ -604,26 +683,46 @@ BDAExpr *regalloc_inst(AllocState *st, Env *env, Env *regenv, BDAInst *inst, int
         case AI_MAKECLS:
             return bd_aexpr_ans(bd_ainst_makecls(inst->lbl, inst->u.u_int));
         case AI_LOADFVS:
-            return bd_aexpr_ans(bd_ainst_loadfvs(find_reg(env, regenv, inst->lbl)));
+            {
+                char *lbl = find_reg(env, regenv, inst->lbl);
+                free_reg(regenv, lbl);
+                return bd_aexpr_ans(bd_ainst_loadfvs(lbl));
+            }
 
         case AI_PUSHFV_C:
-            return bd_aexpr_ans(bd_ainst_pushfv_c(find_reg(env, regenv, inst->lbl), inst->u.u_int));
         case AI_PUSHFV_I:
-            return bd_aexpr_ans(bd_ainst_pushfv_i(find_reg(env, regenv, inst->lbl), inst->u.u_int));
         case AI_PUSHFV_F:
-            return bd_aexpr_ans(bd_ainst_pushfv_f(find_reg(env, regenv, inst->lbl), inst->u.u_int));
         case AI_PUSHFV_L:
-            return bd_aexpr_ans(bd_ainst_pushfv_l(find_reg(env, regenv, inst->lbl), inst->u.u_int));
+            {
+                char *lbl = find_reg(env, regenv, inst->lbl);
+                free_reg(regenv, lbl);
+
+                switch(inst->kind){
+                    case AI_PUSHFV_C:
+                        return bd_aexpr_ans(bd_ainst_pushfv_c(lbl, inst->u.u_int));
+                    case AI_PUSHFV_I:
+                        return bd_aexpr_ans(bd_ainst_pushfv_i(lbl, inst->u.u_int));
+                    case AI_PUSHFV_F:
+                        return bd_aexpr_ans(bd_ainst_pushfv_f(lbl, inst->u.u_int));
+                    case AI_PUSHFV_L:
+                        return bd_aexpr_ans(bd_ainst_pushfv_l(lbl, inst->u.u_int));
+                }
+            }
 
         case AI_MAKETUPLE:
-            {
-                return bd_aexpr_ans(bd_ainst_maketuple(inst->u.u_int));
-            }
-            break;
+            return bd_aexpr_ans(bd_ainst_maketuple(inst->u.u_int));
         case AI_LOADELMS:
-            return bd_aexpr_ans(bd_ainst_loadelms(find_reg(env, regenv, inst->lbl)));
+            {
+                char *lbl = find_reg(env, regenv, inst->lbl);
+                free_reg(regenv, lbl);
+                return bd_aexpr_ans(bd_ainst_loadelms(lbl));
+            }
         case AI_PUSHELM:
-            return bd_aexpr_ans(bd_ainst_pushelm(find_reg(env, regenv, inst->lbl), inst->u.u_int));
+            {
+                char *lbl = find_reg(env, regenv, inst->lbl);
+                free_reg(regenv, lbl);
+                return bd_aexpr_ans(bd_ainst_pushelm(lbl, inst->u.u_int));
+            }
         case AI_GETELM:
             return bd_aexpr_ans(bd_ainst_getelm(inst->u.u_int));
         case AI_RESTORE:
@@ -848,12 +947,9 @@ BDAExprDef *regalloc_fundef(Env *env, BDAExprDef *def)
             else{
                 reg2lcl = bd_aexpr_let(
                         bd_expr_ident("", bd_type_unit()),
-                        bd_ainst_pushlcl(formal->type, reg_name(RACC), st->local_offset),
+                        bd_ainst_pushlcl(formal->type, reg_name(reg), st->local_offset),
                         NULL);
-                tail->u.u_let.body = bd_aexpr_let(
-                        bd_expr_ident(reg_name(RACC), formal->type),
-                        bd_ainst_getarg(formal->type, i),
-                        reg2lcl);
+                tail->u.u_let.body = reg2lcl;
                 tail = reg2lcl;
 
                 env_set(local, formal->name, lbl_state_offset(formal->type, POS_LCL, st->local_offset));
@@ -874,12 +970,9 @@ BDAExprDef *regalloc_fundef(Env *env, BDAExprDef *def)
             else{
                 reg2lcl = bd_aexpr_let(
                         bd_expr_ident("", bd_type_unit()),
-                        bd_ainst_pushlcl(formal->type, reg_name(RACC), st->local_offset),
+                        bd_ainst_pushlcl(formal->type, reg_name(reg), st->local_offset),
                         NULL);
-                tail->u.u_let.body = bd_aexpr_let(
-                        bd_expr_ident(reg_name(RACC), formal->type),
-                        bd_ainst_getarg(formal->type, i),
-                        reg2lcl);
+                tail->u.u_let.body = reg2lcl;
                 tail = reg2lcl;
 
                 env_set(local, formal->name, lbl_state_offset(formal->type, POS_LCL, st->local_offset));
