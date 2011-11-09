@@ -336,9 +336,43 @@ void emit_inst(EmitState *st, BDAInst *inst, char *dst)
             break;
 
         case AI_MAKETUPLE:
+            {
+                int size = inst->u.u_int;
+                char *size_dst = reg_name(argreg(0));
+
+                fprintf(OC, "\tmovq $%d, %s\n", size, size_dst);
+                fprintf(OC, "\tcall %s\n", "_bodhi_core_make_tuple");
+
+                if(strne("%rax", dst)){
+                    fprintf(OC, "\tmovq %s, %s\n", "%rax", dst);
+                }
+            }
+            break;
         case AI_LOADELMS:
+            {
+                char *lbl = inst->lbl;
+                char *lbl_dst = reg_name(argreg(0));
+
+                if(strne(lbl, lbl_dst)){
+                    fprintf(OC, "\tmovq %s, %s\n", lbl, lbl_dst);
+                }
+                fprintf(OC, "\tcall %s\n", "_bodhi_core_tuple_elems");
+                fprintf(OC, "\tmovq %s, %s\n", "%rax", reg_hp);
+            }
+            break;
         case AI_PUSHELM:
+            {
+                char *lbl = inst->lbl;
+                int offset = inst->u.u_int;
+                fprintf(OC, "\tmovq %s, %d(%s)\n", lbl, offset * SIZE_ALIGN, reg_hp);
+            }
+            break;
         case AI_GETELM:
+            {
+                char *lbl = inst->lbl;
+                int offset = inst->u.u_int;
+                fprintf(OC, "\tmovq %d(%s), %s\n", offset * SIZE_ALIGN, reg_hp, dst);
+            }
             break;
 
     }

@@ -114,9 +114,9 @@ BDReg extra_regs[] = {
     -1
 };
 
-void target_reg_in_expr(Env *regenv, char *lbl, BDAExpr *e, TargetRegResult *result);
+void target_reg_in_expr(Env *regenv, char *lbl, BDAExpr *e, TargetRegResult *result, int wallstop);
 
-int target_reg_in_inst(Env *regenv, char *lbl, BDAInst *inst, TargetRegResult *result)
+int target_reg_in_inst(Env *regenv, char *lbl, BDAInst *inst, TargetRegResult *result, int wallstop)
 {
     switch(inst->kind){
         case AI_SETGLOBAL_C:
@@ -179,8 +179,8 @@ int target_reg_in_inst(Env *regenv, char *lbl, BDAInst *inst, TargetRegResult *r
                 TargetRegResult *r1 = target_reg_result_new();
                 TargetRegResult *r2 = target_reg_result_new();
 
-                target_reg_in_expr(regenv, lbl, inst->u.u_if.t, r1);
-                target_reg_in_expr(regenv, lbl, inst->u.u_if.f, r2);
+                target_reg_in_expr(regenv, lbl, inst->u.u_if.t, r1, wallstop);
+                target_reg_in_expr(regenv, lbl, inst->u.u_if.f, r2, wallstop);
 
                 if(ml || mr){
                     if(r1->target != RNONE || r2->target != RNONE){
@@ -251,7 +251,13 @@ int target_reg_in_inst(Env *regenv, char *lbl, BDAInst *inst, TargetRegResult *r
             }
 
         case AI_MAKECLS:
-            return 1;
+            {
+                if(is_match_lbl(lbl, inst->lbl)){
+                    add_target_reg(result, RARG1);
+                    return 0;
+                }
+                return 1;
+            }
         case AI_LOADFVS:
             {
                 if(is_match_lbl(lbl, inst->lbl)){
@@ -302,20 +308,20 @@ int target_reg_in_inst(Env *regenv, char *lbl, BDAInst *inst, TargetRegResult *r
     }
 }
 
-void target_reg_in_expr(Env *regenv, char *lbl, BDAExpr *e, TargetRegResult *result)
+void target_reg_in_expr(Env *regenv, char *lbl, BDAExpr *e, TargetRegResult *result, int wallstop)
 {
     switch(e->kind){
         case AE_ANS:
             {
-                target_reg_in_inst(regenv, lbl, e->u.u_ans.val, result);
+                target_reg_in_inst(regenv, lbl, e->u.u_ans.val, result, wallstop);
                 return;
             }
             break;
         case AE_LET:
             {
                 TargetRegResult *r1 = target_reg_result_new();
-                int wall = target_reg_in_inst(regenv, lbl, e->u.u_let.val, r1);
-                if(wall){
+                int wall = target_reg_in_inst(regenv, lbl, e->u.u_let.val, r1, wallstop);
+                if(wall && wallstop){
                     // There is wall(by function-call or if-expr) but not target-lbl.
                     target_reg_result_destroy(r1);
                     return;
@@ -332,7 +338,7 @@ void target_reg_in_expr(Env *regenv, char *lbl, BDAExpr *e, TargetRegResult *res
                         else{
                             target_reg_result_destroy(r1);
                             r1 = target_reg_result_new();
-                            target_reg_in_expr(regenv, lbl, e->u.u_let.body, r1);
+                            target_reg_in_expr(regenv, lbl, e->u.u_let.body, r1, 0);
                             if(r1->target != RNONE){
                                 result->reuse = 1;
                             }
@@ -340,7 +346,7 @@ void target_reg_in_expr(Env *regenv, char *lbl, BDAExpr *e, TargetRegResult *res
                         }
                     }
                     else{
-                        target_reg_in_expr(regenv, lbl, e->u.u_let.body, result);
+                        target_reg_in_expr(regenv, lbl, e->u.u_let.body, result, wallstop);
                     }
                 }
             }
@@ -379,7 +385,7 @@ void target_reg_in_expr(Env *regenv, char *lbl, BDAExpr *e, TargetRegResult *res
 BDReg target_reg(Env *regenv, char *lbl, BDAExpr *e, int restore)
 {
     TargetRegResult *result = target_reg_result_new();
-    target_reg_in_expr(regenv, lbl, e, result);
+    target_reg_in_expr(regenv, lbl, e, result, 1);
 
     BDReg target = result->target;
 
@@ -635,13 +641,6 @@ BDAExpr *regalloc_inst(AllocState *st, Env *env, Env *regenv, BDAInst *inst, int
                             char *entry_reg = find_reg(env, regenv, inst->lbl);
                             free_reg(regenv, entry_reg);
                             body = bd_aexpr_ans(bd_ainst_callptr(entry_reg));
-                            /*
-                            body = bd_aexpr_let(
-                                    bd_expr_ident("", bd_type_unit()),
-                                    bd_ainst_getcls_entry(reg_name(RACC)),
-                                    bd_aexpr_ans(bd_ainst_callptr(reg_name(RACC))));
-                            body = resolve_lbl(env, inst->lbl, RACC, body);
-                            */
                         }
                         break;
                     case AI_CCALL:
@@ -734,7 +733,11 @@ BDAExpr *regalloc_inst(AllocState *st, Env *env, Env *regenv, BDAInst *inst, int
             break;
 
         case AI_MAKECLS:
-            return bd_aexpr_ans(bd_ainst_makecls(inst->lbl, inst->u.u_int));
+            {
+                char *lbl = find_reg(env, regenv, inst->lbl);
+                free_reg(regenv, lbl);
+                return bd_aexpr_ans(bd_ainst_makecls(lbl, inst->u.u_int));
+            }
         case AI_LOADFVS:
             {
                 char *lbl = find_reg(env, regenv, inst->lbl);
@@ -1051,7 +1054,7 @@ BDAExprDef *regalloc_fundef(Env *env, BDAExprDef *def)
                     NULL);
             tail->u.u_let.body = bd_aexpr_let(
                     bd_expr_ident(reg_name(RACC), formal->type),
-                    bd_ainst_getfv(formal->type, st->local_offset),
+                    bd_ainst_getfv(formal->type, i),
                     reg2lcl);
             tail = reg2lcl;
 

@@ -278,6 +278,149 @@ TransFunResult *closure_transform_fun(Env *env, Set *known, BDNExpr *e, BDExprId
     return result;
 }
 
+char *find_closure_name(Env *env, char *name)
+{
+    char *result = env_get(env, name);
+    if(result == NULL){
+        return name;
+    }
+    return result;
+}
+
+BDCExpr *_rename_closure(Env *env, BDCExpr *e)
+{
+    switch(e->kind){
+        case E_UNIOP:
+            e->u.u_uniop.val = find_closure_name(env, e->u.u_uniop.val);
+            break;
+        case E_BINOP:
+            e->u.u_binop.l = find_closure_name(env, e->u.u_binop.l);
+            e->u.u_binop.r = find_closure_name(env, e->u.u_binop.r);
+            break;
+        case E_IF:
+            e->u.u_if.l = find_closure_name(env, e->u.u_if.l);
+            e->u.u_if.r = find_closure_name(env, e->u.u_if.r);
+            _rename_closure(env, e->u.u_if.t);
+            _rename_closure(env, e->u.u_if.f);
+            break;
+        case E_LET:
+            {
+                BDExprIdent *ident = e->u.u_let.ident;
+
+                // Add self to env.
+                Env *local = env_local_new(env);
+                env_set(local, ident->name, ident->name);
+
+                _rename_closure(env, e->u.u_let.val);
+                _rename_closure(local, e->u.u_let.body);
+
+                env_local_destroy(local);
+            }
+            break;
+        case E_VAR:
+            e->u.u_var.name = find_closure_name(env, e->u.u_var.name);
+            break;
+        case E_FUN:
+            {
+                // Add args to env.
+                Env *local = env_local_new(env);
+
+                Vector *vec;
+                BDExprIdent *ident;
+                int i;
+
+                vec = e->u.u_fun.formals;
+                for(i = 0; i < vec->length; i++){
+                    ident = vector_get(vec, i);
+                    env_set(local, ident->name, ident->name);
+                }
+                vec = e->u.u_fun.freevars;
+                for(i = 0; i < vec->length; i++){
+                    ident = vector_get(vec, i);
+                    env_set(local, ident->name, ident->name);
+                }
+
+                _rename_closure(local, e->u.u_fun.body);
+
+                env_local_destroy(local);
+            }
+            break;
+        case E_MAKECLS:
+            {
+                BDExprIdent *ident = e->u.u_makecls.ident;
+
+                char *oldname = ident->name;
+                char *newname = bd_generate_id(ident->type);
+
+                // Rename self.
+                ident->name = newname;
+
+                // Add to env.
+                Env *local = env_local_new(env);
+                env_set(local, oldname, newname);
+
+                // Rename expression.
+                _rename_closure(local, e->u.u_makecls.body);
+
+                env_local_destroy(local);
+            }
+            break;
+        case E_APPCLS:
+        case E_APPDIR:
+        case E_CCALL:
+            {
+                e->u.u_app.fun = find_closure_name(env, e->u.u_app.fun);
+
+                Vector *vec = e->u.u_app.actuals;
+                int i;
+                for(i = 0; i < vec->length; i++){
+                    vector_set(vec, i, find_closure_name(env, vector_get(vec, i)));
+                }
+            }
+            break;
+        case E_TUPLE:
+            {
+                Vector *vec = e->u.u_tuple.elems;
+                int i;
+                for(i = 0; i < vec->length; i++){
+                    vector_set(vec, i, find_closure_name(env, vector_get(vec, i)));
+                }
+            }
+            break;
+        case E_LETTUPLE:
+            {
+                // Add self to env.
+                Env *local = env_local_new(env);
+                Vector *vec = e->u.u_lettuple.idents;
+
+                BDExprIdent *ident;
+                int i;
+                for(i = 0; i < vec->length; i++){
+                    ident = vector_get(vec, i);
+                    env_set(local, ident->name, ident->name);
+                }
+
+                e->u.u_lettuple.val = find_closure_name(env, e->u.u_lettuple.val);
+                _rename_closure(local, e->u.u_lettuple.body);
+
+                env_local_destroy(local);
+            }
+            break;
+    }
+
+    return e;
+}
+
+BDCExpr *rename_closure(BDCExpr *e)
+{
+    // Rename name of new closure.
+    Env *rename_env = env_new();
+    e = _rename_closure(rename_env, e);
+    env_destroy(rename_env);
+
+    return e;
+}
+
 BDCExprDef *closure_transform_def(Env *env, Set *known, BDNExprDef *def)
 {
     BDExprIdent *ident = def->ident;
@@ -314,7 +457,7 @@ BDCExprDef *closure_transform_def(Env *env, Set *known, BDNExprDef *def)
 
     return bd_cexpr_def(
             bd_expr_ident_clone(def->ident),
-            newexpr);
+            rename_closure(newexpr));
 }
 
 
@@ -363,7 +506,7 @@ BDCProgram *bd_closure_transform(BDNProgram *prog)
     def = prog->maindef;
     cprog->maindef = bd_cexpr_def(
             bd_expr_ident_clone(def->ident),
-            closure_transform(env, known, def->body));
+            rename_closure(closure_transform(env, known, def->body)));
 
     // Append collected toplevel-functions to definitions.
     for(i = 0; i < toplevels->length; i++){

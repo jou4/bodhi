@@ -155,7 +155,10 @@ BDAExpr *virtual_expr(Env *env, BDCExpr *e)
                 result = bd_aexpr_let(
                         bd_expr_ident_clone(ident),
                         bd_ainst_makecls(closure->entry, fvs_size),
-                        result);
+                        bd_aexpr_let(
+                            bd_expr_ident("", bd_type_unit()),
+                            bd_ainst_loadfvs(ident->name),
+                            result));
 
                 return result;
             }
