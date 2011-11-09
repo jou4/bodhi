@@ -628,6 +628,10 @@ void _bd_ainst_show(BDAInst *inst, int col, int depth)
             PRINT1(col, "GETELM %d", inst->u.u_int);
             break;
 
+        case AI_MAKESTRING:
+            PRINT1(col, "MAKESTRING %s", inst->lbl);
+            break;
+
         case AI_SAVE:
             PRINT2(col, "SAVE %s, %s", inst->u.u_bin.l, inst->u.u_bin.r);
             break;
