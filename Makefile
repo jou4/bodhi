@@ -23,8 +23,9 @@ dir:
 
 clean:
 	cd util; $(MAKE) clean
-	rm lib/libutil.a
 	cd src; $(MAKE) clean
-	rm bin/bodhi
 	cd core; $(MAKE) clean
-	rm lib/libcore.a
+	rm -f lib/*
+	rm -f bin/*
+	rmdir lib
+	rmdir bin
