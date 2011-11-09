@@ -14,6 +14,8 @@ all:
 	cp util/libutil.a lib/libutil.a
 	cd src; $(MAKE) all
 	cp src/a.out bin/bodhi
+	cd core; $(MAKE) all
+	cp core/libcore.a lib/libcore.a
 
 dir:
 	mkdir -p lib
@@ -24,3 +26,5 @@ clean:
 	rm lib/libutil.a
 	cd src; $(MAKE) clean
 	rm bin/bodhi
+	cd core; $(MAKE) clean
+	rm lib/libcore.a

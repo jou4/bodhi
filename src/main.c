@@ -58,7 +58,9 @@ int main(int argc, char **argv)
         in = argv[1];
     }
     else{
-        in = "test/sample.bd";
+		printf("Please input the target file.\n");
+		return 1;
+        //in = "test/sample.bd";
     }
 
     ic = fopen(in, "r");
