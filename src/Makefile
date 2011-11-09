@@ -1,5 +1,6 @@
 CC			= gcc
-CFLAGS		= -O3 -I/usr/local/include -I../include
+#CFLAGS		= -O3 -I/usr/local/include -I../include
+CFLAGS		= -g -I/usr/local/include -I../include
 DEST		=
 LDFLAGS		=
 LIBS		= ../lib/libutil.a

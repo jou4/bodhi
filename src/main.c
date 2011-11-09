@@ -1,47 +1,103 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <getopt.h>
 #include <regex.h>
 #include "lexer.h"
 #include "parser_ext.h"
 #include "primitives.h"
 
+
 Vector *primsigs;
 
-void prompt(int level)
+char *input = NULL;
+char *output = NULL;
+char *compiled_file = NULL;
+int proc_compile = 1;
+int proc_assemble = 1;
+
+char *usage = "usage: bodhi [-S] [-o output] input";
+char *version = "0.0.1";
+
+char *LIBS = "lib/libcore.a";
+
+
+char *basename(char *path)
 {
-    if(level == 0){
-        printf("> ");
-    }
-    else{
-        printf("... ");
-    }
+	int i = 0, len = strlen(path);
+	char *result = malloc(sizeof(char) * len);
+	char *tmp, *begin, *end;
+
+	for(tmp = path; (tmp = strchr(tmp, '/')) != NULL; begin = ++tmp){ }
+	for(tmp = path; (tmp = strchr(tmp, '.')) != NULL; end = tmp, tmp++){ }
+
+	if(begin == NULL){ begin = path; }
+	if(end != NULL){ len = end - begin; }
+
+	tmp = result;
+	while(i < len){
+		tmp[i++] = *begin;
+		begin++;
+	}
+
+	return result;
 }
 
-char *outfile(char *infile)
+void getopts(int argc, char **argv)
 {
-    regex_t ex;
-    size_t nmatch = 3;
-    regmatch_t pmatch[nmatch];
-    char *filename = malloc(sizeof(char) * 100);
-    int i, j;
+	int opt;
 
-    if(regcomp(&ex, "([[:alpha:]/]+)", REG_EXTENDED) != 0){
-        printf("regex compile failed.\n");
-        exit(1);
-    }
+	while((opt = getopt(argc, argv, "Svo:")) >= 0){
+		switch(opt){
+			case 'S':
+				// compile only
+				proc_assemble = 0;
+				break;
+			case 'o':
+				output = optarg;
+				break;
+			case 'v':
+				fprintf(stdout, "%s\n", version);
+				exit(EXIT_SUCCESS);
+				break;
+			case ':':
+			case '?':
+				fprintf(stderr, "%s\n", usage);
+				exit(EXIT_FAILURE);
+				break;
+		}
+	}
 
-    if(regexec(&ex, infile, nmatch, pmatch, REG_NOTBOL|REG_NOTEOL)){
-        // no match
-        return "tmp.s";
-    }
-    else{
-        for(i = pmatch[0].rm_so, j = 0; i < pmatch[0].rm_eo; i++, j++){
-            filename[j] = infile[i];
-        }
-        filename[j++] = '.';
-        filename[j++] = 's';
-        filename[j++] = '\0';
-        printf("%s\n", filename);
-        return filename;
-    }
+	while(optind < argc){
+		input = argv[optind++];
+		break;
+	}
+
+	if(input == NULL){
+		fprintf(stderr, "%s\n", usage);
+		exit(EXIT_FAILURE);
+	}
+
+	char *bname = basename(input);
+	char tmpstr[L_tmpnam];
+	tmpnam(tmpstr);
+
+	compiled_file = malloc(sizeof(char) * 100);
+	sprintf(compiled_file, "%s.s", tmpstr);
+
+	if(output == NULL){
+		if(proc_assemble){
+			output = "a.out";
+		}
+		else{
+			sprintf(compiled_file, "%s.s", bname);
+			output = compiled_file;
+		}
+	}
+	else{
+		if( ! proc_assemble){
+			sprintf(compiled_file, "%s", output);
+		}
+	}
 }
 
 int main(int argc, char **argv)
@@ -50,20 +106,12 @@ int main(int argc, char **argv)
 
     Parser ps;
     Lexer lexer;
-    char *in, *out;
     FILE *ic, *oc;
-    int comp;
+    int err = 0;
 
-    if(argc > 1){
-        in = argv[1];
-    }
-    else{
-		printf("Please input the target file.\n");
-		return 1;
-        //in = "test/sample.bd";
-    }
+	getopts(argc, argv);
 
-    ic = fopen(in, "r");
+    ic = fopen(input, "r");
     if(ic == NULL){
         printf("Can not open the file.\n");
         return 1;
@@ -73,23 +121,18 @@ int main(int argc, char **argv)
     lexer_init(&lexer);
     lexer_setin(&lexer, ic);
 
-//yydebug = 1;
-    if(yyparse(&ps, &lexer, "input") != 0){
-        fclose(ic);
-        return;
-    }
-    fclose(ic);
+	err |= yyparse(&ps, &lexer, "input");
+	fclose(ic);
 
-    out = outfile(in);
-    oc = fopen(out, "w");
-    //oc = stdout;
+    if(proc_compile && err == 0){
+		oc = fopen(compiled_file, "w");
+		err |= compile(oc, &ps.prog);
+		fclose(oc);
+	}
 
-    comp = compile(oc, &ps.prog);
-    fclose(oc);
-
-    if(comp == 0){
+    if(proc_assemble && err == 0){
         char cmd[100];
-        sprintf(cmd, "gcc %s %s", out, "test/core.c");
+        sprintf(cmd, "gcc -o %s %s %s", output, compiled_file, LIBS);
         system(cmd);
     }
 
