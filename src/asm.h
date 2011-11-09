@@ -12,6 +12,7 @@
 #define ARG_REG_NUM 6
 #define FARG_REG_NUM 8
 #define TAIL_JMP_THREASHOLD 0
+#define STACK_ALIGN 16
 
 typedef enum {
     RNONE,

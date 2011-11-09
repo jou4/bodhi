@@ -141,6 +141,19 @@ BDCExpr *closure_transform(Env *env, Set *known, BDNExpr *e)
                     return bd_cexpr_appcls(fun, newactuals);
                 }
             }
+        case E_CCALL:
+            {
+                char *fun = e->u.u_app.fun;
+                Vector *actuals = e->u.u_app.actuals;
+                Vector *newactuals = vector_new();
+                int i;
+
+                for(i = 0; i < actuals->length; i++){
+                    vector_add(newactuals, mem_strdup(vector_get(actuals, i)));
+                }
+
+                return bd_cexpr_appdir(fun, newactuals);
+            }
         case E_TUPLE:
             {
                 Vector *elems = e->u.u_tuple.elems;

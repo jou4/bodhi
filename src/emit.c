@@ -523,9 +523,8 @@ int frame_size(BDAExpr *e)
 
     size += SIZE_ALIGN * TAIL_JMP_THREASHOLD;
 
-    if(size % 16 != 0){
-        int mod = size / 16;
-        size = 16 * (mod + 1);
+    if(size % STACK_ALIGN != 0){
+        size += SIZE_ALIGN;
     }
 
     return size;
