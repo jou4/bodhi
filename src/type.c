@@ -1,6 +1,3 @@
-#include <stdio.h>
-#include "util.h"
-#include "show.h"
 #include "type.h"
 
 BDType *bd_type(BDTypeKind kind)

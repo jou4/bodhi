@@ -33,7 +33,6 @@ void map_destroy(Map *map)
 {
     int i;
     List *slot;
-    MapNode *node;
 
     for(i = 0; i < map->n; i++){
         slot = map->slots[i];
@@ -161,7 +160,7 @@ Map *map_clone(Map *src)
 
 int map_exists(Map *map, void *val)
 {
-    int i, index;
+    int i;
     List *slot;
     MapNode *node;
 

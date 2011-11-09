@@ -1,6 +1,6 @@
 #include <regex.h>
 #include "lexer.h"
-#include "parser.h"
+#include "parser_ext.h"
 #include "primitives.h"
 
 Vector *primsigs;

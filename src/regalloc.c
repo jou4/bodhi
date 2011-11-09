@@ -458,12 +458,12 @@ char *find_reg(Env *env, Env *regenv, char *lbl)
     throw(ERROR, lbl);
 }
 
-void *use_reg(Env *regenv, BDReg reg, char *lbl)
+void use_reg(Env *regenv, BDReg reg, char *lbl)
 {
     env_set(regenv, reg_name(reg), lbl);
 }
 
-void *free_reg(Env *regenv, char *reg)
+void free_reg(Env *regenv, char *reg)
 {
     env_set(regenv, reg, NULL);
 }
@@ -481,7 +481,6 @@ BDAExpr *resolve_lbl(Env *env, char *lbl, BDReg dst, BDAExpr *body)
     }
     else{
         BDType *type = lst->type;
-        BDAExpr *let;
 
         switch(lst->pos){
             case POS_REG:
@@ -517,6 +516,7 @@ BDAExpr *resolve_lbl(Env *env, char *lbl, BDReg dst, BDAExpr *body)
                         body);
         }
     }
+	return NULL;
 }
 
 int use_stack_args_num(int args, int fargs)
@@ -661,6 +661,7 @@ BDAExpr *regalloc_inst(AllocState *st, Env *env, Env *regenv, BDAInst *inst, int
                         body = bd_aexpr_ans(bd_ainst_call(inst->lbl));
                         break;
                     case AI_CALLDIR:
+					default:
                         {
                             LblState *lst = env_get(env, inst->lbl);
                             if(lst == NULL){
@@ -812,7 +813,6 @@ BDAExpr *regalloc_inst(AllocState *st, Env *env, Env *regenv, BDAInst *inst, int
                 }
                 else{
                     BDType *type = lst->type;
-                    BDAExpr *let;
 
                     switch(lst->pos){
                         case POS_LCL:
@@ -837,6 +837,7 @@ BDAExpr *regalloc_inst(AllocState *st, Env *env, Env *regenv, BDAInst *inst, int
             }
             break;
     }
+	return NULL;
 }
 
 BDAExpr *regalloc(AllocState *st, Env *env, Env *regenv, BDAExpr *e, int tail)
@@ -995,6 +996,8 @@ BDAExpr *regalloc(AllocState *st, Env *env, Env *regenv, BDAExpr *e, int tail)
                     bd_ainst_restore(lbl),
                     e), tail);
     }
+
+	return NULL;
 }
 
 BDAExprDef *regalloc_fundef(Env *env, BDAExprDef *def)
@@ -1014,7 +1017,7 @@ BDAExprDef *regalloc_fundef(Env *env, BDAExprDef *def)
     Vector *vec;
     BDReg reg;
 
-    BDAExpr *result, *newbody, *reg2lcl, *tail = NULL;
+    BDAExpr *result, *reg2lcl, *tail = NULL;
 
     result = bd_aexpr_let(bd_expr_ident("", bd_type_unit()), bd_ainst_nop(), NULL);
     tail = result;
@@ -1110,15 +1113,12 @@ BDAProgram *bd_regalloc(BDAProgram *prog)
     BDAProgram *aprog = malloc(sizeof(BDAProgram));
     bd_aprogram_init(aprog);
 
-    AllocState *st = alloc_state();
-
     // Not include primitive_functions, c_functions.
     Env *env = env_new();
 
     BDAExprConst *c;
     BDExprIdent *ident;
     BDAExprDef *def;
-    PrimSig *sig;
     Vector *vec;
     int i;
 

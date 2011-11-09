@@ -1,7 +1,7 @@
 %{
 
 #include <stdio.h>
-#include "parser.h"
+#include "parser_ext.h"
 #include "util.h"
 
 #define YYDEBUG 1
@@ -103,10 +103,7 @@
 input
 : /* nothing */
 | input toplevel
-| error
-    {
-        YYABORT;
-    }
+| error { YYABORT; }
 ;
 
 toplevel
