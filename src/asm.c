@@ -241,13 +241,6 @@ BDAInst *_ainst_call(BDAInstKind kind, char *lbl, Vector *ilist, Vector *flist)
     return inst;
 }
 
-BDAInst *bd_ainst_jmp(char *lbl)
-{
-    BDAInst *inst = bd_ainst(AI_JMP);
-    inst->lbl = lbl;
-    return inst;
-}
-
 BDAInst *_ainst_jmpif(BDAInstKind kind, char *l, char *r, char *lbl)
 {
     BDAInst *inst = bd_ainst(kind);
@@ -530,16 +523,6 @@ void _bd_ainst_show(BDAInst *inst, int col, int depth)
             break;
         case AI_TAILCALLPOINT:
             PRINT(col, "TAILCALLPOINT");
-            break;
-
-        case AI_JMP:
-            PRINT1(col, "JMP %s", inst->lbl);
-            break;
-        case AI_JEQ:
-            PRINT3(col, "JEQ %s, %s, %s", inst->u.u_bin.l, inst->u.u_bin.r, inst->lbl);
-            break;
-        case AI_JLE:
-            PRINT3(col, "JLE %s, %s, %s", inst->u.u_bin.l, inst->u.u_bin.r, inst->lbl);
             break;
 
         case AI_PUSHLCL_C:

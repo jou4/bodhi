@@ -398,6 +398,116 @@ void emit(EmitState *st, BDAExpr *e)
     }
 }
 
+typedef struct {
+    int locals;
+    int args;
+    int accum_args;
+} FrameSizeCounter;
+
+FrameSizeCounter *frame_size_counter()
+{
+    FrameSizeCounter *counter = malloc(sizeof(FrameSizeCounter));
+    counter->locals = 0;
+    counter->args = 0;
+    counter->accum_args = 0;
+    return counter;
+}
+
+void frame_size_counter_destroy(FrameSizeCounter *counter)
+{
+    free(counter);
+}
+
+int max(int a, int b)
+{
+    if(a > b){
+        return a;
+    }
+    return b;
+}
+
+void frame_size_expr(BDAExpr *e, FrameSizeCounter *counter);
+
+void frame_size_inst(BDAInst *inst, FrameSizeCounter *counter)
+{
+    switch(inst->kind){
+        case AI_IFEQ:
+        case AI_IFLE:
+            {
+                FrameSizeCounter *c1 = frame_size_counter();
+                FrameSizeCounter *c2 = frame_size_counter();
+
+                frame_size_expr(inst->u.u_if.t, c1);
+                frame_size_expr(inst->u.u_if.f, c2);
+
+                counter->locals += max(c1->locals, c2->locals);
+                counter->args += max(c1->locals, c2->locals);
+
+                frame_size_counter_destroy(c1);
+                frame_size_counter_destroy(c2);
+            }
+            break;
+
+        case AI_PUSHLCL_C:
+        case AI_PUSHLCL_I:
+        case AI_PUSHLCL_F:
+        case AI_PUSHLCL_L:
+            counter->locals += SIZE_ALIGN;
+            break;
+
+        case AI_PUSHARG_C:
+        case AI_PUSHARG_I:
+        case AI_PUSHARG_L:
+            {
+                int index = inst->u.u_int;
+                if(index >= ARG_REG_NUM){
+                    counter->accum_args += SIZE_ALIGN;
+                }
+            }
+            break;
+
+        case AI_PUSHARG_F:
+            {
+                int index = inst->u.u_int;
+                if(index >= FARG_REG_NUM){
+                    counter->accum_args += SIZE_ALIGN;
+                }
+            }
+            break;
+
+        case AI_CALLPTR:
+        case AI_CALL:
+            counter->args = max(counter->args, counter->accum_args);
+            counter->accum_args = 0;
+            break;
+    }
+}
+
+void frame_size_expr(BDAExpr *e, FrameSizeCounter *counter)
+{
+    switch(e->kind){
+        case AE_ANS:
+            frame_size_inst(e->u.u_ans.val, counter);
+            break;
+        case AE_LET:
+            frame_size_inst(e->u.u_let.val, counter);
+            frame_size_expr(e->u.u_let.body, counter);
+            break;
+    }
+}
+
+int frame_size(BDAExpr *e)
+{
+    FrameSizeCounter *counter = frame_size_counter();
+    frame_size_expr(e, counter);
+
+    int size = counter->locals + counter->args;
+
+    frame_size_counter_destroy(counter);
+
+    return size;
+}
+
 void emit_fundef(EmitState *st, BDAExprDef *def)
 {
     char *textlbl;
@@ -418,8 +528,8 @@ void emit_fundef(EmitState *st, BDAExprDef *def)
     fprintf(OC, "%s:\n", textlbl);
     fprintf(OC, "\tpushq %s\n", "%rbp");
     fprintf(OC, "\tmovq %s, %s\n", "%rsp", "%rbp");
-    // TODO
-    fprintf(OC, "\tsubq $%d, %s\n", 8 * 30, "%rsp");
+    // frame size (local vars + push args + buffer for tail-call)
+    fprintf(OC, "\tsubq $%d, %s\n", frame_size(def->body) + SIZE_ALIGN * TAIL_JMP_THREASHOLD, "%rsp");
     emit(st, def->body);
     fprintf(OC, "\tleave\n");
     fprintf(OC, "\tret\n");

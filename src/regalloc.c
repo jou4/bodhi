@@ -510,6 +510,11 @@ BDAExpr *resolve_lbl(Env *env, char *lbl, BDReg dst, BDAExpr *body)
     }
 }
 
+int use_stack_args_num(int args, int fargs)
+{
+    return (args - ARG_REG_NUM) + (fargs - FARG_REG_NUM);
+}
+
 BDAExpr *regalloc(AllocState *st, Env *env, Env *regenv, BDAExpr *e, int tail);
 
 BDAExpr *regalloc_inst(AllocState *st, Env *env, Env *regenv, BDAInst *inst, int tail)
@@ -663,7 +668,7 @@ BDAExpr *regalloc_inst(AllocState *st, Env *env, Env *regenv, BDAInst *inst, int
                 Vector *flist = inst->u.u_call.flist;
 
                 BDExprIdent *ident;
-                int i, stack = (ilist->length - 6) + (flist->length - 8) - 1;
+                int i, stack = use_stack_args_num(ilist->length, flist->length) - 1;
                 BDReg target;
                 char *reg;
                 Vector *used_regs = vector_new();
@@ -714,7 +719,7 @@ BDAExpr *regalloc_inst(AllocState *st, Env *env, Env *regenv, BDAInst *inst, int
                     }
                 }
 
-                if(tail && ilist->length + flist->length < 20){
+                if(tail && use_stack_args_num(ilist->length, flist->length) < TAIL_JMP_THREASHOLD){
                     body = bd_aexpr_let(
                             bd_expr_ident("", bd_type_unit()),
                             bd_ainst_tailcall_point(),

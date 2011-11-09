@@ -9,6 +9,9 @@
 #define SIZE_FLOAT 8
 #define SIZE_LBL 8
 
+#define ARG_REG_NUM 6
+#define FARG_REG_NUM 8
+#define TAIL_JMP_THREASHOLD 0
 
 typedef enum {
     RNONE,
@@ -116,10 +119,6 @@ typedef enum {
     AI_CALLPTR,
     AI_CALL,
     AI_TAILCALLPOINT,
-
-    AI_JMP,
-    AI_JEQ,
-    AI_JLE,
 
     AI_PUSHLCL_C,
     AI_PUSHLCL_I,
@@ -289,7 +288,6 @@ BDAInst *_ainst_call(BDAInstKind kind, char *lbl, Vector *ilist, Vector *flist);
 #define bd_ainst_calldir(lbl, ilist, flist) _ainst_call(AI_CALLDIR, lbl, ilist, flist)
 #define bd_ainst_ccall(lbl, ilist, flist) _ainst_call(AI_CCALL, lbl, ilist, flist)
 #define bd_ainst_tailcall_point() bd_ainst(AI_TAILCALLPOINT)
-BDAInst *bd_ainst_jmp(char *lbl);
 BDAInst *_ainst_jmpif(BDAInstKind kind, char *l, char *r, char *lbl);
 #define bd_ainst_jeq(l, r, lbl) _ainst_jmpif(AI_JEQ, l, r, lbl)
 #define bd_ainst_jle(l, r, lbl) _ainst_jmpif(AI_JLE, l, r, lbl)
