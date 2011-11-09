@@ -1,12 +1,24 @@
 #include "compile.h"
 
 
+typedef struct {
+    int local_offset;
+} AllocState;
+
+AllocState *alloc_state()
+{
+    AllocState *st = malloc(sizeof(AllocState));
+    st->local_offset = 0;
+    return st;
+}
+
+
 typedef enum {
     POS_REG,
     POS_LCL,
     POS_FV,
     POS_ARG,
-    POS_GLOBAL_FUNCTION,
+    POS_DATA,
 } LblPos;
 
 typedef struct {
@@ -17,10 +29,6 @@ typedef struct {
         BDReg reg;
     } u;
 } LblState;
-
-typedef struct {
-    int local_offset;
-} AllocState;
 
 LblState *lbl_state_reg(BDType *type, BDReg reg)
 {
@@ -40,20 +48,14 @@ LblState *lbl_state_offset(BDType *type, LblPos pos, int offset)
     return st;
 }
 
-LblState *lbl_state_global_function(BDType *type)
+LblState *lbl_state_data(BDType *type)
 {
     LblState *st = malloc(sizeof(LblState));
+    st->pos = POS_DATA;
     st->type = type;
-    st->pos = POS_GLOBAL_FUNCTION;
     return st;
 }
 
-AllocState *alloc_state()
-{
-    AllocState *st = malloc(sizeof(AllocState));
-    st->local_offset = 0;
-    return st;
-}
 
 typedef struct {
     BDReg target;
@@ -77,6 +79,7 @@ void add_target_reg(TargetRegResult *result, BDReg target)
 {
     result->target = target;
 }
+
 
 BDReg usable_reg(Env *regenv, BDReg *candidates)
 {
@@ -240,7 +243,7 @@ int target_reg_in_inst(Env *regenv, char *lbl, BDAInst *inst, TargetRegResult *r
                     }
                 }
 
-                if(ma == 0 || maa == 0){
+                if(mf == 0 && maa == 0){
                     wall = 1;
                 }
 
@@ -250,6 +253,14 @@ int target_reg_in_inst(Env *regenv, char *lbl, BDAInst *inst, TargetRegResult *r
         case AI_MAKECLS:
             return 1;
         case AI_LOADFVS:
+            {
+                if(is_match_lbl(lbl, inst->lbl)){
+                    add_target_reg(result, RARG1);
+                    return 0;
+                }
+                return 1;
+            }
+        case AI_GETCLS_ENTRY:
             {
                 if(is_match_lbl(lbl, inst->lbl)){
                     add_target_reg(result, RARG1);
@@ -337,6 +348,34 @@ void target_reg_in_expr(Env *regenv, char *lbl, BDAExpr *e, TargetRegResult *res
     }
 }
 
+/*
+ * The Rule of Finding Target Register
+ *
+ * Find the position that lable used nearly.
+ * (ex. let A = 1 in A + 10)
+ *
+ * 1. If the label would be found and the label woule not be used in future,
+ *    decide the register that will be used by the position.
+ *
+ *    ex. let A = 1 in A + 10  --> A : %rax
+ *    ex. let A = 1 in 10 + A  --> A : %r10
+ *    ex. let A = 1 in f A 10  --> A : %rdi
+ *
+ * 2. If the label would be found and the label woule be used too in future,
+ *    the label would be saved to stack.
+ *
+ *    ex. let A = 1 in let _ = A + 10 in let _ = A + 20 in ... --> A : push to stack
+ *
+ * 3. If a function_call or a fork_point (ex, if expr) would be found before the position,
+ *    the label would be saved to stack.
+ *
+ *    ex. let A = 1 in let B = f 10 in A + B  --> A : push to stack
+ *
+ *
+ * However, if the label was already saved and that be necessary to restore, rule 2 and 3 will be ignored.
+ * Because the label will be used immediately in future.
+ *
+*/
 BDReg target_reg(Env *regenv, char *lbl, BDAExpr *e, int restore)
 {
     TargetRegResult *result = target_reg_result_new();
@@ -422,7 +461,7 @@ BDAExpr *resolve_lbl(Env *env, char *lbl, BDReg dst, BDAExpr *body)
         // global label.
         return bd_aexpr_let(
                 bd_expr_ident_typevar(reg_name(dst)),
-                bd_ainst_movglobal(lbl),
+                bd_ainst_movglobal_l(lbl),
                 body);
     }
     else{
@@ -456,10 +495,10 @@ BDAExpr *resolve_lbl(Env *env, char *lbl, BDReg dst, BDAExpr *body)
                         bd_expr_ident(reg_name(dst), type),
                         bd_ainst_getarg(type, lst->u.offset),
                         body);
-            case POS_GLOBAL_FUNCTION:
+            case POS_DATA:
                 return bd_aexpr_let(
                         bd_expr_ident_typevar(reg_name(dst)),
-                        bd_ainst_movglobal_l(lbl),
+                        bd_ainst_movglobal(lbl),
                         body);
         }
     }
@@ -593,11 +632,16 @@ BDAExpr *regalloc_inst(AllocState *st, Env *env, Env *regenv, BDAInst *inst, int
                 switch(inst->kind){
                     case AI_CALLCLS:
                         {
+                            char *entry_reg = find_reg(env, regenv, inst->lbl);
+                            free_reg(regenv, entry_reg);
+                            body = bd_aexpr_ans(bd_ainst_callptr(entry_reg));
+                            /*
                             body = bd_aexpr_let(
                                     bd_expr_ident("", bd_type_unit()),
                                     bd_ainst_getcls_entry(reg_name(RACC)),
                                     bd_aexpr_ans(bd_ainst_callptr(reg_name(RACC))));
                             body = resolve_lbl(env, inst->lbl, RACC, body);
+                            */
                         }
                         break;
                     case AI_CCALL:
@@ -606,7 +650,7 @@ BDAExpr *regalloc_inst(AllocState *st, Env *env, Env *regenv, BDAInst *inst, int
                     case AI_CALLDIR:
                         {
                             LblState *lst = env_get(env, inst->lbl);
-                            if(lst != NULL && lst->pos == POS_GLOBAL_FUNCTION){
+                            if(lst == NULL){
                                 body = bd_aexpr_ans(bd_ainst_call(inst->lbl));
                             }
                             else{
@@ -618,10 +662,12 @@ BDAExpr *regalloc_inst(AllocState *st, Env *env, Env *regenv, BDAInst *inst, int
 
                 Vector *ilist = inst->u.u_call.ilist;
                 Vector *flist = inst->u.u_call.flist;
+
                 BDExprIdent *ident;
                 int i, stack = (ilist->length - 6) + (flist->length - 8) - 1;
                 BDReg target;
                 char *reg;
+                Vector *used_regs = vector_new();
 
                 for(i = flist->length - 1; i >= 0; i--){
                     ident = vector_get(flist, i);
@@ -637,7 +683,7 @@ BDAExpr *regalloc_inst(AllocState *st, Env *env, Env *regenv, BDAInst *inst, int
                     }
                     else{
                         reg = find_reg(env, regenv, ident->name);
-                        free_reg(regenv, reg);
+                        vector_add(used_regs, reg);
 
                         body = bd_aexpr_let(
                                 bd_expr_ident("", bd_type_unit()),
@@ -660,7 +706,7 @@ BDAExpr *regalloc_inst(AllocState *st, Env *env, Env *regenv, BDAInst *inst, int
                     }
                     else{
                         reg = find_reg(env, regenv, ident->name);
-                        free_reg(regenv, reg);
+                        vector_add(used_regs, reg);
 
                         body = bd_aexpr_let(
                                 bd_expr_ident("", bd_type_unit()),
@@ -676,6 +722,13 @@ BDAExpr *regalloc_inst(AllocState *st, Env *env, Env *regenv, BDAInst *inst, int
                             body);
                 }
 
+                // Remove used_regs.
+                for(i = 0; i < used_regs->length; i++){
+                    reg = vector_get(used_regs, i);
+                    free_reg(regenv, reg);
+                }
+                vector_destroy(used_regs);
+
                 return body;
             }
             break;
@@ -687,6 +740,12 @@ BDAExpr *regalloc_inst(AllocState *st, Env *env, Env *regenv, BDAInst *inst, int
                 char *lbl = find_reg(env, regenv, inst->lbl);
                 free_reg(regenv, lbl);
                 return bd_aexpr_ans(bd_ainst_loadfvs(lbl));
+            }
+        case AI_GETCLS_ENTRY:
+            {
+                char *lbl = find_reg(env, regenv, inst->lbl);
+                free_reg(regenv, lbl);
+                return bd_aexpr_ans(bd_ainst_getcls_entry(lbl));
             }
 
         case AI_PUSHFV_C:
@@ -732,7 +791,7 @@ BDAExpr *regalloc_inst(AllocState *st, Env *env, Env *regenv, BDAInst *inst, int
                 LblState *lst = env_get(env, lbl);
 
                 if(lst == NULL){
-                    return bd_aexpr_ans(bd_ainst_movglobal(lbl));
+                    return bd_aexpr_ans(bd_ainst_movglobal_l(lbl));
                 }
                 else{
                     BDType *type = lst->type;
@@ -745,9 +804,9 @@ BDAExpr *regalloc_inst(AllocState *st, Env *env, Env *regenv, BDAInst *inst, int
                             return bd_aexpr_ans(bd_ainst_getfv(type, lst->u.offset));
                         case POS_ARG:
                             return bd_aexpr_ans(bd_ainst_getarg(type, lst->u.offset));
-                        case POS_GLOBAL_FUNCTION:
+                        case POS_DATA:
                         default:
-                            return bd_aexpr_ans(bd_ainst_movglobal_l(lbl));
+                            return bd_aexpr_ans(bd_ainst_movglobal(lbl));
                     }
                 }
 
@@ -1027,6 +1086,8 @@ BDAProgram *bd_regalloc(BDAProgram *prog)
     bd_aprogram_init(aprog);
 
     AllocState *st = alloc_state();
+
+    // Not include primitive_functions, c_functions.
     Env *env = env_new();
 
     BDAExprConst *c;
@@ -1036,10 +1097,26 @@ BDAProgram *bd_regalloc(BDAProgram *prog)
     Vector *vec;
     int i;
 
-    // Add primitives that be called direct.
-    for(i = 0; i < primsigs->length; i++){
-        sig = vector_get(primsigs, i);
-        env_set(env, sig->lbl, lbl_state_global_function(sig->type));
+    // Add consts.
+    vec = prog->consts;
+    for(i = 0; i < vec->length; i++){
+        c = vector_get(vec, i);
+        env_set(env, c->lbl, lbl_state_data(c->type));
+    }
+
+    // Add globals.
+    vec = prog->globals;
+    for(i = 0; i < vec->length; i++){
+        ident = vector_get(vec, i);
+        env_set(env, ident->name, lbl_state_data(ident->type));
+    }
+
+    // Add functions.
+    vec = prog->fundefs;
+    for(i = 0; i < vec->length; i++){
+        def = vector_get(vec, i);
+        ident = def->ident;
+        env_set(env, ident->name, lbl_state_data(ident->type));
     }
 
     // Allocate.

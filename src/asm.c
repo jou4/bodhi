@@ -155,38 +155,39 @@ BDAExprDef *bd_aexpr_def(BDExprIdent *ident, Vector *iformals, Vector *fformals,
     return def;
 }
 
-BDAExprConst *bd_aexpr_const(BDAExprConstKind kind, char *lbl)
+BDAExprConst *bd_aexpr_const(BDAExprConstKind kind, char *lbl, BDType *type)
 {
     BDAExprConst *c = malloc(sizeof(BDAExprConst));
     c->kind = kind;
     c->lbl = lbl;
+    c->type = type;
     return c;
 }
 
 BDAExprConst *bd_aexpr_const_char(char *lbl, char val)
 {
-    BDAExprConst *c = bd_aexpr_const(AEC_CHAR, lbl);
+    BDAExprConst *c = bd_aexpr_const(AEC_CHAR, lbl, bd_type_char());
     c->u.u_char = val;
     return c;
 }
 
 BDAExprConst *bd_aexpr_const_int(char *lbl, int val)
 {
-    BDAExprConst *c = bd_aexpr_const(AEC_INT, lbl);
+    BDAExprConst *c = bd_aexpr_const(AEC_INT, lbl, bd_type_int());
     c->u.u_int = val;
     return c;
 }
 
 BDAExprConst *bd_aexpr_const_float(char *lbl, double val)
 {
-    BDAExprConst *c = bd_aexpr_const(AEC_FLOAT, lbl);
+    BDAExprConst *c = bd_aexpr_const(AEC_FLOAT, lbl, bd_type_float());
     c->u.u_double = val;
     return c;
 }
 
 BDAExprConst *bd_aexpr_const_str(char *lbl, char *val)
 {
-    BDAExprConst *c = bd_aexpr_const(AEC_STR, lbl);
+    BDAExprConst *c = bd_aexpr_const(AEC_STR, lbl, bd_type_string());
     c->u.u_str = val;
     return c;
 }

@@ -223,8 +223,9 @@ typedef enum {
 } BDAExprConstKind;
 
 typedef struct {
-    BDAExprConstKind kind;
     char *lbl;
+    BDType *type;
+    BDAExprConstKind kind;
     union {
         char u_char;
         int u_int;
@@ -245,7 +246,7 @@ void bd_aprogram_destroy(BDAProgram *prog);
 void bd_aprogram_show(BDAProgram *prog);
 
 BDAExprDef *bd_aexpr_def(BDExprIdent *ident, Vector *iformals, Vector *fformals, Vector *freevars, BDAExpr *body);
-BDAExprConst *bd_aexpr_const(BDAExprConstKind kind, char *lbl);
+BDAExprConst *bd_aexpr_const(BDAExprConstKind kind, char *lbl, BDType *type);
 BDAExprConst *bd_aexpr_const_char(char *lbl, char val);
 BDAExprConst *bd_aexpr_const_int(char *lbl, int val);
 BDAExprConst *bd_aexpr_const_float(char *lbl, double val);

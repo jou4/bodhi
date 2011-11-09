@@ -185,10 +185,16 @@ BDAExpr *virtual_expr(Env *env, BDCExpr *e)
 
                 switch(e->kind){
                     case E_APPCLS:
-                        return bd_aexpr_let(
-                                bd_expr_ident("_", bd_type_unit()),
-                                bd_ainst_loadfvs(fun),
-                                bd_aexpr_ans(bd_ainst_callcls(fun, ilist, flist)));
+                        {
+                            char *entry = bd_generate_id(NULL);
+                            return bd_aexpr_let(
+                                    bd_expr_ident("_", bd_type_unit()),
+                                    bd_ainst_loadfvs(fun),
+                                    bd_aexpr_let(
+                                        bd_expr_ident_typevar(entry),
+                                        bd_ainst_getcls_entry(fun),
+                                        bd_aexpr_ans(bd_ainst_callcls(entry, ilist, flist))));
+                        }
                     case E_APPDIR:
                         return bd_aexpr_ans(bd_ainst_calldir(fun, ilist, flist));
                     case E_CCALL:

@@ -268,18 +268,72 @@ void emit_inst(EmitState *st, BDAInst *inst, char *dst)
             break;
 
         case AI_MAKECLS:
+            {
+                char *lbl = inst->lbl;
+                int fvs_size = inst->u.u_int;
+
+                char *lbl_dst = reg_name(argreg(0));
+                char *fvs_size_dst = reg_name(argreg(1));
+
+                if(strne(lbl, lbl_dst)){
+                    fprintf(OC, "\tmovq %s, %s\n", lbl, lbl_dst);
+                }
+                fprintf(OC, "\tmovq $%d, %s\n", fvs_size, fvs_size_dst);
+                fprintf(OC, "\tcall %s\n", "_bodhi_core_make_closure");
+
+                if(strne("%rax", dst)){
+                    fprintf(OC, "\tmovq %s, %s\n", "%rax", dst);
+                }
+            }
+            break;
         case AI_LOADFVS:
+            {
+                char *lbl = inst->lbl;
+                char *lbl_dst = reg_name(argreg(0));
+
+                if(strne(lbl, lbl_dst)){
+                    fprintf(OC, "\tmovq %s, %s\n", lbl, lbl_dst);
+                }
+                fprintf(OC, "\tcall %s\n", "_bodhi_core_closure_freevars");
+                fprintf(OC, "\tmovq %s, %s\n", "%rax", reg_hp);
+            }
+            break;
         case AI_GETCLS_ENTRY:
+            {
+                char *lbl = inst->lbl;
+                char *lbl_dst = reg_name(argreg(0));
+
+                if(strne(lbl, lbl_dst)){
+                    fprintf(OC, "\tmovq %s, %s\n", lbl, lbl_dst);
+                }
+                fprintf(OC, "\tcall %s\n", "_bodhi_core_closure_entry");
+
+                if(strne("%rax", dst)){
+                    fprintf(OC, "\tmovq %s, %s\n", "%rax", dst);
+                }
+            }
+            break;
 
         case AI_PUSHFV_C:
         case AI_PUSHFV_I:
         case AI_PUSHFV_F:
         case AI_PUSHFV_L:
+            {
+                char *lbl = inst->lbl;
+                int offset = inst->u.u_int;
+                fprintf(OC, "\tmovq %s, %d(%s)\n", lbl, offset, reg_hp);
+            }
+            break;
 
         case AI_GETFV_C:
         case AI_GETFV_I:
         case AI_GETFV_F:
         case AI_GETFV_L:
+            {
+                int offset = inst->u.u_int;
+                fprintf(OC, "\tmovq %d(%s), %s\n", offset, reg_hp, dst);
+            }
+            break;
 
         case AI_MAKETUPLE:
         case AI_LOADELMS:
