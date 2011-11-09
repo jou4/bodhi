@@ -227,7 +227,10 @@ BDAExpr *virtual_expr(Env *env, BDCExpr *e)
                 return bd_aexpr_let(
                         bd_expr_ident_typevar(newname),
                         bd_ainst_maketuple(elems->length),
-                        result);
+                        bd_aexpr_let(
+                            bd_expr_ident("", bd_type_unit()),
+                            bd_ainst_loadelms(newname),
+                            result));
             }
         case E_LETTUPLE:
             {
