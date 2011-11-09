@@ -183,7 +183,7 @@ Pair normalize(Env *env, BDSExpr *e)
                 Pair p2 = normalize(local, e->u.u_let.body);
 
                 return pair(bd_nexpr_let(
-                            bd_expr_ident(ident->name, bd_type_clone(ident->type)), p1.e, p2.e),
+                            bd_expr_ident_clone(ident), p1.e, p2.e),
                         p2.t);
             }
         case E_VAR:
@@ -339,7 +339,7 @@ Pair normalize(Env *env, BDSExpr *e)
                     ident = vector_get(idents, i);
                     env_set(local, ident->name, ident->type);
 
-                    vector_add(new_idents, bd_expr_ident(ident->name, bd_type_clone(ident->type)));
+                    vector_add(new_idents, bd_expr_ident_clone(ident));
                 }
 
                 p = normalize(local, e->u.u_lettuple.body);

@@ -70,7 +70,7 @@ BDCExpr *closure_transform(Env *env, Set *known, BDNExpr *e)
                 }
                 else{
                     newexpr = bd_cexpr_let(
-                            bd_expr_ident(ident->name, bd_type_clone(ident->type)),
+                            bd_expr_ident_clone(ident),
                             closure_transform(env, known, e->u.u_let.val),
                             closure_transform(local, known, e->u.u_let.body)
                             );
@@ -177,7 +177,7 @@ BDCExpr *closure_transform(Env *env, Set *known, BDNExpr *e)
                 for(i = 0; i < idents->length; i++){
                     ident = vector_get(idents, i);
 
-                    vector_add(newidents, bd_expr_ident(ident->name, bd_type_clone(ident->type)));
+                    vector_add(newidents, bd_expr_ident_clone(ident));
                     env_set(local, ident->name, ident->type);
                 }
 
@@ -522,8 +522,11 @@ BDCProgram *bd_closure_transform(BDNProgram *prog)
             rename_closure(closure_transform(env, known, def->body)));
 
     // Append collected toplevel-functions to definitions.
+    BDCExprDef *toplevel;
     for(i = 0; i < toplevels->length; i++){
-        vector_add(cprog->fundefs, vector_get(toplevels, i));
+        toplevel = vector_get(toplevels, i);
+        toplevel->body = rename_closure(toplevel->body);
+        vector_add(cprog->fundefs, toplevel);
     }
 
     // Clean.

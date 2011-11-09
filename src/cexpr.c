@@ -539,7 +539,7 @@ void _bd_cexpr_show(BDCExpr *e, int col, int depth)
                     if(i > 0){
                         PRINT(col, ", ");
                     }
-                    bd_expr_ident_show(vector_get(idents, i));
+                    PRINT1(col, "%s", bd_expr_ident_show(vector_get(idents, i)));
                 }
                 PRINT1(col, ") = %s", e->u.u_lettuple.val);
 

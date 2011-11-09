@@ -754,7 +754,7 @@ BDSProgram *bd_typing(BDSProgram *prog)
         env_destroy(env);
         env = NULL;
 
-        if(maintype->kind != T_UNIT && def->body->kind != E_CCALL){
+        if(maintype->kind != T_UNIT && maintype->kind != T_VAR){
             throw(ERROR, "type of 'main' must be ().");
         }
 

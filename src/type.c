@@ -12,6 +12,8 @@ BDType *bd_type(BDTypeKind kind)
 
 void bd_type_destroy(BDType *t)
 {
+    return;
+
     if(t == NULL){
         return;
     }

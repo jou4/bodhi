@@ -203,8 +203,8 @@ struct BDAInst {
             BDAExpr *f;
         } u_if;
         struct {
-            Vector *ilist;  // Vector<BDExprIdent>
-            Vector *flist;  // Vector<BDExprIdent>
+            Vector *ilist;      // Vector<BDExprIdent>
+            Vector *flist;      // Vector<BDExprIdent>
         } u_call;
     } u;
 };

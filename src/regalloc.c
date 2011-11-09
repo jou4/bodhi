@@ -1076,7 +1076,7 @@ BDAExprDef *regalloc_fundef(Env *env, BDAExprDef *def)
                     NULL);
             tail->u.u_let.body = bd_aexpr_let(
                     bd_expr_ident(reg_name(RACC), formal->type),
-                    bd_ainst_getfv(formal->type, i),
+                    bd_ainst_getfv(formal->type, i * SIZE_ALIGN),
                     reg2lcl);
             tail = reg2lcl;
 
