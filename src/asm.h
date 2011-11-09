@@ -159,6 +159,8 @@ typedef enum {
     AI_PUSHELM,
     AI_GETELM,
 
+    AI_MAKESTRING,
+
     AI_SAVE,
     AI_RESTORE,
 
@@ -331,6 +333,8 @@ BDAInst *bd_ainst_maketuple(int size);
 #define bd_ainst_loadelms(lbl) _ainst_unireg(AI_LOADELMS, lbl)
 #define bd_ainst_pushelm(lbl, offset) _ainst_push_offset(AI_PUSHELM, lbl, offset)
 #define bd_ainst_getelm(offset) _ainst_get_offset(AI_GETELM, offset)
+#define bd_ainst_makestring(lbl) _ainst_unireg(AI_MAKESTRING, lbl)
+
 #define bd_ainst_save(lbl, reg) _ainst_binreg(AI_SAVE, lbl, reg)
 #define bd_ainst_restore(lbl) _ainst_unireg(AI_RESTORE, lbl)
 

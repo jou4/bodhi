@@ -305,6 +305,15 @@ int target_reg_in_inst(Env *regenv, char *lbl, BDAInst *inst, TargetRegResult *r
             }
         case AI_GETELM:
             return 0;
+
+        case AI_MAKESTRING:
+            {
+                if(is_match_lbl(lbl, inst->lbl)){
+                    add_target_reg(result, RARG1);
+                    return 0;
+                }
+                return 1;
+            }
     }
 }
 
@@ -817,8 +826,16 @@ BDAExpr *regalloc_inst(AllocState *st, Env *env, Env *regenv, BDAInst *inst, int
                             return bd_aexpr_ans(bd_ainst_movglobal(lbl));
                     }
                 }
-
             }
+            break;
+
+        case AI_MAKESTRING:
+            {
+                char *lbl = find_reg(env, regenv, inst->lbl);
+                free_reg(regenv, lbl);
+                return bd_aexpr_ans(bd_ainst_makestring(lbl));
+            }
+            break;
     }
 }
 

@@ -352,7 +352,6 @@ BDAExpr *insert_initializer(BDAExpr *init, BDExprIdent *ident, BDAExpr *body)
         case AE_ANS:
             {
                 char *tmpname = bd_generate_id(ident->type);
-                printf("*****%s *****\n" , tmpname);
                 newexpr = bd_aexpr_let(
                         bd_expr_ident(tmpname, bd_type_clone(ident->type)),
                         init->u.u_ans.val,
@@ -437,6 +436,28 @@ BDAProgram *bd_virtual(BDCProgram *prog)
     // Transform main definition and combine with initializes.
     def = prog->maindef;
     main = virtual_expr(env, def->body);
+
+    // Make StringObject from const string.
+    BDAExprConst *c;
+    BDExprIdent *ident;
+    char *constlbl;
+    char *stringlbl;
+    vec = aprog->consts;
+    for(i = 0; i < vec->length; i++){
+        c = vector_get(vec, i);
+        if(c->kind == AEC_STR){
+            constlbl = bd_generate_id(bd_type_string());
+            stringlbl = c->lbl; // for access
+            c->lbl = constlbl;
+
+            ident = bd_expr_ident(stringlbl, bd_type_string());
+
+            vector_add(aprog->globals, ident);
+            vector_add(inits, ident);
+            vector_add(initializers, bd_aexpr_ans(bd_ainst_makestring(constlbl)));
+        }
+    }
+
 
     for(i = inits->length - 1; i >= 0; i--){
         main = insert_initializer(

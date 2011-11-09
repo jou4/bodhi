@@ -375,6 +375,22 @@ void emit_inst(EmitState *st, BDAInst *inst, char *dst)
             }
             break;
 
+        case AI_MAKESTRING:
+            {
+                char *lbl = inst->lbl;
+                char *lbl_dst = reg_name(argreg(0));
+
+                if(strne(lbl, lbl_dst)){
+                    fprintf(OC, "\tmovq %s, %s\n", lbl, lbl_dst);
+                }
+                fprintf(OC, "\tcall %s\n", "_bodhi_core_make_string");
+
+                if(strne("%rax", dst)){
+                    fprintf(OC, "\tmovq %s, %s\n", "%rax", dst);
+                }
+            }
+            break;
+
     }
 }
 
@@ -505,6 +521,13 @@ int frame_size(BDAExpr *e)
 
     frame_size_counter_destroy(counter);
 
+    size += SIZE_ALIGN * TAIL_JMP_THREASHOLD;
+
+    if(size % 16 != 0){
+        int mod = size / 16;
+        size = 16 * (mod + 1);
+    }
+
     return size;
 }
 
@@ -529,7 +552,7 @@ void emit_fundef(EmitState *st, BDAExprDef *def)
     fprintf(OC, "\tpushq %s\n", "%rbp");
     fprintf(OC, "\tmovq %s, %s\n", "%rsp", "%rbp");
     // frame size (local vars + push args + buffer for tail-call)
-    fprintf(OC, "\tsubq $%d, %s\n", frame_size(def->body) + SIZE_ALIGN * TAIL_JMP_THREASHOLD, "%rsp");
+    fprintf(OC, "\tsubq $%d, %s\n", frame_size(def->body), "%rsp");
     emit(st, def->body);
     fprintf(OC, "\tleave\n");
     fprintf(OC, "\tret\n");
@@ -587,16 +610,16 @@ void bd_emit(FILE *ch, BDAProgram *prog)
         fprintf(OC, "%s:\n", ident->name);
         switch(ident->type->kind){
             case AEC_CHAR:
-                fprintf(OC, "\t.byte\n");
+                fprintf(OC, "\t.byte 0\n");
                 break;
             case AEC_INT:
-                fprintf(OC, "\t.long\n");
+                fprintf(OC, "\t.long 0\n");
                 break;
             case AEC_FLOAT:
                 // TODO
                 break;
             default:
-                fprintf(OC, "\t.quad\n");
+                fprintf(OC, "\t.quad 0\n");
                 break;
         }
     }
