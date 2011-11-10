@@ -35,6 +35,10 @@ int compile(FILE *ch, BDSProgram *sprog)
         printf("--- Nested let flatten --- \n");
         bd_nprogram_show(nprog);
 
+        nprog = bd_inline_expand(10, nprog);
+        printf("--- Inline expanded --- \n");
+        bd_nprogram_show(nprog);
+
         cprog = bd_closure_transform(nprog);
         printf("--- Closure transformed --- \n");
         bd_cprogram_show(cprog);

@@ -603,20 +603,7 @@ void bd_emit(FILE *ch, BDAProgram *prog)
         ident = vector_get(vec, i);
         fprintf(OC, "\t.data\n");
         fprintf(OC, "%s:\n", ident->name);
-        switch(ident->type->kind){
-            case AEC_CHAR:
-                fprintf(OC, "\t.byte 0\n");
-                break;
-            case AEC_INT:
-                fprintf(OC, "\t.long 0\n");
-                break;
-            case AEC_FLOAT:
-                // TODO
-                break;
-            default:
-                fprintf(OC, "\t.quad 0\n");
-                break;
-        }
+		fprintf(OC, "\t.quad 0\n");
     }
 
 
