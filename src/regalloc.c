@@ -314,6 +314,8 @@ int target_reg_in_inst(Env *regenv, char *lbl, BDAInst *inst, TargetRegResult *r
                 }
                 return 1;
             }
+        default:
+            return 0;
     }
 }
 
@@ -516,7 +518,7 @@ BDAExpr *resolve_lbl(Env *env, char *lbl, BDReg dst, BDAExpr *body)
                         body);
         }
     }
-	return NULL;
+    return NULL;
 }
 
 int use_stack_args_num(int args, int fargs)
@@ -570,6 +572,8 @@ BDAExpr *regalloc_inst(AllocState *st, Env *env, Env *regenv, BDAInst *inst, int
                         return bd_aexpr_ans(bd_ainst_neg(lbl));
                 }
             }
+        case AI_MOVGLOBAL_L:
+            return bd_aexpr_ans(bd_ainst_movglobal_l(inst->lbl));
 
         case AI_ADD:
         case AI_SUB:
@@ -661,7 +665,7 @@ BDAExpr *regalloc_inst(AllocState *st, Env *env, Env *regenv, BDAInst *inst, int
                         body = bd_aexpr_ans(bd_ainst_call(inst->lbl));
                         break;
                     case AI_CALLDIR:
-					default:
+                    default:
                         {
                             LblState *lst = env_get(env, inst->lbl);
                             if(lst == NULL){
@@ -837,7 +841,7 @@ BDAExpr *regalloc_inst(AllocState *st, Env *env, Env *regenv, BDAInst *inst, int
             }
             break;
     }
-	return NULL;
+    return NULL;
 }
 
 BDAExpr *regalloc(AllocState *st, Env *env, Env *regenv, BDAExpr *e, int tail)
@@ -997,7 +1001,7 @@ BDAExpr *regalloc(AllocState *st, Env *env, Env *regenv, BDAExpr *e, int tail)
                     e), tail);
     }
 
-	return NULL;
+    return NULL;
 }
 
 BDAExprDef *regalloc_fundef(Env *env, BDAExprDef *def)

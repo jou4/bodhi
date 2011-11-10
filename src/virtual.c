@@ -44,9 +44,15 @@ BDAExpr *virtual_expr(Env *env, BDCExpr *e)
             return bd_aexpr_ans(bd_ainst_setc(e->u.u_char));
         case E_STR:
             {
-                char *lbl = bd_generate_id(bd_type_string());
-                vector_add(consts, bd_aexpr_const_str(lbl, e->u.u_str));
-                return bd_aexpr_ans(bd_ainst_mov(lbl));
+                char *const_lbl = bd_generate_id(bd_type_string());
+                char *str_lbl = bd_generate_id(bd_type_string());
+
+                // Add lbl of '.ascii' to '.data' section.
+                vector_add(consts, bd_aexpr_const_str(const_lbl, e->u.u_str));
+                return bd_aexpr_let(
+                        bd_expr_ident(str_lbl, bd_type_string()),
+                        bd_ainst_movglobal_l(const_lbl),
+                        bd_aexpr_ans(bd_ainst_makestring(str_lbl)));
             }
         case E_NIL:
             return bd_aexpr_ans(bd_ainst_seti(0));
@@ -288,9 +294,6 @@ BDAExpr *virtual_expr_datadef(Env *env, BDCExprDef *def)
         case E_FLOAT:
             vector_add(consts, bd_aexpr_const_float(ident->name, body->u.u_double));
             return NULL;
-        case E_STR:
-            vector_add(consts, bd_aexpr_const_str(ident->name, body->u.u_str));
-            return NULL;
         case E_NIL:
             vector_add(consts, bd_aexpr_const_int(ident->name, 0));
             return NULL;
@@ -436,28 +439,6 @@ BDAProgram *bd_virtual(BDCProgram *prog)
     // Transform main definition and combine with initializes.
     def = prog->maindef;
     main = virtual_expr(env, def->body);
-
-    // Make StringObject from const string.
-    BDAExprConst *c;
-    BDExprIdent *ident;
-    char *constlbl;
-    char *stringlbl;
-    vec = aprog->consts;
-    for(i = 0; i < vec->length; i++){
-        c = vector_get(vec, i);
-        if(c->kind == AEC_STR){
-            constlbl = bd_generate_id(bd_type_string());
-            stringlbl = c->lbl; // for access
-            c->lbl = constlbl;
-
-            ident = bd_expr_ident(stringlbl, bd_type_string());
-
-            vector_add(aprog->globals, ident);
-            vector_add(inits, ident);
-            vector_add(initializers, bd_aexpr_ans(bd_ainst_makestring(constlbl)));
-        }
-    }
-
 
     for(i = inits->length - 1; i >= 0; i--){
         main = insert_initializer(

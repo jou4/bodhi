@@ -9,6 +9,11 @@ int compile(FILE *ch, BDSProgram *sprog)
 
     try{
 
+        if(sprog->maindef == NULL){
+            printf("There is no main.\n");
+            return 1;
+        }
+
         bd_typing(sprog);
 
         printf("--- Parsed ---\n");

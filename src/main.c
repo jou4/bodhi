@@ -23,81 +23,82 @@ char *LIBS = "lib/libcore.a";
 
 char *basename(char *path)
 {
-	int i = 0, len = strlen(path);
-	char *result = malloc(sizeof(char) * len);
-	char *tmp, *begin, *end;
+    int i = 0, len = strlen(path);
+    char *result = malloc(sizeof(char) * len);
+    char *tmp, *begin, *end;
 
-	for(tmp = path; (tmp = strchr(tmp, '/')) != NULL; begin = ++tmp){ }
-	for(tmp = path; (tmp = strchr(tmp, '.')) != NULL; end = tmp, tmp++){ }
+    for(tmp = path; (tmp = strchr(tmp, '/')) != NULL; begin = ++tmp){ }
+    for(tmp = path; (tmp = strchr(tmp, '.')) != NULL; end = tmp, tmp++){ }
 
-	if(begin == NULL){ begin = path; }
-	if(end != NULL){ len = end - begin; }
+    if(begin == NULL){ begin = path; }
+    if(end != NULL){ len = end - begin; }
 
-	tmp = result;
-	while(i < len){
-		tmp[i++] = *begin;
-		begin++;
-	}
+    tmp = result;
+    while(i < len){
+        tmp[i++] = *begin;
+        begin++;
+    }
 
-	return result;
+    return result;
 }
 
 void getopts(int argc, char **argv)
 {
-	int opt;
+    int opt;
 
-	while((opt = getopt(argc, argv, "Svo:")) >= 0){
-		switch(opt){
-			case 'S':
-				// compile only
-				proc_assemble = 0;
-				break;
-			case 'o':
-				output = optarg;
-				break;
-			case 'v':
-				fprintf(stdout, "%s\n", version);
-				exit(EXIT_SUCCESS);
-				break;
-			case ':':
-			case '?':
-				fprintf(stderr, "%s\n", usage);
-				exit(EXIT_FAILURE);
-				break;
-		}
-	}
+    while((opt = getopt(argc, argv, "Svo:")) >= 0){
+        switch(opt){
+            case 'S':
+                // compile only
+                proc_assemble = 0;
+                break;
+            case 'o':
+                output = optarg;
+                break;
+            case 'v':
+                fprintf(stdout, "%s\n", version);
+                exit(EXIT_SUCCESS);
+                break;
+            case ':':
+            case '?':
+                fprintf(stderr, "%s\n", usage);
+                exit(EXIT_FAILURE);
+                break;
+        }
+    }
 
-	while(optind < argc){
-		input = argv[optind++];
-		break;
-	}
+    while(optind < argc){
+        input = argv[optind++];
+        break;
+    }
 
-	if(input == NULL){
-		fprintf(stderr, "%s\n", usage);
-		exit(EXIT_FAILURE);
-	}
+    if(input == NULL){
+        fprintf(stderr, "%s\n", usage);
+        exit(EXIT_FAILURE);
+    }
 
-	char *bname = basename(input);
-	char tmpstr[L_tmpnam];
-	tmpnam(tmpstr);
+    char *bname = basename(input);
+    char tmpstr[L_tmpnam];
+    tmpnam(tmpstr);
 
-	compiled_file = malloc(sizeof(char) * 100);
-	sprintf(compiled_file, "%s.s", tmpstr);
+    compiled_file = malloc(sizeof(char) * 100);
+    sprintf(compiled_file, "%s.s", tmpstr);
 
-	if(output == NULL){
-		if(proc_assemble){
-			output = "a.out";
-		}
-		else{
-			sprintf(compiled_file, "%s.s", bname);
-			output = compiled_file;
-		}
-	}
-	else{
-		if( ! proc_assemble){
-			sprintf(compiled_file, "%s", output);
-		}
-	}
+    if(output == NULL){
+        if(proc_assemble){
+            sprintf(compiled_file, "%s.s", bname);  // TODO remove
+            output = "a.out";
+        }
+        else{
+            sprintf(compiled_file, "%s.s", bname);
+            output = compiled_file;
+        }
+    }
+    else{
+        if( ! proc_assemble){
+            sprintf(compiled_file, "%s", output);
+        }
+    }
 }
 
 int main(int argc, char **argv)
@@ -109,7 +110,7 @@ int main(int argc, char **argv)
     FILE *ic, *oc;
     int err = 0;
 
-	getopts(argc, argv);
+    getopts(argc, argv);
 
     ic = fopen(input, "r");
     if(ic == NULL){
@@ -121,14 +122,14 @@ int main(int argc, char **argv)
     lexer_init(&lexer);
     lexer_setin(&lexer, ic);
 
-	err |= yyparse(&ps, &lexer, "input");
-	fclose(ic);
+    err |= yyparse(&ps, &lexer, "input");
+    fclose(ic);
 
     if(proc_compile && err == 0){
-		oc = fopen(compiled_file, "w");
-		err |= compile(oc, &ps.prog);
-		fclose(oc);
-	}
+        oc = fopen(compiled_file, "w");
+        err |= compile(oc, &ps.prog);
+        fclose(oc);
+    }
 
     if(proc_assemble && err == 0){
         char cmd[100];

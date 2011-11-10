@@ -267,6 +267,7 @@ BDAInst *bd_ainst_setglobal(BDType *type, char *l, char *r);
 #define bd_ainst_setglobal_f(l, r) _ainst_binreg(AI_SETGLOBAL_F, l, r)
 #define bd_ainst_setglobal_l(l, r) _ainst_binreg(AI_SETGLOBAL_L, l, r)
 BDAInst *bd_ainst_mov(char *lbl);
+#define bd_ainst_mov_l(lbl) _ainst_unireg(AI_MOV_L, lbl)
 #define bd_ainst_movglobal(lbl) _ainst_unireg(AI_MOVGLOBAL, lbl)
 #define bd_ainst_movglobal_l(lbl) _ainst_unireg(AI_MOVGLOBAL_L, lbl)
 BDAInst *_ainst_unireg(BDAInstKind kind, char *reg);

@@ -589,13 +589,9 @@ void bd_emit(FILE *ch, BDAProgram *prog)
                 break;
             case AEC_STR:
                 {
-                    char *tmpname = bd_generate_id(bd_type_string());
                     fprintf(OC, "\t.cstring\n");
-                    fprintf(OC, "%s:\n", tmpname);
-                    fprintf(OC, "\t.ascii \"%s\\0\"\n", c->u.u_str);
-                    fprintf(OC, "\t.data\n");
                     fprintf(OC, "%s:\n", c->lbl);
-                    fprintf(OC, "\t.quad %s\n", tmpname);
+                    fprintf(OC, "\t.ascii \"%s\\0\"\n", c->u.u_str);
                 }
                 break;
         }
