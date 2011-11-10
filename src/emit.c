@@ -588,12 +588,12 @@ void bd_emit(FILE *ch, BDAProgram *prog)
             case AEC_CHAR:
                 fprintf(OC, "\t.data\n");
                 fprintf(OC, "%s:\n", c->lbl);
-                fprintf(OC, "\t.byte %d\n", (int)c->u.u_char);
+                fprintf(OC, "\t.quad %d\n", (int)c->u.u_char);
                 break;
             case AEC_INT:
                 fprintf(OC, "\t.data\n");
                 fprintf(OC, "%s:\n", c->lbl);
-                fprintf(OC, "\t.long %d\n", c->u.u_int);
+                fprintf(OC, "\t.quad %d\n", c->u.u_int);
                 break;
             case AEC_FLOAT:
                 // TODO

@@ -62,13 +62,14 @@ BDValue *bd_value(char type)
 
 BDValue *bd_value_string(int length, char *val)
 {
-    if(val == NULL){
-        val = allocate_cell(SIZE_OF_CHAR * (length + 1));
+    char *cell = allocate_cell(SIZE_OF_CHAR * (length + 1));
+    if(val != NULL){
+        strcpy(cell, val);
     }
 
     BDValue *v = bd_value(T_STRING);
     v_string_length(v) = length;
-    v_string_val(v) = val;
+    v_string_val(v) = cell;
     return v;
 }
 
