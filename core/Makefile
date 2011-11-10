@@ -3,7 +3,7 @@ CFLAGS		= -O3 -Wall -I/usr/local/include
 DEST		=
 LDFLAGS		=
 LIBS		=
-OBJS		= core.o
+OBJS		= core.o primitives.o value.o heap.o
 PROGRAM		= libcore.a
 AR			= ar
 

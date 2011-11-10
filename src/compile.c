@@ -45,6 +45,7 @@ int compile(FILE *ch, BDSProgram *sprog)
 
         printf("--- Emit code --- \n");
         bd_emit(ch, aprog);
+        printf("Done.\n\n");
 
         return 0;
 

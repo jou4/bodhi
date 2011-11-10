@@ -55,7 +55,7 @@ BDAExpr *virtual_expr(Env *env, BDCExpr *e)
                         bd_aexpr_ans(bd_ainst_makestring(str_lbl)));
             }
         case E_NIL:
-            return bd_aexpr_ans(bd_ainst_seti(0));
+            return bd_aexpr_ans(bd_ainst_movglobal("_NIL_PTR"));
         case E_UNIOP:
             {
                 return bd_aexpr_ans(bd_ainst_neg(e->u.u_uniop.val));
@@ -293,9 +293,6 @@ BDAExpr *virtual_expr_datadef(Env *env, BDCExprDef *def)
             return NULL;
         case E_FLOAT:
             vector_add(consts, bd_aexpr_const_float(ident->name, body->u.u_double));
-            return NULL;
-        case E_NIL:
-            vector_add(consts, bd_aexpr_const_int(ident->name, 0));
             return NULL;
     }
 

@@ -33,7 +33,7 @@ BDCExpr *closure_transform(Env *env, Set *known, BDNExpr *e)
                         Vector *actuals = vector_new();
                         vector_add(actuals, mem_strdup(e->u.u_binop.l));
                         vector_add(actuals, mem_strdup(e->u.u_binop.r));
-                        return bd_cexpr_appdir("_bodhi_cons", actuals);
+                        return bd_cexpr_appdir("_bodhi_core_list_cons", actuals);
                     }
                 default:
                     return bd_cexpr_binop(e->u.u_binop.kind, e->u.u_binop.l, e->u.u_binop.r);

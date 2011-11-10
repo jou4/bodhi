@@ -572,6 +572,8 @@ BDAExpr *regalloc_inst(AllocState *st, Env *env, Env *regenv, BDAInst *inst, int
                         return bd_aexpr_ans(bd_ainst_neg(lbl));
                 }
             }
+        case AI_MOVGLOBAL:
+            return bd_aexpr_ans(bd_ainst_movglobal(inst->lbl));
         case AI_MOVGLOBAL_L:
             return bd_aexpr_ans(bd_ainst_movglobal_l(inst->lbl));
 

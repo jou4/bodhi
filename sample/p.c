@@ -2,27 +2,53 @@
 #include <stdlib.h>
 
 typedef struct {
-    char *a;
-    char *b;
+    void *a;
+    void *b;
 } Value;
+
+char size()
+{
+    return sizeof(Value);
+}
+
+Value *create(void *a, void *b)
+{
+    Value *v = malloc(sizeof(Value));
+    v->a = a;
+    v->b = b;
+    return v;
+}
+
+void *geta(Value *v)
+{
+    return v->a;
+}
+
+void *getb(Value *v)
+{
+    return v->b;
+}
+
+void show(Value *v)
+{
+    printf("%ld\n", (long)geta(v));
+    printf("%ld\n", (long)getb(v));
+}
 
 int main()
 {
     char *a = "ABC";
     char *b = "DEF";
 
-    Value *v = malloc(sizeof(Value));
-    v->a = a;
-    v->b = b;
+    asm(
+            "movq $100, %rdi\n"
+            "movq $200, %rsi\n"
+            "call _create\n"
+            "movq %rax, %rdi\n"
+            "call _show\n"
+       );
 
-    long *v2 = malloc(sizeof(Value));
-    v2[0] = (long)a;
-    v2[1] = (long)b;
-
-    printf("%s\n", ((Value *)v)->a);
-    printf("%s\n", ((Value *)v)->b);
-    printf("%s\n", ((Value *)v2)->a);
-    printf("%s\n", ((Value *)v2)->b);
+    printf("%d\n", size());
 
     return 0;
 }

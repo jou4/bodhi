@@ -1,87 +1,42 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "value.h"
 
-typedef struct {
-    char o;
-    char *entry;
-} BDValueClosure;
-
-void *bodhi_core_make_closure(char *entry, int fvs_size)
+void *bodhi_core_make_closure(char *entry, int num_of_vars)
 {
-    BDValueClosure *value = malloc(sizeof(BDValueClosure) + fvs_size);
-    value->o = 'O';
-    value->entry = entry;
-    return value;
+    return bd_value_closure(entry, num_of_vars);
 }
 
-void *bodhi_core_closure_entry(void *value)
+void *bodhi_core_closure_entry(BDValue *v)
 {
-    BDValueClosure *cls = (BDValueClosure *)value;
-    if(cls->o == 'O'){
-        return cls->entry;
-    }
-    return value;
+    assert_expected_value(v, T_CLOSURE);
+    return v_closure_entry(v);
 }
 
-void *bodhi_core_closure_freevars(void *value)
+void *bodhi_core_closure_vars(BDValue *v)
 {
-    return value + sizeof(BDValueClosure);
+    assert_expected_value(v, T_CLOSURE);
+    return v_closure_vars(v);
 }
 
-typedef struct {
-    char o;
-} BDValueTuple;
-
-void *bodhi_core_make_tuple(int size)
+void *bodhi_core_make_tuple(int num_of_elements)
 {
-    BDValueTuple *value = malloc(sizeof(BDValueTuple) + sizeof(void *) * size);
-    value->o = 'O';
-    return value;
+    return bd_value_tuple(num_of_elements);
 }
 
-void *bodhi_core_tuple_elems(void *value)
+void *bodhi_core_tuple_elems(BDValue *v)
 {
-    return value + sizeof(BDValueTuple);
+    assert_expected_value(v, T_TUPLE);
+    return v_tuple_elements(v);
 }
 
-typedef struct {
-    char o;
-} BDValueString;
-
-void *bodhi_core_make_string(char *str)
+void *bodhi_core_make_string(char *val)
 {
-
-    void *value = malloc(sizeof(BDValueString) + strlen(str) + 1);
-    ((BDValueString *)value)->o = 'O';
-
-    char *cell = value + sizeof(BDValueString);
-    strcpy(cell, str);
-
-    return value;
+    return bd_value_string(strlen(val), val);
 }
 
-
-
-
-void bodhi_print_int(int x)
+void *bodhi_core_list_cons(void *head, void *tail)
 {
-    printf("%d\n", x);
+    return bd_value_list(head, tail);
 }
-
-void bodhi_print_float(double x)
-{
-    printf("%.14g\n", x);
-}
-
-void bodhi_print_char(char x)
-{
-    printf("%c\n", x);
-}
-
-void bodhi_print_string(void *x)
-{
-    char *str = x + sizeof(BDValueString);
-    printf("%s\n", str);
-}
-
