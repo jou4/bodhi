@@ -1,6 +1,6 @@
 CC			= gcc
-#CFLAGS		= -O3 -I/usr/local/include -I../include
-CFLAGS		= -g -I/usr/local/include -I../include
+CFLAGS		= -O3 -Wall -I/usr/local/include -I../include
+DFLAGS		= -g  -I/usr/local/include -I../include
 DEST		=
 LDFLAGS		=
 LIBS		= ../lib/libutil.a
@@ -14,12 +14,16 @@ PARSER		= parser.c
 
 all:		$(PROGRAM)
 
+$(PROGRAM):	$(OBJS)
+	$(CC) $(OBJS) $(LDFLAGS) $(LIBS) -o $(PROGRAM)
+
+debug:	CFLAGS = $(DFLAGS)
+debug:	$(OBJS)
+	$(CC) $(OBJS) $(LDFLAGS) $(LIBS) -o $(PROGRAM)
+
 parser:
 	$(MAKE) $(LEXER)
 	$(MAKE) $(PARSER)
-
-$(PROGRAM):	$(OBJS)
-	$(CC) $(OBJS) $(LDFLAGS) $(LIBS) -o $(PROGRAM)
 
 $(LEXER):	lexer.l
 	flex -o $(LEXER) lexer.l

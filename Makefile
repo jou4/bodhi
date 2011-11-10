@@ -1,5 +1,6 @@
 CC			= gcc
 CFLAGS		= -O3 -Wall -I/usr/local/include
+DFLAGS		= -g -Wall -I/usr/local/include
 DEST		=
 LDFLAGS		=
 LIBS		=
@@ -15,6 +16,15 @@ all:
 	cd src; $(MAKE) all
 	cp src/a.out bin/bodhi
 	cd core; $(MAKE) all
+	cp core/libcore.a lib/libcore.a
+
+debug:
+	$(MAKE) dir
+	cd util; $(MAKE) debug
+	cp util/libutil.a lib/libutil.a
+	cd src; $(MAKE) debug
+	cp src/a.out bin/bodhi
+	cd core; $(MAKE) debug
 	cp core/libcore.a lib/libcore.a
 
 dir:
