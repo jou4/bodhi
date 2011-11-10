@@ -88,7 +88,6 @@ BDNProgram *bd_inline_expand(int threashold, BDNProgram *prog)
 
     int i;
     Vector *vec;
-    BDNExpr *e;
     BDNExprDef *def;
 
     vec = prog->defs;

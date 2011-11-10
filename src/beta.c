@@ -93,7 +93,6 @@ BDNProgram *bd_beta_reduce(BDNProgram *prog)
 
     int i;
     Vector *vec;
-    BDNExpr *e;
     BDNExprDef *def;
 
     vec = prog->defs;

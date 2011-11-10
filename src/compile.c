@@ -39,6 +39,10 @@ int compile(FILE *ch, BDSProgram *sprog)
         printf("--- Inline expanded --- \n");
         bd_nprogram_show(nprog);
 
+        printf("--- Const folded --- \n");
+        nprog = bd_const_fold(nprog);
+        bd_nprogram_show(nprog);
+
         cprog = bd_closure_transform(nprog);
         printf("--- Closure transformed --- \n");
         bd_cprogram_show(cprog);
