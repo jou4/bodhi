@@ -130,6 +130,14 @@ BDAExpr *bd_aexpr_let(BDExprIdent *ident, BDAInst *val, BDAExpr *body)
     return e;
 }
 
+BDAExpr *bd_aexpr_nonelet(BDAInst *val, BDAExpr *body)
+{
+	return bd_aexpr_let(
+			bd_expr_ident(NULL, NULL),
+			val,
+			body);
+}
+
 BDAExpr *bd_aexpr_ans(BDAInst *val)
 {
     BDAExpr *e = bd_aexpr(AE_ANS);
@@ -654,7 +662,7 @@ void _bd_aexpr_show(BDAExpr *e, int col, int depth)
                 BDAInst *val = e->u.u_let.val;
                 BDAExpr *body = e->u.u_let.body;
 
-                if(ident->type->kind != T_UNIT){
+                if(ident->type != NULL){
                     PRINT1(col, "%s = ", bd_expr_ident_show(ident));
                 }
                 _bd_ainst_show(val, col, depth + 1);

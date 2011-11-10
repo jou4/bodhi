@@ -150,8 +150,7 @@ BDAExpr *virtual_expr(Env *env, BDCExpr *e)
                 env_local_destroy(local);
 
                 for(i = es->length - 1; i >= 0; i--){
-                    result = bd_aexpr_let(
-                            bd_expr_ident("", bd_type_unit()),
+                    result = bd_aexpr_nonelet(
                             vector_get(es, i),
                             result
                             );
@@ -161,8 +160,7 @@ BDAExpr *virtual_expr(Env *env, BDCExpr *e)
                 result = bd_aexpr_let(
                         bd_expr_ident_clone(ident),
                         bd_ainst_makecls(closure->entry, fvs_size),
-                        bd_aexpr_let(
-                            bd_expr_ident("", bd_type_unit()),
+                        bd_aexpr_nonelet(
                             bd_ainst_loadfvs(ident->name),
                             result));
 
@@ -196,8 +194,7 @@ BDAExpr *virtual_expr(Env *env, BDCExpr *e)
                     case E_APPCLS:
                         {
                             char *entry = bd_generate_id(NULL);
-                            return bd_aexpr_let(
-                                    bd_expr_ident("_", bd_type_unit()),
+                            return bd_aexpr_nonelet(
                                     bd_ainst_loadfvs(fun),
                                     bd_aexpr_let(
                                         bd_expr_ident_typevar(entry),
@@ -224,8 +221,7 @@ BDAExpr *virtual_expr(Env *env, BDCExpr *e)
 
                 for(i = elems->length - 1; i >= 0; i--){
                     elem = vector_get(elems, i);
-                    result = bd_aexpr_let(
-                            bd_expr_ident("", bd_type_unit()),
+                    result = bd_aexpr_nonelet(
                             bd_ainst_pushelm(elem, i),
                             result);
                 }
@@ -233,8 +229,7 @@ BDAExpr *virtual_expr(Env *env, BDCExpr *e)
                 return bd_aexpr_let(
                         bd_expr_ident_typevar(newname),
                         bd_ainst_maketuple(elems->length),
-                        bd_aexpr_let(
-                            bd_expr_ident("", bd_type_unit()),
+                        bd_aexpr_nonelet(
                             bd_ainst_loadelms(newname),
                             result));
             }
@@ -268,8 +263,7 @@ BDAExpr *virtual_expr(Env *env, BDCExpr *e)
                 vector_destroy(insts);
                 env_local_destroy(local);
 
-                result = bd_aexpr_let(
-                        bd_expr_ident("", bd_type_unit()),
+                result = bd_aexpr_nonelet(
                         bd_ainst_loadelms(val),
                         result);
 
@@ -355,8 +349,7 @@ BDAExpr *insert_initializer(BDAExpr *init, BDExprIdent *ident, BDAExpr *body)
                 newexpr = bd_aexpr_let(
                         bd_expr_ident(tmpname, bd_type_clone(ident->type)),
                         init->u.u_ans.val,
-                        bd_aexpr_let(
-                            bd_expr_ident("", bd_type_unit()),
+                        bd_aexpr_nonelet(
                             bd_ainst_setglobal(ident->type, ident->name, tmpname),
                             body));
             }

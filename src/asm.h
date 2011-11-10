@@ -255,6 +255,7 @@ BDAExprConst *bd_aexpr_const_float(char *lbl, double val);
 BDAExprConst *bd_aexpr_const_str(char *lbl, char *val);
 
 BDAExpr *bd_aexpr_let(BDExprIdent *ident, BDAInst *val, BDAExpr *body);
+BDAExpr *bd_aexpr_nonelet(BDAInst *val, BDAExpr *body);
 BDAExpr *bd_aexpr_ans(BDAInst *val);
 
 BDAInst *bd_ainst(BDAInstKind kind);

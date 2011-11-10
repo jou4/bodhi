@@ -695,8 +695,7 @@ BDAExpr *regalloc_inst(AllocState *st, Env *env, Env *regenv, BDAInst *inst, int
 
                     if(target == RNONE){
                         body = resolve_lbl(env, ident->name, RACC,
-                                bd_aexpr_let(
-                                    bd_expr_ident("", bd_type_unit()),
+                                bd_aexpr_nonelet(
                                     bd_ainst_pusharg(ident->type, reg_name(RACC), stack),
                                     body));
                         stack--;
@@ -705,8 +704,7 @@ BDAExpr *regalloc_inst(AllocState *st, Env *env, Env *regenv, BDAInst *inst, int
                         reg = find_reg(env, regenv, ident->name);
                         vector_add(used_regs, reg);
 
-                        body = bd_aexpr_let(
-                                bd_expr_ident("", bd_type_unit()),
+                        body = bd_aexpr_nonelet(
                                 bd_ainst_pusharg(ident->type, reg, i),
                                 body);
                     }
@@ -718,8 +716,7 @@ BDAExpr *regalloc_inst(AllocState *st, Env *env, Env *regenv, BDAInst *inst, int
 
                     if(target == RNONE){
                         body = resolve_lbl(env, ident->name, RACC,
-                                bd_aexpr_let(
-                                    bd_expr_ident("", bd_type_unit()),
+                                bd_aexpr_nonelet(
                                     bd_ainst_pusharg(ident->type, reg_name(RACC), stack),
                                     body));
                         stack--;
@@ -728,16 +725,14 @@ BDAExpr *regalloc_inst(AllocState *st, Env *env, Env *regenv, BDAInst *inst, int
                         reg = find_reg(env, regenv, ident->name);
                         vector_add(used_regs, reg);
 
-                        body = bd_aexpr_let(
-                                bd_expr_ident("", bd_type_unit()),
+                        body = bd_aexpr_nonelet(
                                 bd_ainst_pusharg(ident->type, reg, i),
                                 body);
                     }
                 }
 
                 if(tail && use_stack_args_num(ilist->length, flist->length) < TAIL_JMP_THREASHOLD){
-                    body = bd_aexpr_let(
-                            bd_expr_ident("", bd_type_unit()),
+                    body = bd_aexpr_nonelet(
                             bd_ainst_tailcall_point(),
                             body);
                 }
@@ -871,7 +866,7 @@ BDAExpr *regalloc(AllocState *st, Env *env, Env *regenv, BDAExpr *e, int tail)
 
                     BDAExpr *newbody;
 
-                    if(ident->type->kind == T_UNIT){
+                    if(ident->type == NULL){
                         newbody = regalloc(local_st, local_env, local_regenv, body, tail);
 
                         // Clean.
@@ -920,8 +915,7 @@ BDAExpr *regalloc(AllocState *st, Env *env, Env *regenv, BDAExpr *e, int tail)
                             env_destroy(local_env);
                             env_destroy(local_regenv);
 
-                            return bd_aexpr_let(
-                                    bd_expr_ident("", bd_type_unit()),
+                            return bd_aexpr_nonelet(
                                     saveinst,
                                     bd_aexpr_concat(
                                         newinst,
@@ -953,8 +947,7 @@ BDAExpr *regalloc(AllocState *st, Env *env, Env *regenv, BDAExpr *e, int tail)
                                 return bd_aexpr_concat(
                                         newinst,
                                         bd_expr_ident(reg_name(RACC), ident->type),
-                                        bd_aexpr_let(
-                                            bd_expr_ident("", bd_type_unit()),
+                                        bd_aexpr_nonelet(
                                             saveinst,
                                             newbody));
                             }
@@ -1025,7 +1018,7 @@ BDAExprDef *regalloc_fundef(Env *env, BDAExprDef *def)
 
     BDAExpr *result, *reg2lcl, *tail = NULL;
 
-    result = bd_aexpr_let(bd_expr_ident("", bd_type_unit()), bd_ainst_nop(), NULL);
+    result = bd_aexpr_nonelet(bd_ainst_nop(), NULL);
     tail = result;
 
     vec = iformals;
@@ -1038,8 +1031,7 @@ BDAExprDef *regalloc_fundef(Env *env, BDAExprDef *def)
                 env_set(local, formal->name, lbl_state_offset(formal->type, POS_ARG, i));
             }
             else{
-                reg2lcl = bd_aexpr_let(
-                        bd_expr_ident("", bd_type_unit()),
+                reg2lcl = bd_aexpr_nonelet(
                         bd_ainst_pushlcl(formal->type, reg_name(reg), st->local_offset),
                         NULL);
                 tail->u.u_let.body = reg2lcl;
@@ -1061,8 +1053,7 @@ BDAExprDef *regalloc_fundef(Env *env, BDAExprDef *def)
                 env_set(local, formal->name, lbl_state_offset(formal->type, POS_ARG, i));
             }
             else{
-                reg2lcl = bd_aexpr_let(
-                        bd_expr_ident("", bd_type_unit()),
+                reg2lcl = bd_aexpr_nonelet(
                         bd_ainst_pushlcl(formal->type, reg_name(reg), st->local_offset),
                         NULL);
                 tail->u.u_let.body = reg2lcl;
@@ -1079,8 +1070,7 @@ BDAExprDef *regalloc_fundef(Env *env, BDAExprDef *def)
         for(i = 0; i < vec->length; i++){
             formal = vector_get(vec, i);
 
-            reg2lcl = bd_aexpr_let(
-                    bd_expr_ident("", bd_type_unit()),
+            reg2lcl = bd_aexpr_nonelet(
                     bd_ainst_pushlcl(formal->type, reg_name(RACC), st->local_offset),
                     NULL);
             tail->u.u_let.body = bd_aexpr_let(

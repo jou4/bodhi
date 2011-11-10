@@ -404,7 +404,7 @@ void emit(EmitState *st, BDAExpr *e)
             {
                 BDExprIdent *ident = e->u.u_let.ident;
                 char *dst = NULL;
-                if(ident->type->kind != T_UNIT){
+                if(ident->type != NULL){
                     dst = ident->name;
                 }
                 emit_inst(st, e->u.u_let.val, dst);
