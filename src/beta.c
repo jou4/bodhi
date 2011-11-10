@@ -12,7 +12,7 @@ char *try_find(Env *env, char *key)
     return val;
 }
 
-BDExpr2 *beta_reduce(Env *env, BDExpr2 *e)
+BDNExpr *beta_reduce(Env *env, BDNExpr *e)
 {
     switch(e->kind)
     {
@@ -31,12 +31,12 @@ BDExpr2 *beta_reduce(Env *env, BDExpr2 *e)
             break;
         case E_LET:
             {
-                BDExpr2 *val = beta_reduce(env, e->u.u_let.val);
+                BDNExpr *val = beta_reduce(env, e->u.u_let.val);
                 if(val->kind == E_VAR){
                     // beta-reducing
                     Env *local = env_local_new(env);
                     env_set(local, e->u.u_let.ident->name, val->u.u_var.name);
-                    BDExpr2 *reduced = beta_reduce(local, e->u.u_let.body);
+                    BDNExpr *reduced = beta_reduce(local, e->u.u_let.body);
                     env_local_destroy(local);
 
                     free(e);
@@ -52,8 +52,11 @@ BDExpr2 *beta_reduce(Env *env, BDExpr2 *e)
             e->u.u_var.name = try_find(env, e->u.u_var.name);
             break;
         case E_LETREC:
-            e->u.u_letrec.fundef->body = beta_reduce(env, e->u.u_letrec.fundef->body);
+            e->u.u_letrec.fun = beta_reduce(env, e->u.u_letrec.fun);
             e->u.u_letrec.body = beta_reduce(env, e->u.u_letrec.body);
+            break;
+        case E_FUN:
+            e->u.u_fun.body = beta_reduce(env, e->u.u_fun.body);
             break;
         case E_APP:
             {
@@ -78,19 +81,31 @@ BDExpr2 *beta_reduce(Env *env, BDExpr2 *e)
             e->u.u_lettuple.val = try_find(env, e->u.u_lettuple.val);
             e->u.u_lettuple.body = beta_reduce(env, e->u.u_lettuple.body);
             break;
+        default:
+            break;
     }
     return e;
 }
 
-BDExpr2 *bd_beta_reduce(BDExpr2 *e)
+BDNProgram *bd_beta_reduce(BDNProgram *prog)
 {
     Env *env = env_new();
-    BDExpr2 *ret = beta_reduce(env, e);
+
+    int i;
+    Vector *vec;
+    BDNExpr *e;
+    BDNExprDef *def;
+
+    vec = prog->defs;
+    for(i = 0; i < vec->length; i++){
+        def = vector_get(vec, i);
+        def->body = beta_reduce(env, def->body);
+        vector_set(vec, i, def);
+    }
+
+    prog->maindef->body = beta_reduce(env, prog->maindef->body);
+
     env_destroy(env);
 
-    printf("--- β reduced --- \n");
-    bd_expr2_show(ret);
-    printf("\n");
-
-    return ret;
+    return prog;
 }

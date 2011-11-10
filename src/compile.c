@@ -27,6 +27,10 @@ int compile(FILE *ch, BDSProgram *sprog)
         printf("--- α converted --- \n");
         bd_nprogram_show(nprog);
 
+        nprog = bd_beta_reduce(nprog);
+        printf("--- β reduced --- \n");
+        bd_nprogram_show(nprog);
+
         nprog = bd_flatten(nprog);
         printf("--- Nested let flatten --- \n");
         bd_nprogram_show(nprog);
