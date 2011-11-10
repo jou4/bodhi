@@ -4,11 +4,15 @@
 #include "parser_ext.h"
 #include "util.h"
 
-#define YYDEBUG 1
+//#define YYDEBUG 1
 #define YYLEX_PARAM lexer->scanner, lexer
 
 #define add_def(def) vector_add(ps->prog.defs, def)
 #define set_maindef(def) ps->prog.maindef = def
+
+extern int yylex();
+extern int yyerror();
+extern int yyget_lineno();
 
 %}
 
@@ -249,7 +253,7 @@ pat
 
 %%
 
-int yyerror(Parser *ps, Lexer *lexer, char *stream_name, char *msg)
+int yyerror(Parser *ps, Lexer *lexer, const char *stream_name, const char *msg)
 {
     fprintf(stderr, "%s(%d): %s\n", stream_name, yyget_lineno(lexer->scanner), msg);
     return 0;

@@ -9,6 +9,8 @@
 
 Vector *primsigs;
 
+extern int yyparse();
+
 char *input = NULL;
 char *output = NULL;
 char *compiled_file = NULL;
@@ -25,7 +27,7 @@ char *basename(char *path)
 {
     int i = 0, len = strlen(path);
     char *result = malloc(sizeof(char) * len);
-    char *tmp, *begin, *end;
+    char *tmp, *begin = NULL, *end = NULL;
 
     for(tmp = path; (tmp = strchr(tmp, '/')) != NULL; begin = ++tmp){ }
     for(tmp = path; (tmp = strchr(tmp, '.')) != NULL; end = tmp, tmp++){ }
@@ -61,9 +63,10 @@ void getopts(int argc, char **argv)
                 break;
             case ':':
             case '?':
+			default:
                 fprintf(stderr, "%s\n", usage);
                 exit(EXIT_FAILURE);
-                break;
+				break;
         }
     }
 

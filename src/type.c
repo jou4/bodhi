@@ -39,6 +39,8 @@ void bd_type_destroy(BDType *t)
         case T_VAR:
             bd_type_destroy(t->u.u_var.content);
             break;
+		default:
+			break;
     }
     free(t);
 }
@@ -103,7 +105,10 @@ BDType *_bd_type_clone(BDType *t, Vector *oldvars, Vector *newvars)
                     return vector_get(newvars, index);
                 }
             }
+		default:
+			break;
     }
+	return NULL;
 }
 
 BDType *bd_type_clone(BDType *t)
@@ -309,6 +314,8 @@ void bd_type_to_string(BDType *t, StringBuffer *sb, Vector *vars)
                 bd_type_to_string(t->u.u_schema.body, sb, vars);
                 return;
             }
+		default:
+			break;
     }
 }
 

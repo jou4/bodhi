@@ -498,7 +498,7 @@ BDType *typing(Env *env, BDSExpr *e)
                 return bd_type_list(bd_type_var(NULL));
             case E_UNIOP:
                 {
-                    BDType *expected;
+                    BDType *expected = NULL;
 
                     switch(e->u.u_uniop.kind){
                         case OP_NOT:

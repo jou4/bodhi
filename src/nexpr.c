@@ -71,6 +71,8 @@ void bd_nexpr_destroy(BDNExpr *e)
             free(e->u.u_lettuple.val);
             bd_nexpr_destroy(e->u.u_lettuple.body);
             break;
+		default:
+			break;
     }
     free(e);
 }
@@ -381,6 +383,8 @@ void _bd_nexpr_show(BDNExpr *e, int col, int depth)
                 case OP_NEG:
                     PRINT1(col, "-%s", e->u.u_uniop.val);
                     break;
+				default:
+					break;
             }
             break;
         case E_BINOP:
@@ -401,6 +405,8 @@ void _bd_nexpr_show(BDNExpr *e, int col, int depth)
                 case OP_CONS:
                     PRINT(col, " : ");
                     break;
+				default:
+					break;
             }
             PRINT1(col, "%s", e->u.u_binop.r);
             break;
@@ -415,6 +421,8 @@ void _bd_nexpr_show(BDNExpr *e, int col, int depth)
                 case OP_LE:
                     PRINT(col, " <= ");
                     break;
+				default:
+					break;
             }
             PRINT1(col, "%s", e->u.u_binop.r);
 
@@ -546,6 +554,8 @@ void _bd_nexpr_show(BDNExpr *e, int col, int depth)
                 _bd_nexpr_show(e->u.u_lettuple.body, col, depth);
             }
             break;
+		default:
+			break;
     }
 }
 
@@ -557,8 +567,7 @@ void bd_nexpr_show(BDNExpr *e)
 
 void bd_nprogram_def_show(BDNExprDef *def)
 {
-    Vector *vec;
-    int i, col = 0, depth = 0;
+    int col = 0, depth = 0;
 
     PRINT1(col, "%s", bd_expr_ident_show(def->ident));
     PRINT(col, " = ");

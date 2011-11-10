@@ -40,6 +40,8 @@ BDNExpr *flatten_nested_let(BDNExpr *e)
         case E_LETTUPLE:
             e->u.u_lettuple.body = flatten_nested_let(e->u.u_lettuple.body);
             break;
+		default:
+			break;
     }
     return e;
 }

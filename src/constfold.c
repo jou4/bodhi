@@ -67,6 +67,8 @@ BDNExpr *const_fold(Env *env, BDNExpr *e)
                         return newexpr;
                     }
                     break;
+				default:
+					break;
             }
             break;
         case E_BINOP:
@@ -93,6 +95,8 @@ BDNExpr *const_fold(Env *env, BDNExpr *e)
                         newexpr = bd_nexpr_int(find_const_int(env, x) / find_const_int(env, y));
                     }
                     break;
+				default:
+					break;
             }
 
             if(newexpr != NULL){
@@ -128,6 +132,8 @@ BDNExpr *const_fold(Env *env, BDNExpr *e)
                         }
                     }
                     break;
+				default:
+					break;
             }
 
             if(newexpr != NULL){
@@ -160,7 +166,7 @@ BDNExpr *const_fold(Env *env, BDNExpr *e)
 			break;
         case E_LETTUPLE:
             // TODO
-            e->u.u_lettuple.body = const_fold(env, e->u.u_lettuple.body);
+            //e->u.u_lettuple.body = const_fold(env, e->u.u_lettuple.body);
             break;
 		default:
 			break;

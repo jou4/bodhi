@@ -22,8 +22,9 @@ int has_side_effect(BDNExpr *e)
         case E_APP:
             return 1;
 		default:
-			return 0;
+			break;
     }
+	return 0;
 }
 
 BDNExpr *elim_disuse_decl(BDNExpr *e)

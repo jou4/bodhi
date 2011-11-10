@@ -50,6 +50,8 @@ char *reg_name(BDReg reg)
             return reg_ext4;
         case REXT5:
             return reg_ext5;
+		default:
+			break;
     }
     return NULL;
 }
@@ -492,6 +494,8 @@ void _bd_ainst_show(BDAInst *inst, int col, int depth)
                     case AI_CCALL:
                         PRINT(col, "CCALL");
                         break;
+					default:
+						break;
                 }
 
                 PRINT1(col, " %s ", inst->lbl);
@@ -646,6 +650,8 @@ void _bd_ainst_show(BDAInst *inst, int col, int depth)
         case AI_RESTORE:
             PRINT1(col, "RESTORE %s", inst->lbl);
             break;
+		default:
+			break;
 
     }
 }
@@ -677,12 +683,14 @@ void _bd_aexpr_show(BDAExpr *e, int col, int depth)
                 PRINT(col, ")");
             }
             break;
+		default:
+			break;
     }
 }
 
 void bd_aprogram_const_show(BDAExprConst *c)
 {
-    int i, col = 0, depth = 0;
+    int col = 0;
 
     PRINT1(col, "%s:\n", c->lbl);
     PRINT(col, "\t");
@@ -697,6 +705,8 @@ void bd_aprogram_const_show(BDAExprConst *c)
         case AEC_STR:
             PRINT1(col, "\"%s\"", c->u.u_str);
             break;
+		default:
+			break;
     }
 
     PRINT(col, "\n");
@@ -704,7 +714,7 @@ void bd_aprogram_const_show(BDAExprConst *c)
 
 void bd_aprogram_global_show(BDExprIdent *global)
 {
-    int i, col = 0, depth = 0;
+    int col = 0;
     PRINT1(col, "%s\n", bd_expr_ident_show(global));
 }
 
@@ -782,7 +792,7 @@ void bd_aprogram_show(BDAProgram *prog)
 
 BDAExpr *bd_aexpr_concat(BDAExpr *e1, BDExprIdent *ident, BDAExpr *e2)
 {
-    BDAExpr *ret;
+    BDAExpr *ret = NULL;
     switch(e1->kind){
         case AE_ANS:
             ret = bd_aexpr_let(bd_expr_ident_clone(ident), e1->u.u_ans.val, e2);
@@ -793,6 +803,8 @@ BDAExpr *bd_aexpr_concat(BDAExpr *e1, BDExprIdent *ident, BDAExpr *e2)
                     e1->u.u_let.val,
                     bd_aexpr_concat(e1->u.u_let.body, ident, e2));
             break;
+		default:
+			break;
     }
     free(e1);
     return ret;

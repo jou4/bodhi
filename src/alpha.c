@@ -187,6 +187,8 @@ BDNExpr *bd_alpha(Env *env, BDNExpr *e)
                 return newexpr;
             }
             break;
+        default:
+            break;
     }
     return NULL;
 }

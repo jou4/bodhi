@@ -22,7 +22,6 @@ typedef struct {
 
 InsertLetResult insert_let(Pair p)
 {
-    char *x;
     InsertLetResult ret;
 
     if(p.e->kind == E_VAR){
@@ -65,7 +64,7 @@ Pair normalize_binop(Env *env, BDSExpr *src, BDNExpr *dest)
 {
     Pair p1, p2;
     InsertLetResult x, y;
-    BDType *t;
+    BDType *t = NULL;
 
     p1 = normalize(env, src->u.u_binop.l);
     p2 = normalize(env, src->u.u_binop.r);
@@ -86,6 +85,8 @@ Pair normalize_binop(Env *env, BDSExpr *src, BDNExpr *dest)
         case OP_CONS:
             t = bd_type_list(p1.t);
             break;
+		default:
+			break;
     }
 
     return pair(combine_let_body(x.let, combine_let_body(y.let, dest)), t);
@@ -138,6 +139,8 @@ Pair normalize(Env *env, BDSExpr *e)
                     return normalize(env, bd_sexpr_if(e->u.u_uniop.val, bd_sexpr_bool(0), bd_sexpr_bool(1)));
                 case OP_NEG:
                     return normalize_uniop(env, e, bd_nexpr_uniop(e->u.u_uniop.kind, NULL), bd_type_int());
+				default:
+					break;
             }
             break;
         case E_BINOP:
@@ -152,6 +155,8 @@ Pair normalize(Env *env, BDSExpr *e)
                     return normalize(env, bd_sexpr_if(e, bd_sexpr_bool(1), bd_sexpr_bool(0)));
                 case OP_CONS:
                     return normalize_binop(env, e, bd_nexpr_binop(e->u.u_binop.kind, NULL, NULL));
+				default:
+					break;
             }
             break;
         case E_IF:
@@ -253,7 +258,6 @@ Pair normalize(Env *env, BDSExpr *e)
                 Vector *actuals = e->u.u_app.actuals;
                 Vector *new_actuals = vector_new();
                 int i;
-                BDSExpr *tmp;
                 for(i = 0; i < actuals->length; i++){
                     p = normalize(env, vector_get(actuals, i));
                     x = insert_let(p);
@@ -274,13 +278,12 @@ Pair normalize(Env *env, BDSExpr *e)
         case E_CCALL:
             {
                 Pair p;
-                InsertLetResult f, x;
+                InsertLetResult x;
                 Vector *lets = vector_new();
 
                 Vector *actuals = e->u.u_app.actuals;
                 Vector *new_actuals = vector_new();
                 int i;
-                BDSExpr *tmp;
                 for(i = 0; i < actuals->length; i++){
                     p = normalize(env, vector_get(actuals, i));
                     x = insert_let(p);
@@ -352,7 +355,10 @@ Pair normalize(Env *env, BDSExpr *e)
                             bd_nexpr_lettuple(new_idents, x.name, p.e)),
                         p.t);
             }
+		default:
+			break;
     }
+	return pair(NULL, NULL);
 }
 
 void bd_idents_env(Env *env, Vector *idents)
@@ -375,7 +381,7 @@ BDNProgram *bd_knormalize(BDSProgram *prog)
     BDNExprDef *ndef;
     int i;
     Pair p;
-    Env *env, *funlocal;
+    Env *env;
 
     BDNProgram *nprog = malloc(sizeof(BDNProgram));
     bd_nprogram_init(nprog);

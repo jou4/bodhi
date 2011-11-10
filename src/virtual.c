@@ -72,6 +72,8 @@ BDAExpr *virtual_expr(Env *env, BDCExpr *e)
                         return bd_aexpr_ans(bd_ainst_mul(e->u.u_binop.l, e->u.u_binop.r));
                     case OP_DIV:
                         return bd_aexpr_ans(bd_ainst_div(e->u.u_binop.l, e->u.u_binop.r));
+					default:
+						break;
                 }
             }
             break;
@@ -92,6 +94,8 @@ BDAExpr *virtual_expr(Env *env, BDCExpr *e)
                                     e->u.u_if.r,
                                     virtual_expr(env, e->u.u_if.t),
                                     virtual_expr(env, e->u.u_if.f)));
+					default:
+						break;
                 }
             }
             break;
@@ -159,7 +163,7 @@ BDAExpr *virtual_expr(Env *env, BDCExpr *e)
 
                 result = bd_aexpr_let(
                         bd_expr_ident_clone(ident),
-                        bd_ainst_makecls(closure->entry, fvs_size),
+                        bd_ainst_makecls(entry, fvs_size),
                         bd_aexpr_nonelet(
                             bd_ainst_loadfvs(ident->name),
                             result));
@@ -182,7 +186,6 @@ BDAExpr *virtual_expr(Env *env, BDCExpr *e)
                     vector_add(idents, bd_expr_ident(name, env_get(env, name)));
                 }
 
-                BDExprIdent *ident;
                 Vector *ilist = vector_new();
                 Vector *flist = vector_new();
 
@@ -205,6 +208,8 @@ BDAExpr *virtual_expr(Env *env, BDCExpr *e)
                         return bd_aexpr_ans(bd_ainst_calldir(fun, ilist, flist));
                     case E_CCALL:
                         return bd_aexpr_ans(bd_ainst_ccall(fun, ilist, flist));
+					default:
+						break;
                 }
             }
         case E_TUPLE:
@@ -269,7 +274,10 @@ BDAExpr *virtual_expr(Env *env, BDCExpr *e)
 
                 return result;
             }
+		default:
+			break;
     }
+	return NULL;
 }
 
 BDAExpr *virtual_expr_datadef(Env *env, BDCExprDef *def)
@@ -288,6 +296,8 @@ BDAExpr *virtual_expr_datadef(Env *env, BDCExprDef *def)
         case E_FLOAT:
             vector_add(consts, bd_aexpr_const_float(ident->name, body->u.u_double));
             return NULL;
+		default:
+			break;
     }
 
     // Concat with maindef.
@@ -301,7 +311,6 @@ BDAExprDef *virtual_expr_fundef(Env *env, BDCExprDef *def)
     BDExprIdent *ident = def->ident;
     BDCExpr *fun = def->body;
 
-    BDType *type = fun->u.u_fun.type;
     Vector *formals = fun->u.u_fun.formals;
     Vector *fvs = fun->u.u_fun.freevars;
     BDCExpr *body = fun->u.u_fun.body;
@@ -340,7 +349,7 @@ BDAExprDef *virtual_expr_fundef(Env *env, BDCExprDef *def)
 
 BDAExpr *insert_initializer(BDAExpr *init, BDExprIdent *ident, BDAExpr *body)
 {
-    BDAExpr *newexpr;
+    BDAExpr *newexpr = NULL;
 
     switch(init->kind){
         case AE_ANS:
@@ -363,6 +372,8 @@ BDAExpr *insert_initializer(BDAExpr *init, BDExprIdent *ident, BDAExpr *body)
                         ident,
                         body));
             break;
+		default:
+			break;
     }
     free(init);
 
@@ -382,7 +393,7 @@ BDAProgram *bd_virtual(BDCProgram *prog)
     Vector *initializers = vector_new();
 
     BDCExprDef *def;
-    BDAExpr *init, *main;
+    BDAExpr *init, *mainexpr;
     PrimSig *sig;
     Vector *vec;
     int i;
@@ -428,13 +439,13 @@ BDAProgram *bd_virtual(BDCProgram *prog)
 
     // Transform main definition and combine with initializes.
     def = prog->maindef;
-    main = virtual_expr(env, def->body);
+    mainexpr = virtual_expr(env, def->body);
 
     for(i = inits->length - 1; i >= 0; i--){
-        main = insert_initializer(
+        mainexpr = insert_initializer(
                 vector_get(initializers, i),
                 vector_get(inits, i),
-                main);
+                mainexpr);
     }
 
     aprog->maindef = bd_aexpr_def(
@@ -442,7 +453,7 @@ BDAProgram *bd_virtual(BDCProgram *prog)
             NULL,
             NULL,
             NULL,
-            main);
+            mainexpr);
 
     env_destroy(env);
     vector_destroy(inits);

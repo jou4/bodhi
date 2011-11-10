@@ -84,6 +84,8 @@ void bd_sexpr_destroy(BDSExpr *e)
             bd_sexpr_destroy(e->u.u_lettuple.val);
             bd_sexpr_destroy(e->u.u_lettuple.body);
             break;
+		default:
+			break;
     }
     free(e);
 }
@@ -276,6 +278,8 @@ void _bd_sexpr_show(BDSExpr *e, int col, int depth)
                     PRINT(col, "-");
                     _bd_sexpr_show(e->u.u_uniop.val, col, depth);
                     break;
+				default:
+					break;
             }
             break;
         case E_BINOP:
@@ -302,6 +306,8 @@ void _bd_sexpr_show(BDSExpr *e, int col, int depth)
                 case OP_CONS:
                     PRINT(col, " : ");
                     break;
+				default:
+					break;
             }
             _bd_sexpr_show(e->u.u_binop.r, col, depth);
             break;
@@ -434,6 +440,8 @@ void _bd_sexpr_show(BDSExpr *e, int col, int depth)
                 _bd_sexpr_show(e->u.u_lettuple.body, col, depth + 1);
             }
             break;
+		default:
+			break;
     }
 }
 
@@ -460,8 +468,7 @@ void bd_sprogram_destroy(BDSProgram *prog)
 
 void bd_sprogram_def_show(BDSExprDef *def)
 {
-    Vector *vec;
-    int i, col = 0, depth = 0;
+    int col = 0, depth = 0;
 
     PRINT1(col, "%s", bd_expr_ident_show(def->ident));
     PRINT(col, " = ");

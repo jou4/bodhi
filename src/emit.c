@@ -82,7 +82,7 @@ void emit_inst(EmitState *st, BDAInst *inst, char *dst)
         case AI_MUL:
         case AI_DIV:
             {
-                char *op;
+                char *op = NULL;
                 switch(inst->kind){
                     case AI_ADD:
                         op = "addq"; break;
@@ -94,6 +94,8 @@ void emit_inst(EmitState *st, BDAInst *inst, char *dst)
                         op = "idivq";
                         fprintf(OC, "\tmovq $0, %s\n", "%rdx");
                         break;
+					default:
+						break;
                 }
 
                 fprintf(OC, "\t%s %s, %s\n", op, inst->u.u_bin.r, inst->u.u_bin.l);
@@ -131,6 +133,8 @@ void emit_inst(EmitState *st, BDAInst *inst, char *dst)
                     case AI_IFLE:
                         fprintf(OC, "\tjle %s\n", t_lbl);
                         break;
+					default:
+						break;
                 }
 
                 fprintf(OC, "%s:\n", f_lbl);
@@ -250,7 +254,6 @@ void emit_inst(EmitState *st, BDAInst *inst, char *dst)
         case AI_GETARG_F:
         case AI_GETARG_L:
             {
-                char *lbl = inst->lbl;
                 int offset = inst->u.u_int;
 
                 BDReg reg = argreg(offset);
@@ -369,7 +372,6 @@ void emit_inst(EmitState *st, BDAInst *inst, char *dst)
             break;
         case AI_GETELM:
             {
-                char *lbl = inst->lbl;
                 int offset = inst->u.u_int;
                 fprintf(OC, "\tmovq %d(%s), %s\n", offset * SIZE_ALIGN, reg_hp, dst);
             }
@@ -390,6 +392,8 @@ void emit_inst(EmitState *st, BDAInst *inst, char *dst)
                 }
             }
             break;
+		default:
+			break;
 
     }
 }
@@ -411,6 +415,8 @@ void emit(EmitState *st, BDAExpr *e)
                 emit(st, e->u.u_let.body);
             }
             break;
+		default:
+			break;
     }
 }
 
@@ -496,6 +502,9 @@ void frame_size_inst(BDAInst *inst, FrameSizeCounter *counter)
             counter->args = max(counter->args, counter->accum_args);
             counter->accum_args = 0;
             break;
+
+		default:
+			break;
     }
 }
 
@@ -509,6 +518,8 @@ void frame_size_expr(BDAExpr *e, FrameSizeCounter *counter)
             frame_size_inst(e->u.u_let.val, counter);
             frame_size_expr(e->u.u_let.body, counter);
             break;
+		default:
+			break;
     }
 }
 
@@ -594,6 +605,8 @@ void bd_emit(FILE *ch, BDAProgram *prog)
                     fprintf(OC, "\t.ascii \"%s\\0\"\n", c->u.u_str);
                 }
                 break;
+			default:
+				break;
         }
     }
 

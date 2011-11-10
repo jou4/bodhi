@@ -73,16 +73,21 @@
 #include "parser_ext.h"
 #include "util.h"
 
-#define YYDEBUG 1
+//#define YYDEBUG 1
 #define YYLEX_PARAM lexer->scanner, lexer
 
 #define add_def(def) vector_add(ps->prog.defs, def)
 #define set_maindef(def) ps->prog.maindef = def
 
+extern int yylex();
+extern int yyerror();
+extern int yyget_lineno();
+extern void yyunput();
+
 
 
 /* Line 268 of yacc.c  */
-#line 86 "parser.c"
+#line 91 "parser.c"
 
 /* Enabling traces.  */
 #ifndef YYDEBUG
@@ -105,7 +110,7 @@
 /* "%code requires" blocks.  */
 
 /* Line 288 of yacc.c  */
-#line 15 "parser.y"
+#line 20 "parser.y"
 
 #include "lexer.h"
 #include "compile.h"
@@ -113,7 +118,7 @@
 
 
 /* Line 288 of yacc.c  */
-#line 117 "parser.c"
+#line 122 "parser.c"
 
 /* Tokens.  */
 #ifndef YYTOKENTYPE
@@ -181,7 +186,7 @@ typedef union YYSTYPE
 {
 
 /* Line 301 of yacc.c  */
-#line 27 "parser.y"
+#line 32 "parser.y"
 
   int i_val;
   double d_val;
@@ -195,7 +200,7 @@ typedef union YYSTYPE
 
 
 /* Line 301 of yacc.c  */
-#line 199 "parser.c"
+#line 204 "parser.c"
 } YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
@@ -207,7 +212,7 @@ typedef union YYSTYPE
 
 
 /* Line 343 of yacc.c  */
-#line 211 "parser.c"
+#line 216 "parser.c"
 
 #ifdef short
 # undef short
@@ -520,12 +525,12 @@ static const yytype_int8 yyrhs[] =
 /* YYRLINE[YYN] -- source line where rule number YYN was defined.  */
 static const yytype_uint8 yyrline[] =
 {
-       0,   103,   103,   105,   106,   110,   112,   114,   119,   121,
-     123,   125,   127,   129,   131,   133,   135,   137,   139,   144,
-     145,   146,   147,   150,   153,   156,   159,   162,   165,   171,
-     174,   180,   182,   184,   186,   188,   190,   192,   194,   196,
-     198,   200,   206,   208,   213,   215,   220,   223,   229,   231,
-     236,   238,   243,   245
+       0,   108,   108,   110,   111,   115,   117,   119,   124,   126,
+     128,   130,   132,   134,   136,   138,   140,   142,   144,   149,
+     150,   151,   152,   155,   158,   161,   164,   167,   170,   176,
+     179,   185,   187,   189,   191,   193,   195,   197,   199,   201,
+     203,   205,   211,   213,   218,   220,   225,   228,   234,   236,
+     241,   243,   248,   250
 };
 #endif
 
@@ -1593,336 +1598,336 @@ yyreduce:
         case 4:
 
 /* Line 1821 of yacc.c  */
-#line 106 "parser.y"
+#line 111 "parser.y"
     { YYABORT; }
     break;
 
   case 5:
 
 /* Line 1821 of yacc.c  */
-#line 111 "parser.y"
+#line 116 "parser.y"
     { add_def(bd_sexpr_def(bd_expr_ident_typevar((yyvsp[(2) - (4)].s_val)), (yyvsp[(4) - (4)].t))); }
     break;
 
   case 6:
 
 /* Line 1821 of yacc.c  */
-#line 113 "parser.y"
+#line 118 "parser.y"
     { add_def(bd_sexpr_def(bd_expr_ident_typevar((yyvsp[(2) - (5)].s_val)), bd_sexpr_fun(bd_type_var(NULL), (yyvsp[(3) - (5)].vec), (yyvsp[(5) - (5)].t)))); }
     break;
 
   case 7:
 
 /* Line 1821 of yacc.c  */
-#line 115 "parser.y"
+#line 120 "parser.y"
     { set_maindef(bd_sexpr_def(bd_expr_ident("main", bd_type_unit()), (yyvsp[(4) - (4)].t))); }
     break;
 
   case 8:
 
 /* Line 1821 of yacc.c  */
-#line 120 "parser.y"
+#line 125 "parser.y"
     { (yyval.t) = (yyvsp[(2) - (3)].t); }
     break;
 
   case 9:
 
 /* Line 1821 of yacc.c  */
-#line 122 "parser.y"
+#line 127 "parser.y"
     { (yyval.t) = bd_sexpr_tuple((yyvsp[(2) - (3)].vec)); }
     break;
 
   case 10:
 
 /* Line 1821 of yacc.c  */
-#line 124 "parser.y"
+#line 129 "parser.y"
     { (yyval.t) = bd_sexpr_unit(); }
     break;
 
   case 11:
 
 /* Line 1821 of yacc.c  */
-#line 126 "parser.y"
+#line 131 "parser.y"
     { (yyval.t) = (yyvsp[(2) - (3)].t); }
     break;
 
   case 12:
 
 /* Line 1821 of yacc.c  */
-#line 128 "parser.y"
+#line 133 "parser.y"
     { (yyval.t) = bd_sexpr_nil(); }
     break;
 
   case 13:
 
 /* Line 1821 of yacc.c  */
-#line 130 "parser.y"
+#line 135 "parser.y"
     { (yyval.t) = bd_sexpr_var((yyvsp[(1) - (1)].s_val)); }
     break;
 
   case 14:
 
 /* Line 1821 of yacc.c  */
-#line 132 "parser.y"
+#line 137 "parser.y"
     { (yyval.t) = bd_sexpr_bool((yyvsp[(1) - (1)].i_val)); }
     break;
 
   case 15:
 
 /* Line 1821 of yacc.c  */
-#line 134 "parser.y"
+#line 139 "parser.y"
     { (yyval.t) = bd_sexpr_int((yyvsp[(1) - (1)].i_val)); }
     break;
 
   case 16:
 
 /* Line 1821 of yacc.c  */
-#line 136 "parser.y"
+#line 141 "parser.y"
     { (yyval.t) = bd_sexpr_float((yyvsp[(1) - (1)].d_val)); }
     break;
 
   case 17:
 
 /* Line 1821 of yacc.c  */
-#line 138 "parser.y"
+#line 143 "parser.y"
     { (yyval.t) = bd_sexpr_char((yyvsp[(1) - (1)].c_val)); }
     break;
 
   case 18:
 
 /* Line 1821 of yacc.c  */
-#line 140 "parser.y"
+#line 145 "parser.y"
     { (yyval.t) = bd_sexpr_str(sb_to_string((yyvsp[(1) - (1)].buf))); }
     break;
 
   case 22:
 
 /* Line 1821 of yacc.c  */
-#line 149 "parser.y"
+#line 154 "parser.y"
     { (yyval.t) = bd_sexpr_if((yyvsp[(2) - (6)].t), (yyvsp[(4) - (6)].t), (yyvsp[(6) - (6)].t)); }
     break;
 
   case 23:
 
 /* Line 1821 of yacc.c  */
-#line 152 "parser.y"
+#line 157 "parser.y"
     { (yyval.t) = bd_sexpr_let(bd_expr_ident_typevar((yyvsp[(2) - (6)].s_val)), (yyvsp[(4) - (6)].t), (yyvsp[(6) - (6)].t)); }
     break;
 
   case 24:
 
 /* Line 1821 of yacc.c  */
-#line 155 "parser.y"
+#line 160 "parser.y"
     { (yyval.t) = bd_sexpr_letrec(bd_expr_ident_typevar((yyvsp[(3) - (8)].s_val)), bd_sexpr_fun(bd_type_var(NULL), (yyvsp[(4) - (8)].vec), (yyvsp[(6) - (8)].t)), (yyvsp[(8) - (8)].t)); }
     break;
 
   case 25:
 
 /* Line 1821 of yacc.c  */
-#line 158 "parser.y"
+#line 163 "parser.y"
     { (yyval.t) = bd_sexpr_app((yyvsp[(1) - (2)].t), (yyvsp[(2) - (2)].vec)); }
     break;
 
   case 26:
 
 /* Line 1821 of yacc.c  */
-#line 161 "parser.y"
+#line 166 "parser.y"
     { (yyval.t) = bd_sexpr_ccall((yyvsp[(2) - (3)].s_val), (yyvsp[(3) - (3)].vec)); }
     break;
 
   case 27:
 
 /* Line 1821 of yacc.c  */
-#line 164 "parser.y"
+#line 169 "parser.y"
     { (yyval.t) = bd_sexpr_lettuple((yyvsp[(3) - (8)].vec), (yyvsp[(6) - (8)].t), (yyvsp[(8) - (8)].t)); }
     break;
 
   case 28:
 
 /* Line 1821 of yacc.c  */
-#line 167 "parser.y"
+#line 172 "parser.y"
     { (yyval.t) = bd_sexpr_fun(bd_type_var(NULL), (yyvsp[(2) - (4)].vec), (yyvsp[(4) - (4)].t)); }
     break;
 
   case 29:
 
 /* Line 1821 of yacc.c  */
-#line 173 "parser.y"
+#line 178 "parser.y"
     { (yyval.t) = bd_sexpr_uniop(OP_NOT, (yyvsp[(2) - (2)].t)); }
     break;
 
   case 30:
 
 /* Line 1821 of yacc.c  */
-#line 176 "parser.y"
+#line 181 "parser.y"
     { (yyval.t) = bd_sexpr_uniop(OP_NEG, (yyvsp[(2) - (2)].t)); }
     break;
 
   case 31:
 
 /* Line 1821 of yacc.c  */
-#line 181 "parser.y"
+#line 186 "parser.y"
     { (yyval.t) = bd_sexpr_binop(OP_ADD, (yyvsp[(1) - (3)].t), (yyvsp[(3) - (3)].t)); }
     break;
 
   case 32:
 
 /* Line 1821 of yacc.c  */
-#line 183 "parser.y"
+#line 188 "parser.y"
     { (yyval.t) = bd_sexpr_binop(OP_SUB, (yyvsp[(1) - (3)].t), (yyvsp[(3) - (3)].t)); }
     break;
 
   case 33:
 
 /* Line 1821 of yacc.c  */
-#line 185 "parser.y"
+#line 190 "parser.y"
     { (yyval.t) = bd_sexpr_binop(OP_MUL, (yyvsp[(1) - (3)].t), (yyvsp[(3) - (3)].t)); }
     break;
 
   case 34:
 
 /* Line 1821 of yacc.c  */
-#line 187 "parser.y"
+#line 192 "parser.y"
     { (yyval.t) = bd_sexpr_binop(OP_DIV, (yyvsp[(1) - (3)].t), (yyvsp[(3) - (3)].t)); }
     break;
 
   case 35:
 
 /* Line 1821 of yacc.c  */
-#line 189 "parser.y"
+#line 194 "parser.y"
     { (yyval.t) = bd_sexpr_binop(OP_EQ, (yyvsp[(1) - (3)].t), (yyvsp[(3) - (3)].t)); }
     break;
 
   case 36:
 
 /* Line 1821 of yacc.c  */
-#line 191 "parser.y"
+#line 196 "parser.y"
     { (yyval.t) = bd_sexpr_uniop(OP_NOT, bd_sexpr_binop(OP_EQ, (yyvsp[(1) - (3)].t), (yyvsp[(3) - (3)].t))); }
     break;
 
   case 37:
 
 /* Line 1821 of yacc.c  */
-#line 193 "parser.y"
+#line 198 "parser.y"
     { (yyval.t) = bd_sexpr_uniop(OP_NOT, bd_sexpr_binop(OP_LE, (yyvsp[(3) - (3)].t), (yyvsp[(1) - (3)].t))); }
     break;
 
   case 38:
 
 /* Line 1821 of yacc.c  */
-#line 195 "parser.y"
+#line 200 "parser.y"
     { (yyval.t) = bd_sexpr_uniop(OP_NOT, bd_sexpr_binop(OP_LE, (yyvsp[(1) - (3)].t), (yyvsp[(3) - (3)].t))); }
     break;
 
   case 39:
 
 /* Line 1821 of yacc.c  */
-#line 197 "parser.y"
+#line 202 "parser.y"
     { (yyval.t) = bd_sexpr_binop(OP_LE, (yyvsp[(1) - (3)].t), (yyvsp[(3) - (3)].t)); }
     break;
 
   case 40:
 
 /* Line 1821 of yacc.c  */
-#line 199 "parser.y"
+#line 204 "parser.y"
     { (yyval.t) = bd_sexpr_binop(OP_LE, (yyvsp[(3) - (3)].t), (yyvsp[(1) - (3)].t)); }
     break;
 
   case 41:
 
 /* Line 1821 of yacc.c  */
-#line 201 "parser.y"
+#line 206 "parser.y"
     { (yyval.t) = bd_sexpr_binop(OP_CONS, (yyvsp[(1) - (3)].t), (yyvsp[(3) - (3)].t)); }
     break;
 
   case 42:
 
 /* Line 1821 of yacc.c  */
-#line 207 "parser.y"
+#line 212 "parser.y"
     { Vector *vec = vector_new(); vector_add(vec, (yyvsp[(1) - (1)].ident)); (yyval.vec) = vec; }
     break;
 
   case 43:
 
 /* Line 1821 of yacc.c  */
-#line 209 "parser.y"
+#line 214 "parser.y"
     { vector_add((yyvsp[(1) - (2)].vec), (yyvsp[(2) - (2)].ident)); (yyval.vec) = (yyvsp[(1) - (2)].vec); }
     break;
 
   case 44:
 
 /* Line 1821 of yacc.c  */
-#line 214 "parser.y"
+#line 219 "parser.y"
     { (yyval.ident) = bd_expr_ident_typevar((yyvsp[(1) - (1)].s_val)); }
     break;
 
   case 45:
 
 /* Line 1821 of yacc.c  */
-#line 216 "parser.y"
+#line 221 "parser.y"
     { (yyval.ident) = bd_expr_ident("_", bd_type_unit()); }
     break;
 
   case 46:
 
 /* Line 1821 of yacc.c  */
-#line 222 "parser.y"
+#line 227 "parser.y"
     { Vector *vec = vector_new(); vector_add(vec, (yyvsp[(1) - (1)].t)); (yyval.vec) = vec; }
     break;
 
   case 47:
 
 /* Line 1821 of yacc.c  */
-#line 225 "parser.y"
+#line 230 "parser.y"
     { vector_add((yyvsp[(1) - (2)].vec), (yyvsp[(2) - (2)].t)); (yyval.vec) = (yyvsp[(1) - (2)].vec); }
     break;
 
   case 48:
 
 /* Line 1821 of yacc.c  */
-#line 230 "parser.y"
+#line 235 "parser.y"
     { vector_add((yyvsp[(1) - (3)].vec), (yyvsp[(3) - (3)].t)); (yyval.vec) = (yyvsp[(1) - (3)].vec); }
     break;
 
   case 49:
 
 /* Line 1821 of yacc.c  */
-#line 232 "parser.y"
+#line 237 "parser.y"
     { Vector *vec = vector_new(); vector_add(vec, (yyvsp[(1) - (3)].t)); vector_add(vec, (yyvsp[(3) - (3)].t)); (yyval.vec) = vec; }
     break;
 
   case 50:
 
 /* Line 1821 of yacc.c  */
-#line 237 "parser.y"
+#line 242 "parser.y"
     { (yyval.t) = bd_sexpr_binop(OP_CONS, (yyvsp[(1) - (3)].t), (yyvsp[(3) - (3)].t)); }
     break;
 
   case 51:
 
 /* Line 1821 of yacc.c  */
-#line 239 "parser.y"
+#line 244 "parser.y"
     { (yyval.t) = bd_sexpr_binop(OP_CONS, (yyvsp[(1) - (1)].t), bd_sexpr_nil()); }
     break;
 
   case 52:
 
 /* Line 1821 of yacc.c  */
-#line 244 "parser.y"
+#line 249 "parser.y"
     { vector_add((yyvsp[(1) - (3)].vec), bd_expr_ident_typevar((yyvsp[(3) - (3)].s_val))); (yyval.vec) = (yyvsp[(1) - (3)].vec); }
     break;
 
   case 53:
 
 /* Line 1821 of yacc.c  */
-#line 246 "parser.y"
+#line 251 "parser.y"
     { Vector *vec = vector_new(); vector_add(vec, bd_expr_ident_typevar((yyvsp[(1) - (1)].s_val))); (yyval.vec) = vec; }
     break;
 
 
 
 /* Line 1821 of yacc.c  */
-#line 1926 "parser.c"
+#line 1931 "parser.c"
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires
@@ -2153,10 +2158,10 @@ yyreturn:
 
 
 /* Line 2067 of yacc.c  */
-#line 250 "parser.y"
+#line 255 "parser.y"
 
 
-int yyerror(Parser *ps, Lexer *lexer, char *stream_name, char *msg)
+int yyerror(Parser *ps, Lexer *lexer, const char *stream_name, const char *msg)
 {
     fprintf(stderr, "%s(%d): %s\n", stream_name, yyget_lineno(lexer->scanner), msg);
     return 0;

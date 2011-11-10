@@ -188,14 +188,16 @@ BDCExpr *closure_transform(Env *env, Set *known, BDNExpr *e)
 
                 return newexpr;
             }
+		default:
+			break;
     }
+	return NULL;
 }
 
 TransFunResult *closure_transform_fun(Env *env, Set *known, BDNExpr *e, BDExprIdent *ident)
 {
     TransFunResult *result = malloc(sizeof(TransFunResult));
 
-    BDType *type = e->u.u_fun.type;
     Vector *formals = e->u.u_fun.formals;
     BDNExpr *body = e->u.u_fun.body;
 
@@ -419,6 +421,8 @@ BDCExpr *_rename_closure(Env *env, BDCExpr *e)
                 env_local_destroy(local);
             }
             break;
+		default:
+			break;
     }
 
     return e;
@@ -436,7 +440,6 @@ BDCExpr *rename_closure(BDCExpr *e)
 
 BDCExprDef *closure_transform_def(Env *env, Set *known, BDNExprDef *def)
 {
-    BDExprIdent *ident = def->ident;
     BDNExpr *body = def->body;
 
     BDCExpr *newexpr;
@@ -484,7 +487,6 @@ BDCProgram *bd_closure_transform(BDNProgram *prog)
     PrimSig *sig;
     Vector *vec;
     BDNExprDef *def;
-    BDCExprDef *newdef;
     int i;
 
     Env *env = env_new();

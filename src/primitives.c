@@ -143,7 +143,10 @@ BDType *convert_prim_type(Vector *mem, PrimType *t)
                 }
                 return var;
             }
+		default:
+			break;
     }
+	return NULL;
 }
 
 PrimSig *prim_sig(char *name, int num, ...)
