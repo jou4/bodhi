@@ -294,7 +294,7 @@ void emit_inst(EmitState *st, BDAInst *inst, char *dst)
                 if(strne(lbl, lbl_dst)){
                     fprintf(OC, "\tmovq %s, %s\n", lbl, lbl_dst);
                 }
-                fprintf(OC, "\tcall %s\n", "_bodhi_core_closure_freevars");
+                fprintf(OC, "\tcall %s\n", "_bodhi_core_closure_vars");
                 fprintf(OC, "\tmovq %s, %s\n", "%rax", reg_hp);
             }
             break;
