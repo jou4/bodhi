@@ -33,6 +33,7 @@ print_int :: Int -> ()
 print_float :: Float -> ()
 print_char :: Char -> ()
 print_string :: String -> ()
+print :: a -> ()
 
 raise :: a -> ()
 get_exception :: () -> a

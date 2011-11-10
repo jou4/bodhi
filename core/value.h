@@ -2,6 +2,8 @@
 #define _value_h_
 
 
+#define PTR long
+
 #define T_NIL 0
 #define T_CHAR 1
 #define T_INT 2
@@ -10,7 +12,8 @@
 #define T_TUPLE 5
 #define T_LIST 6
 #define T_ARRAY 7
-#define T_CLOSURE 8
+#define T_REF 8
+#define T_CLOSURE 9
 
 #define TYPE_RANGE_MIN T_NIL
 #define TYPE_RANGE_MAX T_CLOSURE
@@ -99,6 +102,7 @@ BDValue *bd_value_string(int length, char *val);
 BDValue *bd_value_tuple(int length);
 BDValue *bd_value_list(void *head, BDValue *tail);
 BDValue *bd_value_array(char size_of_elem, int length);
+BDValue *bd_value_ref(void *val);
 BDValue *bd_value_closure(char *entry, int length);
 
 

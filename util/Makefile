@@ -1,5 +1,6 @@
 CC			= gcc
-CFLAGS		= -O3 -Wall -I/usr/local/include
+#CFLAGS		= -O3 -Wall -I/usr/local/include
+CFLAGS		= -g -Wall -I/usr/local/include
 DEST		=
 LDFLAGS		=
 LIBS		=

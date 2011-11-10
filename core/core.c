@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "value.h"
+#include "core.h"
 
 void *bodhi_core_make_closure(char *entry, int num_of_vars)
 {

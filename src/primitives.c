@@ -201,6 +201,8 @@ Vector *primitives()
     defprim(Sig("string_append", 3, PTString, PTString, PTString));
     defprim(Sig("string_concat", 3, PTString, PTList(PTString), PTString));
     defprim(Sig("string_compare", 3, PTString, PTString, PTBool));
+    defprim(Sig("string_of_cstr", 1, PTString));
+    defprim(Sig("string_to_cstr", 2, PTString, PTVar(1)));
 
     defprim(Sig("ref", 2, PTVar(1), PTArray(PTVar(1))));
     defprim(Sig("deref", 2, PTArray(PTVar(1)), PTVar(1)));
@@ -211,6 +213,7 @@ Vector *primitives()
     defprim(Sig("print_float", 2, PTFloat, PTUnit));
     defprim(Sig("print_char", 2, PTChar, PTUnit));
     defprim(Sig("print_string", 2, PTString, PTUnit));
+    defprim(Sig("print", 2, PTVar(1), PTUnit));
 
     defprim(Sig("raise", 2, PTVar(1), PTUnit));
     defprim(Sig("get_exception", 2, PTUnit, PTVar(1)));

@@ -193,7 +193,9 @@ Pair normalize(Env *env, BDSExpr *e)
 
                 type = env_get(env, name);
                 if(type == NULL){
-                    // TODO External reference
+					// Undefined var.
+                    printf("'%s' is undefined.\n", name);
+					exit(EXIT_FAILURE);
                 }
 
                 return pair(bd_nexpr_var(name), bd_type_clone(type));

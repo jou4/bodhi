@@ -4,10 +4,10 @@ char *find_alt_name(Env *env, char *name)
 {
     char *alt = env_get(env, name);
     if(alt){
-        return alt;
+        return mem_strdup(alt);
     }
 
-    return name;
+    return mem_strdup(name);
 }
 
 BDNExpr *bd_alpha(Env *env, BDNExpr *e)
@@ -128,7 +128,7 @@ BDNExpr *bd_alpha(Env *env, BDNExpr *e)
                 char *oldname;
                 for(i = 0; i < actuals->length; i++){
                     oldname = vector_get(actuals, i);
-                    vector_add(newactuals, mem_strdup(find_alt_name(env, oldname)));
+                    vector_add(newactuals, find_alt_name(env, oldname));
                 }
 
                 return bd_nexpr_app(find_alt_name(env, e->u.u_app.fun), newactuals);
