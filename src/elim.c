@@ -1,6 +1,6 @@
 #include "compile.h"
 
-int has_side_effect(BDExpr2 *e)
+int has_side_effect(BDNExpr *e)
 {
     switch(e->kind){
         case E_LET:
@@ -15,15 +15,18 @@ int has_side_effect(BDExpr2 *e)
             break;
         case E_LETREC:
             return has_side_effect(e->u.u_letrec.body);
+		case E_FUN:
+			return has_side_effect(e->u.u_fun.body);
         case E_LETTUPLE:
             return has_side_effect(e->u.u_lettuple.body);
         case E_APP:
             return 1;
+		default:
+			return 0;
     }
-    return 0;
 }
 
-BDExpr2 *elim_disuse_decl(BDExpr2 *e)
+BDNExpr *elim_disuse_decl(BDNExpr *e)
 {
     switch(e->kind){
         case E_IF:
@@ -32,10 +35,10 @@ BDExpr2 *elim_disuse_decl(BDExpr2 *e)
             break;
         case E_LET:
             {
-                BDExpr2 *e1 = elim_disuse_decl(e->u.u_let.val);
-                BDExpr2 *e2 = elim_disuse_decl(e->u.u_let.body);
+                BDNExpr *e1 = elim_disuse_decl(e->u.u_let.val);
+                BDNExpr *e2 = elim_disuse_decl(e->u.u_let.body);
 
-                Set *fvs = bd_expr2_freevars(e2);
+                Set *fvs = bd_nexpr_freevars(e2);
 
                 if(has_side_effect(e1) || set_has(fvs, e->u.u_let.ident->name)){
                     e->u.u_let.val = e1;
@@ -46,7 +49,7 @@ BDExpr2 *elim_disuse_decl(BDExpr2 *e)
                 else{
                     // eliminate variable
                     bd_expr_ident_destroy(e->u.u_let.ident);
-                    bd_expr2_destroy(e1);
+                    bd_nexpr_destroy(e1);
                     free(e);
 
                     set_destroy(fvs);
@@ -57,19 +60,19 @@ BDExpr2 *elim_disuse_decl(BDExpr2 *e)
             break;
         case E_LETREC:
             {
-                BDExpr2 *e2 = elim_disuse_decl(e->u.u_letrec.body);
+                BDNExpr *e2 = elim_disuse_decl(e->u.u_letrec.body);
 
-                Set *fvs = bd_expr2_freevars(e2);
+                Set *fvs = bd_nexpr_freevars(e2);
 
-                if(set_has(fvs, e->u.u_letrec.fundef->ident->name)){
-                    e->u.u_letrec.fundef->body = elim_disuse_decl(e->u.u_letrec.fundef->body);
+                if(set_has(fvs, e->u.u_letrec.ident->name)){
+                    e->u.u_letrec.fun = elim_disuse_decl(e->u.u_letrec.fun);
                     e->u.u_letrec.body = e2;
 
                     set_destroy(fvs);
                 }
                 else{
                     // eliminate function
-                    bd_expr2_fundef_destroy(e->u.u_letrec.fundef);
+                    bd_nexpr_destroy(e->u.u_letrec.fun);
                     free(e);
 
                     set_destroy(fvs);
@@ -78,10 +81,13 @@ BDExpr2 *elim_disuse_decl(BDExpr2 *e)
                 }
             }
             break;
+		case E_FUN:
+			e->u.u_fun.body = elim_disuse_decl(e->u.u_fun.body);
+			break;
         case E_LETTUPLE:
             {
-                BDExpr2 *e1 = elim_disuse_decl(e->u.u_lettuple.body);
-                Set *fvs = bd_expr2_freevars(e1);
+                BDNExpr *e1 = elim_disuse_decl(e->u.u_lettuple.body);
+                Set *fvs = bd_nexpr_freevars(e1);
 
                 Vector *idents = e->u.u_lettuple.idents;
                 BDExprIdent *ident;
@@ -114,17 +120,26 @@ BDExpr2 *elim_disuse_decl(BDExpr2 *e)
                 }
             }
             break;
+		default:
+			break;
     }
     return e;
 }
 
-BDExpr2 *bd_elim(BDExpr2 *e)
+BDNProgram *bd_elim(BDNProgram *prog)
 {
-    BDExpr2 *ret = elim_disuse_decl(e);
+    int i;
+    Vector *vec;
+    BDNExprDef *def;
 
-    printf("--- Disuse declaration eliminated --- \n");
-    bd_expr2_show(ret);
-    printf("\n");
+    vec = prog->defs;
+    for(i = 0; i < vec->length; i++){
+        def = vector_get(vec, i);
+        def->body = elim_disuse_decl(def->body);
+        vector_set(vec, i, def);
+    }
 
-    return ret;
+    prog->maindef->body = elim_disuse_decl(prog->maindef->body);
+
+	return prog;
 }

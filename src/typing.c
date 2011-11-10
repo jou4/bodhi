@@ -144,6 +144,8 @@ BDType *replace_freevars(BDType *t, Vector *freevars, Vector *freshvars)
 
                 return replace_freevars(t->u.u_var.content, freevars, freshvars);
             }
+		default:
+			return NULL;
     }
 }
 
@@ -297,9 +299,10 @@ BDSExpr *deref_term(BDSExpr *e)
                 e->u.u_lettuple.body = deref_term(e->u.u_lettuple.body);
             }
             break;
+		default:
+			break;
     }
     return e;
-
 }
 
 
@@ -348,6 +351,8 @@ int occur(BDType *t1, BDType *t2)
                 }
                 return occur(t1, c2);
             }
+		default:
+			break;
     }
 
     return 0;
@@ -502,6 +507,8 @@ BDType *typing(Env *env, BDSExpr *e)
                         case OP_NEG:
                             expected = bd_type_int();
                             break;
+						default:
+							break;
                     }
 
                     unify(expected, typing(env, e->u.u_uniop.val));
@@ -531,6 +538,8 @@ BDType *typing(Env *env, BDSExpr *e)
                     case OP_LE:
                         unify(typing(env, e->u.u_binop.l), typing(env, e->u.u_binop.r));
                         return bd_type_bool();
+					default:
+						break;
                 }
                 break;
             case E_IF:
@@ -657,6 +666,8 @@ BDType *typing(Env *env, BDSExpr *e)
 
                     return result;
                 }
+			default:
+				break;
         }
     }catch{
         if(error_type == ERROR_UNIFY){
@@ -727,7 +738,6 @@ extern Vector *primsigs;
 BDSProgram *bd_typing(BDSProgram *prog)
 {
     Env *env = env_new();
-    Vector *vec;
     BDSExprDef *def;
     int i;
 
@@ -757,21 +767,6 @@ BDSProgram *bd_typing(BDSProgram *prog)
         if(maintype->kind != T_UNIT && maintype->kind != T_VAR){
             throw(ERROR, "type of 'main' must be ().");
         }
-
-        // debug
-#ifdef DEBUG
-        printf("--- Typing ---\n");
-
-        vec = prog->defs;
-        for(i = 0; i < vec->length; i++){
-            def = vector_get(vec, i);
-            printf("%s", bd_expr_ident_show(def->ident));
-            printf("\n");
-        }
-
-        printf("%s", bd_expr_ident_show(prog->maindef->ident));
-        printf("\n\n");
-#endif
 
         return prog;
     }catch{

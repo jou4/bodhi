@@ -7,6 +7,8 @@ int compile(FILE *ch, BDSProgram *sprog)
     BDCProgram *cprog;
     BDAProgram *aprog;
 
+    int i;
+
     try{
 
         if(sprog->maindef == NULL){
@@ -16,71 +18,91 @@ int compile(FILE *ch, BDSProgram *sprog)
 
         bd_typing(sprog);
 
+#ifdef DEBUG
+        printf("--- Typing ---\n");
+        BDSExprDef *def;
+        Vector *vec = sprog->defs;
+        for(i = 0; i < vec->length; i++){
+            def = vector_get(vec, i);
+            printf("%s", bd_expr_ident_show(def->ident));
+            printf("\n");
+        }
+        printf("%s", bd_expr_ident_show(sprog->maindef->ident));
+        printf("\n\n");
+#endif
+
+#ifdef DEBUG
         printf("--- Parsed ---\n");
         bd_sprogram_show(sprog);
+#endif
 
         nprog = bd_knormalize(sprog);
+#ifdef DEBUG
         printf("--- K normalized --- \n");
         bd_nprogram_show(nprog);
+#endif
 
         nprog = bd_alpha_convert(nprog);
+#ifdef DEBUG
         printf("--- α converted --- \n");
         bd_nprogram_show(nprog);
+#endif
 
-        nprog = bd_beta_reduce(nprog);
-        printf("--- β reduced --- \n");
-        bd_nprogram_show(nprog);
+        for(i = 0; i < OPTIMIZE_COUNT; i++){
 
-        nprog = bd_flatten(nprog);
-        printf("--- Nested let flatten --- \n");
-        bd_nprogram_show(nprog);
+            nprog = bd_beta_reduce(nprog);
+#ifdef DEBUG_OPTIMIZE
+            printf("--- β reduced --- \n");
+            bd_nprogram_show(nprog);
+#endif
 
-        nprog = bd_inline_expand(10, nprog);
-        printf("--- Inline expanded --- \n");
-        bd_nprogram_show(nprog);
+            nprog = bd_flatten(nprog);
+#ifdef DEBUG_OPTIMIZE
+            printf("--- Nested let flatten --- \n");
+            bd_nprogram_show(nprog);
+#endif
 
-        printf("--- Const folded --- \n");
-        nprog = bd_const_fold(nprog);
-        bd_nprogram_show(nprog);
+            nprog = bd_inline_expand(10, nprog);
+#ifdef DEBUG_OPTIMIZE
+            printf("--- Inline expanded --- \n");
+            bd_nprogram_show(nprog);
+#endif
 
-        cprog = bd_closure_transform(nprog);
-        printf("--- Closure transformed --- \n");
-        bd_cprogram_show(cprog);
+            nprog = bd_const_fold(nprog);
+#ifdef DEBUG_OPTIMIZE
+            printf("--- Const folded --- \n");
+            bd_nprogram_show(nprog);
+#endif
 
-        aprog = bd_virtual(cprog);
-        printf("--- Generated vm code --- \n");
-        bd_aprogram_show(aprog);
+            nprog = bd_elim(nprog);
+#ifdef DEBUG_OPTIMIZE
+            printf("--- Disuse declaration eliminated --- \n");
+            bd_nprogram_show(nprog);
+#endif
 
-        aprog = bd_regalloc(aprog);
-        printf("--- Allocated registers --- \n");
-        bd_aprogram_show(aprog);
-
-        printf("--- Emit code --- \n");
-        bd_emit(ch, aprog);
-        printf("Done.\n\n");
-
-        return 0;
-
-        /*
-        BDSExpr *e1 = bd_typing(e);
-        BDExpr2 *e2;
-        e2 = bd_knormalize(e1);
-        e2 = bd_alpha_convert(e2);
-
-        int i;
-        for(i = 0; i < 10; i++){
-            e2 = bd_beta_reduce(e2);
-            e2 = bd_flatten(e2);
-            e2 = bd_inline_expand(0, e2);
-            //e2 = bd_const_fold(e2);
-            e2 = bd_elim(e2);
         }
 
-        BDProgram1 *prog1 = bd_closure_transform(e2);
-        BDAsmProg *prog2 = bd_virtual(prog1);
-        BDAsmProg *prog3 = bd_register_allocate(prog2);
-        bd_emit(prog3);
-        */
+        cprog = bd_closure_transform(nprog);
+#ifdef DEBUG
+        printf("--- Closure transformed --- \n");
+        bd_cprogram_show(cprog);
+#endif
+
+        aprog = bd_virtual(cprog);
+#ifdef DEBUG
+        printf("--- Generated vm code --- \n");
+        bd_aprogram_show(aprog);
+#endif
+
+        aprog = bd_regalloc(aprog);
+#ifdef DEBUG
+        printf("--- Allocated registers --- \n");
+        bd_aprogram_show(aprog);
+#endif
+
+        bd_emit(ch, aprog);
+
+        return 0;
     }
 
     return 1;
