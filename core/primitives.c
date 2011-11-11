@@ -338,11 +338,12 @@ void _bodhi_print_array(BDValue *v)
 
 void _bodhi_print(BDValue *v)
 {
+	if(is_nil(v)){
+		_bodhi_print_nil(); return;
+	}
+
 	if(is_gc_object(v)){
         switch(v_type(v)){
-            case T_NIL:
-                _bodhi_print_nil();
-                break;
             case T_STRING:
                 _bodhi_print_string(v);
                 break;

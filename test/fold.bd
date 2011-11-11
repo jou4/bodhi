@@ -1,0 +1,17 @@
+def foldl f acc xs =
+	if empty xs then acc
+	else foldl f (f acc (head xs)) (tail xs)
+
+def foldr f acc xs =
+	if empty xs then acc
+	else f (head xs) (foldr f acc (tail xs))
+
+def map f xs =
+	foldr (\x y -> f x : y) [] xs
+
+def sum xs = foldl (\x y -> x + y) 0 xs
+
+def main =
+	let xs = [1,2,3,4,5] in
+	let xs = map (\x -> x + 1) xs in
+	print_int (sum xs)
