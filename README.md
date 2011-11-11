@@ -38,5 +38,5 @@ See 'test' directory.
 
 ## License
 
-Copyright (C) 2011 K.Kamitsukasa.
+Copyright (C) 2011 K.Kamitsukasa.<br />
 Licensed under the MIT License (http://www.opensource.org/licenses/mit-license.php)
