@@ -24,11 +24,11 @@ See 'test' directory.
 	Typing
 	Closure
 	C Function Call
+	GC
 
 
 ## Todo
 
-	GC
 	Pattern Match
 	Module System
 	Cross platform
