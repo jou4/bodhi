@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <getopt.h>
 #include <regex.h>
+#include "config.h"
 #include "lexer.h"
 #include "parser_ext.h"
 #include "primitives.h"
@@ -21,7 +22,7 @@ size_t heap_size = 64000000;
 char *usage = "usage: bodhi [-Sv] [-o output] [-H heap size] input";
 char *version = "0.0.1";
 
-char *LIBS = "lib/libcore.a lib/libutil.a";
+char *LIBS = "-lbdcore -lbdutil -lm";
 
 
 char *basename(char *path)
@@ -110,6 +111,8 @@ void getopts(int argc, char **argv)
 
 int main(int argc, char **argv)
 {
+    printf("%s\n", argv[0]);
+        system("pwd\n");
     primsigs = primitives();
 
     Parser ps;
@@ -140,7 +143,7 @@ int main(int argc, char **argv)
 
     if(proc_assemble && err == 0){
         char cmd[100];
-        sprintf(cmd, "gcc -o %s %s %s", output, compiled_file, LIBS);
+        sprintf(cmd, "gcc -o %s %s -L%s %s", output, compiled_file, LIB_DIR, LIBS);
         system(cmd);
     }
 

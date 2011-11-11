@@ -55,7 +55,7 @@ BDAExpr *virtual_expr(Env *env, BDCExpr *e)
                         bd_aexpr_ans(bd_ainst_makestring(str_lbl)));
             }
         case E_NIL:
-            return bd_aexpr_ans(bd_ainst_movglobal("_NIL_PTR"));
+            return bd_aexpr_ans(bd_ainst_movglobal(bd_generate_lbl("NIL_PTR")));
         case E_UNIOP:
             {
                 return bd_aexpr_ans(bd_ainst_neg(e->u.u_uniop.val));

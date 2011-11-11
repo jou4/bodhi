@@ -1,0 +1,84 @@
+#! /bin/sh
+
+config_h=include/config.h
+
+
+prefix=/usr/local
+bindir=''
+libdir='lib'
+system=macosx   # linux, macosx, win
+arch=amd64      # i386, amd64
+
+while : ; do
+  case "$1" in
+    "") break;;
+#    -prefix|--prefix=)
+#        prefix=$2; shift;;
+#    -prefix=*|--prefix=*)
+#        prefix=`echo $1 | sed -e 's/-*prefix=//'`;;
+#    -bindir|--bindir)
+#        bindir=$2; shift;;
+#    -bindir=*|--bindir=*)
+#        bindir=`echo $1 | sed -e 's/-*bindir=//'`;;
+#    -libdir|--libdir)
+#        libdir=$2; shift;;
+#    -libdir=*|--libdir=*)
+#        bindir=`echo $1 | sed -e 's/-*libdir=//'`;;
+    -system|--system)
+        system=$2; shift;;
+    -system=*|--system=*)
+        system=`echo $1 | sed -e 's/-*system=//'`;;
+    -arch|--arch)
+        arch=$2; shift;;
+    -arch=*|--arch=*)
+        arch=`echo $1 | sed -e 's/-*arch=//'`;;
+  esac
+  shift
+done
+
+
+# Sanity checks
+
+case "$prefix" in
+  /*) ;;
+   *) echo "The -prefix directory must be absolute." 1>&2; exit 2;;
+esac
+#case "$bindir" in
+#  /*) ;;
+#  "") ;;
+#   *) echo "The -bindir directory must be absolute." 1>&2; exit 2;;
+#esac
+#case "$libdir" in
+#  /*) ;;
+#  "") ;;
+#   *) echo "The -libdir directory must be absolute." 1>&2; exit 2;;
+#esac
+
+
+#case "$bindir" in
+#  "") bindir="$prefix/bin";;
+#esac
+#
+#case "$libdir" in
+#  "") bindir="$prefix/lib";;
+#esac
+
+
+rm -f $config_h
+touch $config_h
+
+
+case "$system" in
+    macosx)
+        echo "#define SYSTEM_MACOSX" >> $config_h;;
+    linux)
+        echo "#define SYSTEM_LINUX" >> $config_h;;
+esac
+
+case "$arch" in
+    amd64)
+        echo "#define ARCH_AMD64" >> $config_h;;
+esac
+
+echo "#define BIN_DIR \"$bindir\"" >> $config_h
+echo "#define LIB_DIR \"$libdir\"" >> $config_h

@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include "config.h"
 #include "id.h"
 
 char *bd_generate_id(BDType *type)
@@ -45,11 +46,25 @@ char *add_prefix(const char *prefix, const char *name)
 
 char *bd_generate_toplevel_lbl(const char *name)
 {
+#ifdef SYSTEM_LINUX
+    return add_prefix("bodhi_", name);
+#endif
+#ifdef SYSTEM_MACOSX
     return add_prefix("_bodhi_", name);
+#endif
+}
+
+char *bd_generate_lbl(const char *name)
+{
+#ifdef SYSTEM_LINUX
+    return add_prefix("", name);
+#endif
+#ifdef SYSTEM_MACOSX
+    return add_prefix("_", name);
+#endif
 }
 
 char *bd_generate_cfunc_lbl(const char *name)
 {
-    return add_prefix("_", name);
+	return bd_generate_lbl(name);
 }
-

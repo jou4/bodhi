@@ -6,3 +6,5 @@ tmp*
 *.a
 *.o
 *.out
+config.h
+Makefile.in

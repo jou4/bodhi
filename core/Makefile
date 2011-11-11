@@ -5,7 +5,7 @@ DEST		=
 LDFLAGS		=
 LIBS		=
 OBJS		= core.o primitives.o value.o gc.o
-PROGRAM		= libcore.a
+PROGRAM		= libbdcore.a
 AR			= ar
 
 
@@ -20,7 +20,7 @@ debug:	$(OBJS)
 
 test:	CFLAGS = $(DFLAGS)
 test:	$(OBJS) test.o
-	$(CC) $(OBJS) test.o ../lib/libutil.a
+	$(CC) $(OBJS) test.o ../lib/libbdutil.a
 
 clean:
 	rm -f *.o *~ $(PROGRAM)

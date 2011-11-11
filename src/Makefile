@@ -3,7 +3,7 @@ CFLAGS		= -O3 -Wall -I/usr/local/include -I../include
 DFLAGS		= -g  -I/usr/local/include -I../include
 DEST		=
 LDFLAGS		=
-LIBS		= ../lib/libutil.a
+LIBS		= ../lib/libbdutil.a
 OBJS		= lexer.o parser.o type.o env.o id.o show.o main.o compile.o \
 			  primitives.o expr.o sexpr.o typing.o nexpr.o knormal.o alpha.o \
 			  beta.o flatten.o inline.o constfold.o elim.o cexpr.o closure.o \

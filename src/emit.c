@@ -15,10 +15,10 @@ extern size_t heap_size;
 #define GC_INIT \
 	fprintf(OC, "\tmovq $%lu, %s\n", heap_size, reg_name(RARG1)); \
 	fprintf(OC, "\tmovq $%lu, %s\n", heap_size, reg_name(RARG2)); \
-	fprintf(OC, "\tcall %s\n", "_bodhi_core_gc_init")
-#define GC_FINISH fprintf(OC, "\tcall %s\n", "_bodhi_core_gc_finish")
-#define GC_SET_BASEPTR fprintf(OC, "\tmovq %s, %s(%s)\n", reg_bp, "_BASE_PTR", reg_ip)
-#define GC_SET_STACKPTR fprintf(OC, "\tmovq %s, %s(%s)\n", reg_sp, "_STACK_PTR", reg_ip)
+	fprintf(OC, "\tcall %s\n", bd_generate_toplevel_lbl("core_gc_init"))
+#define GC_FINISH fprintf(OC, "\tcall %s\n", bd_generate_toplevel_lbl("core_gc_finish"))
+#define GC_SET_BASEPTR fprintf(OC, "\tmovq %s, %s(%s)\n", reg_bp, bd_generate_lbl("BASE_PTR"), reg_ip)
+#define GC_SET_STACKPTR fprintf(OC, "\tmovq %s, %s(%s)\n", reg_sp, bd_generate_lbl("STACK_PTR"), reg_ip)
 
 
 int strne(char *s1, char *s2)
@@ -64,7 +64,7 @@ void emit_inst(EmitState *st, BDAInst *inst, char *dst)
             fprintf(OC, "\tmovq %s, %s(%s)\n", inst->u.u_bin.r, inst->u.u_bin.l, reg_ip);
 			// For GC.
             fprintf(OC, "\tleaq %s(%s), %s\n", inst->u.u_bin.l, reg_ip, reg_name(RARG1));
-            fprintf(OC, "\tcall %s\n", "_bodhi_core_push_global_ptr");
+            fprintf(OC, "\tcall %s\n", bd_generate_toplevel_lbl("core_push_global_ptr"));
             break;
 
         case AI_MOV:
@@ -296,7 +296,7 @@ void emit_inst(EmitState *st, BDAInst *inst, char *dst)
                     fprintf(OC, "\tmovq %s, %s\n", lbl, lbl_dst);
                 }
                 fprintf(OC, "\tmovq $%d, %s\n", fvs_size, fvs_size_dst);
-                fprintf(OC, "\tcall %s\n", "_bodhi_core_make_closure");
+                fprintf(OC, "\tcall %s\n", bd_generate_toplevel_lbl("core_make_closure"));
 
                 if(strne(reg_acc, dst)){
                     fprintf(OC, "\tmovq %s, %s\n", reg_acc, dst);
@@ -311,7 +311,7 @@ void emit_inst(EmitState *st, BDAInst *inst, char *dst)
                 if(strne(lbl, lbl_dst)){
                     fprintf(OC, "\tmovq %s, %s\n", lbl, lbl_dst);
                 }
-                fprintf(OC, "\tcall %s\n", "_bodhi_core_closure_vars");
+                fprintf(OC, "\tcall %s\n", bd_generate_toplevel_lbl("core_closure_vars"));
                 fprintf(OC, "\tmovq %s, %s\n", reg_acc, reg_hp);
             }
             break;
@@ -323,7 +323,7 @@ void emit_inst(EmitState *st, BDAInst *inst, char *dst)
                 if(strne(lbl, lbl_dst)){
                     fprintf(OC, "\tmovq %s, %s\n", lbl, lbl_dst);
                 }
-                fprintf(OC, "\tcall %s\n", "_bodhi_core_closure_entry");
+                fprintf(OC, "\tcall %s\n", bd_generate_toplevel_lbl("core_closure_entry"));
 
                 if(strne(reg_acc, dst)){
                     fprintf(OC, "\tmovq %s, %s\n", reg_acc, dst);
@@ -358,7 +358,7 @@ void emit_inst(EmitState *st, BDAInst *inst, char *dst)
                 char *size_dst = reg_name(argreg(0));
 
                 fprintf(OC, "\tmovq $%d, %s\n", size, size_dst);
-                fprintf(OC, "\tcall %s\n", "_bodhi_core_make_tuple");
+                fprintf(OC, "\tcall %s\n", bd_generate_toplevel_lbl("core_make_tuple"));
 
                 if(strne(reg_acc, dst)){
                     fprintf(OC, "\tmovq %s, %s\n", reg_acc, dst);
@@ -373,7 +373,7 @@ void emit_inst(EmitState *st, BDAInst *inst, char *dst)
                 if(strne(lbl, lbl_dst)){
                     fprintf(OC, "\tmovq %s, %s\n", lbl, lbl_dst);
                 }
-                fprintf(OC, "\tcall %s\n", "_bodhi_core_tuple_elems");
+                fprintf(OC, "\tcall %s\n", bd_generate_toplevel_lbl("core_tuple_elems"));
                 fprintf(OC, "\tmovq %s, %s\n", reg_acc, reg_hp);
             }
             break;
@@ -399,7 +399,7 @@ void emit_inst(EmitState *st, BDAInst *inst, char *dst)
                 if(strne(lbl, lbl_dst)){
                     fprintf(OC, "\tmovq %s, %s\n", lbl, lbl_dst);
                 }
-                fprintf(OC, "\tcall %s\n", "_bodhi_core_make_string");
+                fprintf(OC, "\tcall %s\n", bd_generate_toplevel_lbl("core_make_string"));
 
                 if(strne(reg_acc, dst)){
                     fprintf(OC, "\tmovq %s, %s\n", reg_acc, dst);
@@ -630,7 +630,8 @@ void bd_emit(FILE *ch, BDAProgram *prog)
                 break;
             case AEC_STR:
                 {
-                    fprintf(OC, "\t.cstring\n");
+                    fprintf(OC, "\t.data\n");
+                    //fprintf(OC, "\t.cstring\n");
                     fprintf(OC, "%s:\n", c->lbl);
                     fprintf(OC, "\t.ascii \"%s\\0\"\n", c->u.u_str);
                 }
@@ -660,7 +661,7 @@ void bd_emit(FILE *ch, BDAProgram *prog)
 
     // main function
     fprintf(OC, "\t.text\n");
-    fprintf(OC, ".globl _main\n");
+    fprintf(OC, ".globl %s\n", bd_generate_lbl("main"));
     def = prog->maindef;
     st->tailpoint = 0;
     st->main = 1;

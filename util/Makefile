@@ -5,7 +5,7 @@ DEST		=
 LDFLAGS		=
 LIBS		=
 OBJS		= exception.o list.o map.o mem.o set.o string_buffer.o treemap.o vector.o
-PROGRAM		= libutil.a
+PROGRAM		= libbdutil.a
 AR			= ar
 
 

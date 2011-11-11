@@ -12,20 +12,20 @@ BIN			= ./bin
 all:
 	$(MAKE) dir
 	cd util; $(MAKE) all
-	cp util/libutil.a lib/libutil.a
+	cp util/libbdutil.a lib/libbdutil.a
 	cd src; $(MAKE) all
 	cp src/a.out bin/bodhi
 	cd core; $(MAKE) all
-	cp core/libcore.a lib/libcore.a
+	cp core/libbdcore.a lib/libbdcore.a
 
 debug:
 	$(MAKE) dir
 	cd util; $(MAKE) debug
-	cp util/libutil.a lib/libutil.a
+	cp util/libbdutil.a lib/libbdutil.a
 	cd src; $(MAKE) debug
 	cp src/a.out bin/bodhi
 	cd core; $(MAKE) debug
-	cp core/libcore.a lib/libcore.a
+	cp core/libbdcore.a lib/libbdcore.a
 
 dir:
 	mkdir -p lib
