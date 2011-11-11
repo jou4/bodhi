@@ -1,6 +1,6 @@
 bodhi
-test
 .DS_Store
+*tmp*
 *.dSYM
 *.s
 *.a

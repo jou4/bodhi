@@ -1,0 +1,41 @@
+# Bodhi
+
+Bodhi is Functional programming language compiler.
+(For only x86_64 now.)
+(It is still the alpha version.)
+
+
+## Usage
+
+See 'test' directory.
+
+
+## Install
+
+	$ git clone git@github.com:jou4/bodhi.git
+	$ cd git
+	$ make
+	$ bin/bodhi test/hello.bd
+
+
+## Feature
+
+	Typing
+	Closure
+	C Function Call
+
+
+## Todo
+
+	GC
+	Pattern Match
+	Module System
+	Cross platform
+	Boot Strap
+	Interpreter
+
+
+## License
+
+Copyrighi (C) 2011 K.Kamitsukasa.
+Licensed under the MIT License (http://www.opensource.org/licenses/mit-license.php)

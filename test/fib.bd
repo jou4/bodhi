@@ -1,0 +1,18 @@
+def fib n =
+	let rec iter x y c n =
+		if c == n then x
+		else iter y (x + y) (c + 1) n
+	in iter 0 1 0 n
+
+def fibs n =
+	let rec reverse xs acc =
+		if empty xs then acc
+		else reverse (tail xs) ((head xs) : acc) in
+	let rec iter acc x y c n =
+		if c == n then acc
+		else iter (x : acc) y (x + y) (c + 1) n
+	in reverse (iter [] 0 1 0 n) []
+
+def main =
+	let _ = print (fib 10) in
+	print (fibs 10)

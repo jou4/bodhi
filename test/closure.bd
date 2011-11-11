@@ -1,0 +1,8 @@
+def make_adder x =
+	let rec f y = x + y in f
+
+def main =
+	let adder = make_adder 1 in
+	let _ = print_int (adder 100) in
+	let _ = print_int (adder 200) in
+	let _ = print_int (adder 300) in ()

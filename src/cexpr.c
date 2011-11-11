@@ -223,10 +223,6 @@ Set *bd_cexpr_freevars(BDCExpr *e)
     Set *s;
 
     switch(e->kind){
-        case E_UNIT:
-        case E_INT:
-        case E_FLOAT:
-            return set_new();
         case E_UNIOP:
             s = set_new();
             set_add(s, e->u.u_uniop.val);
@@ -315,7 +311,7 @@ Set *bd_cexpr_freevars(BDCExpr *e)
 		default:
 			break;
     }
-    return NULL;
+    return set_new();
 }
 
 void bd_cprogram_init(BDCProgram *prog)
