@@ -20,6 +20,7 @@ int has_side_effect(BDNExpr *e)
         case E_LETTUPLE:
             return has_side_effect(e->u.u_lettuple.body);
         case E_APP:
+		case E_CCALL:
             return 1;
 		default:
 			break;

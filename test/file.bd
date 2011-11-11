@@ -1,0 +1,9 @@
+def cstr = string_to_cstr
+def filename = "tmp.txt"
+def text = "Hello, world!"
+
+def main =
+	let fp = ccall fopen (cstr filename) (cstr "w") in
+	let _ = ccall fwrite (cstr text) 1 13 fp in
+	let _ = ccall fclose fp in
+	print_string "done."

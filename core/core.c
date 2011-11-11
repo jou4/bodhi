@@ -60,3 +60,15 @@ void *bodhi_core_list_cons(void *head, void *tail)
 {
     return bd_value_list(head, tail);
 }
+
+
+
+void bodhi_core_print_str(char *str)
+{
+	printf("%s\n", str);
+}
+
+void bodhi_core_print_ptr(void *p)
+{
+	printf("%p\n", p);
+}
