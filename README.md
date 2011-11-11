@@ -1,8 +1,8 @@
 # Bodhi
 
-Bodhi is Functional programming language compiler.
-(For only x86_64 now.)
-(It is still the alpha version.)
+Bodhi is Functional programming language compiler.<br />
+(For only x86_64 now.)<br />
+(It is still the alpha version.)<br />
 
 
 ## Usage
