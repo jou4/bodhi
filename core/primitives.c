@@ -3,7 +3,6 @@
 #include <string.h>
 #include "core.h"
 
-
 double bodhi_i2f(long v);
 long bodhi_f2i(double v);
 
@@ -261,7 +260,7 @@ void _bodhi_print(BDValue *v);
 
 void _bodhi_print_int(long v)
 {
-    printf("%ld", v);
+	printf("%ld", v);
 }
 
 void _bodhi_print_float(double v)

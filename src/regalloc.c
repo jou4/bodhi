@@ -122,11 +122,18 @@ int target_reg_in_inst(Env *regenv, char *lbl, BDAInst *inst, TargetRegResult *r
         case AI_SETGLOBAL_C:
         case AI_SETGLOBAL_I:
         case AI_SETGLOBAL_F:
+            if(is_match_lbl(lbl, inst->u.u_bin.r)){
+                add_target_reg(result, usable_reg(regenv, extra_regs));
+				return 0;
+            }
+            return 1;
         case AI_SETGLOBAL_L:
             if(is_match_lbl(lbl, inst->u.u_bin.r)){
                 add_target_reg(result, usable_reg(regenv, extra_regs));
+				return 0;
             }
-            return 0;
+			// For GC.
+            return 1;
 
         case AI_MOV:
             if(is_match_lbl(lbl, inst->lbl)){

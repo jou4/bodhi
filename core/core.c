@@ -3,6 +3,20 @@
 #include <string.h>
 #include "core.h"
 
+void *BASE_PTR = NULL;
+void *STACK_PTR = NULL;
+
+void bodhi_dump()
+{
+	printf("rbp: %p\n", BASE_PTR);
+	printf("rsp: %p\n", STACK_PTR);
+}
+
+void bodhi_core_push_global_ptr(void *p)
+{
+	printf("global: %p\n", p);
+}
+
 void *bodhi_core_make_closure(char *entry, int num_of_vars)
 {
     return bd_value_closure(entry, num_of_vars);

@@ -10,6 +10,9 @@ typedef struct {
 #define OC st->ch
 #define TAILCALL st->tailpoint
 
+#define GC_SET_BASEPTR fprintf(OC, "\tmovq %s, %s(%s)\n", reg_bp, "_BASE_PTR", reg_ip)
+#define GC_SET_STACKPTR fprintf(OC, "\tmovq %s, %s(%s)\n", reg_sp, "_STACK_PTR", reg_ip)
+
 
 int strne(char *s1, char *s2)
 {
@@ -42,16 +45,19 @@ void emit_inst(EmitState *st, BDAInst *inst, char *dst)
             break;
 
         case AI_SETGLOBAL_C:
-            fprintf(OC, "\tmovb %s, %s(%s)\n", inst->u.u_bin.r, inst->u.u_bin.l, "%rip");
+            fprintf(OC, "\tmovb %s, %s(%s)\n", inst->u.u_bin.r, inst->u.u_bin.l, reg_ip);
             break;
         case AI_SETGLOBAL_I:
-            fprintf(OC, "\tmovq %s, %s(%s)\n", inst->u.u_bin.r, inst->u.u_bin.l, "%rip");
+            fprintf(OC, "\tmovq %s, %s(%s)\n", inst->u.u_bin.r, inst->u.u_bin.l, reg_ip);
             break;
         case AI_SETGLOBAL_F:
             // TODO
             break;
         case AI_SETGLOBAL_L:
-            fprintf(OC, "\tmovq %s, %s(%s)\n", inst->u.u_bin.r, inst->u.u_bin.l, "%rip");
+            fprintf(OC, "\tmovq %s, %s(%s)\n", inst->u.u_bin.r, inst->u.u_bin.l, reg_ip);
+			// For GC.
+            fprintf(OC, "\tleaq %s(%s), %s\n", inst->u.u_bin.l, reg_ip, reg_name(RARG1));
+            fprintf(OC, "\tcall %s\n", "_bodhi_core_push_global_ptr");
             break;
 
         case AI_MOV:
@@ -61,12 +67,12 @@ void emit_inst(EmitState *st, BDAInst *inst, char *dst)
             break;
         case AI_MOVGLOBAL:
             if(strne(inst->lbl, dst)){
-                fprintf(OC, "\tmovq %s(%s), %s\n", inst->lbl, "%rip", dst);
+                fprintf(OC, "\tmovq %s(%s), %s\n", inst->lbl, reg_ip, dst);
             }
             break;
         case AI_MOVGLOBAL_L:
             if(strne(inst->lbl, dst)){
-                fprintf(OC, "\tleaq %s(%s), %s\n", inst->lbl, "%rip", dst);
+                fprintf(OC, "\tleaq %s(%s), %s\n", inst->lbl, reg_ip, dst);
             }
             break;
 
@@ -150,7 +156,7 @@ void emit_inst(EmitState *st, BDAInst *inst, char *dst)
 
         case AI_CALL:
             if(TAILCALL){
-                fprintf(OC, "\tpopq %s\n", "%rbp");
+                fprintf(OC, "\tpopq %s\n", reg_bp);
                 fprintf(OC, "\tjmp %s\n", inst->lbl);
             }
             else{
@@ -164,7 +170,7 @@ void emit_inst(EmitState *st, BDAInst *inst, char *dst)
             {
                 if(inst->lbl[0] == '%'){
                     if(TAILCALL){
-                        fprintf(OC, "\tpopq %s\n", "%rbp");
+                        fprintf(OC, "\tpopq %s\n", reg_bp);
                         fprintf(OC, "\tjmp *%s\n", inst->lbl);
                     }
                     else{
@@ -176,11 +182,11 @@ void emit_inst(EmitState *st, BDAInst *inst, char *dst)
                 }
                 else{
                     if(TAILCALL){
-                        fprintf(OC, "\tpopq %s\n", "%rbp");
-                        fprintf(OC, "\tjmp *%s(%s)\n", inst->lbl, "%rip");
+                        fprintf(OC, "\tpopq %s\n", reg_bp);
+                        fprintf(OC, "\tjmp *%s(%s)\n", inst->lbl, reg_ip);
                     }
                     else{
-                        fprintf(OC, "\tcall *%s(%s)\n", inst->lbl, "%rip");
+                        fprintf(OC, "\tcall *%s(%s)\n", inst->lbl, reg_ip);
                         if(strne(reg_name(RACC), dst)){
                             fprintf(OC, "\tmovq %s, %s\n", reg_name(RACC), dst);
                         }
@@ -191,35 +197,36 @@ void emit_inst(EmitState *st, BDAInst *inst, char *dst)
 
         case AI_TAILCALLPOINT:
             if( ! st->main){
-                fprintf(OC, "\tmovq %s, %s\n", "%rbp", "%rsp");
+                fprintf(OC, "\tmovq %s, %s\n", reg_bp, reg_sp);
+				GC_SET_STACKPTR;	// For GC.
                 TAILCALL = 1;
             }
             return;
 
         case AI_PUSHLCL_C:
-            fprintf(OC, "\tmovq %s, -%d(%s)\n", inst->lbl, inst->u.u_int + SIZE_ALIGN, "%rbp");
+            fprintf(OC, "\tmovq %s, -%d(%s)\n", inst->lbl, inst->u.u_int + SIZE_ALIGN, reg_bp);
             break;
         case AI_PUSHLCL_I:
-            fprintf(OC, "\tmovq %s, -%d(%s)\n", inst->lbl, inst->u.u_int + SIZE_ALIGN, "%rbp");
+            fprintf(OC, "\tmovq %s, -%d(%s)\n", inst->lbl, inst->u.u_int + SIZE_ALIGN, reg_bp);
             break;
         case AI_PUSHLCL_F:
-            fprintf(OC, "\tmovd %s, -%d(%s)\n", inst->lbl, inst->u.u_int + SIZE_ALIGN, "%rbp");
+            fprintf(OC, "\tmovd %s, -%d(%s)\n", inst->lbl, inst->u.u_int + SIZE_ALIGN, reg_bp);
             break;
         case AI_PUSHLCL_L:
-            fprintf(OC, "\tmovq %s, -%d(%s)\n", inst->lbl, inst->u.u_int + SIZE_ALIGN, "%rbp");
+            fprintf(OC, "\tmovq %s, -%d(%s)\n", inst->lbl, inst->u.u_int + SIZE_ALIGN, reg_bp);
             break;
 
         case AI_GETLCL_C:
-            fprintf(OC, "\tmovq -%d(%s), %s\n", inst->u.u_int + SIZE_ALIGN, "%rbp", dst);
+            fprintf(OC, "\tmovq -%d(%s), %s\n", inst->u.u_int + SIZE_ALIGN, reg_bp, dst);
             break;
         case AI_GETLCL_I:
-            fprintf(OC, "\tmovq -%d(%s), %s\n", inst->u.u_int + SIZE_ALIGN, "%rbp", dst);
+            fprintf(OC, "\tmovq -%d(%s), %s\n", inst->u.u_int + SIZE_ALIGN, reg_bp, dst);
             break;
         case AI_GETLCL_F:
-            fprintf(OC, "\tmovd -%d(%s), %s\n", inst->u.u_int + SIZE_ALIGN, "%rbp", dst);
+            fprintf(OC, "\tmovd -%d(%s), %s\n", inst->u.u_int + SIZE_ALIGN, reg_bp, dst);
             break;
         case AI_GETLCL_L:
-            fprintf(OC, "\tmovq -%d(%s), %s\n", inst->u.u_int + SIZE_ALIGN, "%rbp", dst);
+            fprintf(OC, "\tmovq -%d(%s), %s\n", inst->u.u_int + SIZE_ALIGN, reg_bp, dst);
             break;
 
         case AI_PUSHARG_C:
@@ -245,7 +252,7 @@ void emit_inst(EmitState *st, BDAInst *inst, char *dst)
                 else{
                     offset = offset * 8;
                 }
-                fprintf(OC, "\tmovq %s, -%d(%s)\n", lbl, offset, "%rsp");
+                fprintf(OC, "\tmovq %s, -%d(%s)\n", lbl, offset, reg_sp);
             }
             break;
 
@@ -266,7 +273,7 @@ void emit_inst(EmitState *st, BDAInst *inst, char *dst)
                 }
 
                 offset = offset * 8;
-                fprintf(OC, "\tmovq %d(%s), %s\n", offset, "%rbp", dst);
+                fprintf(OC, "\tmovq %d(%s), %s\n", offset, reg_bp, dst);
             }
             break;
 
@@ -284,8 +291,8 @@ void emit_inst(EmitState *st, BDAInst *inst, char *dst)
                 fprintf(OC, "\tmovq $%d, %s\n", fvs_size, fvs_size_dst);
                 fprintf(OC, "\tcall %s\n", "_bodhi_core_make_closure");
 
-                if(strne("%rax", dst)){
-                    fprintf(OC, "\tmovq %s, %s\n", "%rax", dst);
+                if(strne(reg_acc, dst)){
+                    fprintf(OC, "\tmovq %s, %s\n", reg_acc, dst);
                 }
             }
             break;
@@ -298,7 +305,7 @@ void emit_inst(EmitState *st, BDAInst *inst, char *dst)
                     fprintf(OC, "\tmovq %s, %s\n", lbl, lbl_dst);
                 }
                 fprintf(OC, "\tcall %s\n", "_bodhi_core_closure_vars");
-                fprintf(OC, "\tmovq %s, %s\n", "%rax", reg_hp);
+                fprintf(OC, "\tmovq %s, %s\n", reg_acc, reg_hp);
             }
             break;
         case AI_GETCLS_ENTRY:
@@ -311,8 +318,8 @@ void emit_inst(EmitState *st, BDAInst *inst, char *dst)
                 }
                 fprintf(OC, "\tcall %s\n", "_bodhi_core_closure_entry");
 
-                if(strne("%rax", dst)){
-                    fprintf(OC, "\tmovq %s, %s\n", "%rax", dst);
+                if(strne(reg_acc, dst)){
+                    fprintf(OC, "\tmovq %s, %s\n", reg_acc, dst);
                 }
             }
             break;
@@ -346,8 +353,8 @@ void emit_inst(EmitState *st, BDAInst *inst, char *dst)
                 fprintf(OC, "\tmovq $%d, %s\n", size, size_dst);
                 fprintf(OC, "\tcall %s\n", "_bodhi_core_make_tuple");
 
-                if(strne("%rax", dst)){
-                    fprintf(OC, "\tmovq %s, %s\n", "%rax", dst);
+                if(strne(reg_acc, dst)){
+                    fprintf(OC, "\tmovq %s, %s\n", reg_acc, dst);
                 }
             }
             break;
@@ -360,7 +367,7 @@ void emit_inst(EmitState *st, BDAInst *inst, char *dst)
                     fprintf(OC, "\tmovq %s, %s\n", lbl, lbl_dst);
                 }
                 fprintf(OC, "\tcall %s\n", "_bodhi_core_tuple_elems");
-                fprintf(OC, "\tmovq %s, %s\n", "%rax", reg_hp);
+                fprintf(OC, "\tmovq %s, %s\n", reg_acc, reg_hp);
             }
             break;
         case AI_PUSHELM:
@@ -387,8 +394,8 @@ void emit_inst(EmitState *st, BDAInst *inst, char *dst)
                 }
                 fprintf(OC, "\tcall %s\n", "_bodhi_core_make_string");
 
-                if(strne("%rax", dst)){
-                    fprintf(OC, "\tmovq %s, %s\n", "%rax", dst);
+                if(strne(reg_acc, dst)){
+                    fprintf(OC, "\tmovq %s, %s\n", reg_acc, dst);
                 }
             }
             break;
@@ -402,7 +409,7 @@ void emit(EmitState *st, BDAExpr *e)
 {
     switch(e->kind){
         case AE_ANS:
-            emit_inst(st, e->u.u_ans.val, "%rax");
+            emit_inst(st, e->u.u_ans.val, reg_acc);
             break;
         case AE_LET:
             {
@@ -559,12 +566,21 @@ void emit_fundef(EmitState *st, BDAExprDef *def)
     // .text
     fprintf(OC, "\t.text\n");
     fprintf(OC, "%s:\n", textlbl);
-    fprintf(OC, "\tpushq %s\n", "%rbp");
-    fprintf(OC, "\tmovq %s, %s\n", "%rsp", "%rbp");
+    fprintf(OC, "\tpushq %s\n", reg_bp);
+    fprintf(OC, "\tmovq %s, %s\n", reg_sp, reg_bp);
+
+	// For GC.
+    if(st->main){
+		GC_SET_BASEPTR;	// For GC.
+	}
+
     // frame size (local vars + push args + buffer for tail-call)
-    fprintf(OC, "\tsubq $%d, %s\n", frame_size(def->body), "%rsp");
+    fprintf(OC, "\tsubq $%d, %s\n", frame_size(def->body), reg_sp);
+	GC_SET_STACKPTR;	// For GC.
+
     emit(st, def->body);
     fprintf(OC, "\tleave\n");
+	GC_SET_STACKPTR;	// For GC.
     fprintf(OC, "\tret\n");
 }
 

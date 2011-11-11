@@ -48,6 +48,7 @@ typedef enum {
 #define reg_hp "%r15"
 #define reg_bp "%rbp"
 #define reg_sp "%rsp"
+#define reg_ip "%rip"
 
 #define reg_arg1 "%rdi"
 #define reg_arg2 "%rsi"
