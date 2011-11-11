@@ -1,0 +1,12 @@
+def ary = array_make 5 0
+
+def main =
+	let _ = array_set ary 0 11 in
+	let _ = array_set ary 1 12 in
+	let _ = array_set ary 2 13 in
+	let _ = array_set ary 3 14 in
+	let _ = array_set ary 4 15 in
+	let list = array_to_list ary in
+	let _ = print list in
+	let _ = print (array_of_list list) in
+	print_int (array_length ary)

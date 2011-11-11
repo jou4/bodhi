@@ -1,0 +1,11 @@
+def c = ref 0
+def count () = deref c
+def inc () = setref c (count () + 1)
+
+def main =
+	let _ = inc () in
+	let _ = inc () in
+	let _ = inc () in
+	let _ = inc () in
+	let _ = inc () in
+	print_int (count ())

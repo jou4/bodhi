@@ -1,0 +1,5 @@
+def main =
+	let c = 'B' in
+	let i = c2i c in
+	let _ = print_int i in
+	print_char (i2c i)

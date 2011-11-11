@@ -6,7 +6,6 @@
 
 extern void *BASE_PTR;
 extern void *STACK_PTR;
-extern Vector *globals;
 
 void bodhi_core_gc_init(size_t minor_heap_size, size_t major_heap_size)
 {
@@ -20,7 +19,7 @@ void bodhi_core_gc_finish()
 
 void bodhi_core_push_global_ptr(void *p)
 {
-	vector_add(globals, p);
+	gc_push_global(p);
 }
 
 void *bodhi_core_make_closure(char *entry, int num_of_vars)

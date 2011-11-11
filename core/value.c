@@ -64,6 +64,7 @@ BDValue *bd_value(char type)
 BDValue *bd_value_string(int length, char *val)
 {
     char *cell = gc_allocate(SIZE_OF_CHAR * (length + 1));
+	GC_PUSH_ARG(cell);
     if(val != NULL){
         strcpy(cell, val);
     }
@@ -71,14 +72,17 @@ BDValue *bd_value_string(int length, char *val)
     BDValue *v = bd_value(T_STRING);
     v_string_length(v) = length;
     v_string_val(v) = cell;
+	GC_CLEAR_ARGS();
     return v;
 }
 
 BDValue *bd_value_tuple(int length)
 {
     BDValue *v = bd_value(T_TUPLE);
+	GC_PUSH_ARG(v);
     v_tuple_length(v) = length;
     v_tuple_elements(v) = gc_allocate(SIZE_OF_ELEMENT * length);
+	GC_CLEAR_ARGS();
     return v;
 }
 
@@ -101,18 +105,22 @@ BDValue *bd_value_array(char size_of_elem, int length)
     }
 
     BDValue *v = bd_value(T_ARRAY);
+	GC_PUSH_ARG(v);
     v_array_size_of_elem(v) = size_of_elem;
     v_array_length(v) = length;
     v_array_max_length(v) = max_length;
     v_array_elements(v) = gc_allocate(size_of_elem * max_length);
+	GC_CLEAR_ARGS();
     return v;
 }
 
 BDValue *bd_value_closure(char *entry, int length)
 {
     BDValue *v = bd_value(T_CLOSURE);
+	GC_PUSH_ARG(v);
     v_closure_entry(v) = entry;
     v_closure_length(v) = length;
     v_closure_vars(v) = gc_allocate(SIZE_OF_ELEMENT * length);
+	GC_CLEAR_ARGS();
     return v;
 }

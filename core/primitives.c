@@ -4,6 +4,7 @@
 #include "core.h"
 #include "gc.h"
 
+extern void *NIL_PTR;
 
 double bodhi_i2f(long v);
 long bodhi_f2i(double v);
@@ -88,9 +89,57 @@ int bodhi_array_length(BDValue *v)
     return v_array_length(v);
 }
 
-void *bodhi_array_of_list(BDValue *v);
+int _bodhi_list_length(BDValue *v)
+{
+	int length = 0;
+	BDValue *tmp = v;
+	while( ! is_nil(tmp)){
+		length++;
+		tmp = v_list_tail(tmp);
+	}
+	return length;
+}
 
-void *bodhi_array_to_list(BDValue *v);
+void *bodhi_array_of_list(BDValue *v)
+{
+    assert_expected_value(v, T_LIST);
+	GC_PUSH_ARG(v);
+
+	int length = _bodhi_list_length(v);
+	BDValue *ary = bd_value_array(SIZE_OF_ELEMENT, length);
+
+	BDValue *tmp = v;
+	PTR *cell = v_array_elements(ary);
+	while( ! is_nil(tmp)){
+		*cell = (PTR)v_list_head(tmp);
+		tmp = v_list_tail(tmp);
+		cell++;
+	}
+
+	GC_CLEAR_ARGS();
+	return ary;
+}
+
+void *bodhi_array_to_list(BDValue *v)
+{
+    assert_expected_value(v, T_ARRAY);
+	GC_PUSH_ARG(v);
+
+	int i, length = v_array_length(v);
+	PTR *cell = v_array_elements(v);
+	cell += (length - 1);
+
+	BDValue *list = NIL_PTR;
+
+	for(i = length - 1; i >= 0; i--){
+		list = bd_value_list((void *)*cell, list);
+		GC_PUSH_ARG(list);
+		cell--;
+	}
+
+	GC_CLEAR_ARGS();
+	return list;
+}
 
 void *bodhi_string_make(int length)
 {
@@ -149,6 +198,8 @@ void *bodhi_string_append(BDValue *v1, BDValue *v2)
 {
     assert_expected_value(v1, T_STRING);
     assert_expected_value(v2, T_STRING);
+	GC_PUSH_ARG(v1);
+	GC_PUSH_ARG(v2);
 
     BDValue *v = bd_value_string(v_string_length(v1) + v_string_length(v2), NULL);
     char *cell = v_string_val(v);
@@ -157,6 +208,7 @@ void *bodhi_string_append(BDValue *v1, BDValue *v2)
     cell = _bodhi_string_copy(cell, v_string_val(v2));
     *cell = '\0';
 
+	GC_CLEAR_ARGS();
     return v;
 }
 
@@ -164,6 +216,8 @@ void *bodhi_string_concat(BDValue *sep, BDValue *list)
 {
     assert_expected_value(sep, T_STRING);
     assert_expected_value(list, T_LIST);
+	GC_PUSH_ARG(sep);
+	GC_PUSH_ARG(list);
 
     int i, result_length = 0, sep_length = v_string_length(sep);
     BDValue *tmp, *str;
@@ -195,6 +249,7 @@ void *bodhi_string_concat(BDValue *sep, BDValue *list)
     }
     *cell = '\0';
 
+	GC_CLEAR_ARGS();
     return v;
 }
 
@@ -224,7 +279,10 @@ int bodhi_string_compare(BDValue *v1, BDValue *v2)
 
 void *bodhi_ref(void *val)
 {
-    return bodhi_array_make(1, val);
+	GC_PUSH_ARG(val);
+    BDValue *v = bodhi_array_make(1, val);
+	GC_CLEAR_ARGS();
+	return v;
 }
 
 void *bodhi_deref(BDValue *v)

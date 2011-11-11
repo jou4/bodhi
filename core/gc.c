@@ -6,18 +6,14 @@ GC *gc;
 
 void *BASE_PTR = NULL;
 void *STACK_PTR = NULL;
-Vector *globals;
-Vector *args;
 
 void gc_init(size_t minor_heap_size, size_t major_heap_size)
 {
 	gc = gc_create(minor_heap_size, major_heap_size);
-	globals = vector_new();
 }
 
 void gc_finish()
 {
-	vector_destroy(globals);
 	gc_destroy(gc);
 }
 
@@ -44,11 +40,21 @@ void gc_start()
 	Heap *active = gc_active_minor_heap(gc);
 	Heap *deactive = gc_deactive_minor_heap(gc);
 
-	// globals
 	int i;
+	Vector *vec;
 	PTR *g;
-	for(i = 0; i < globals->length; i++){
-		g = vector_get(globals, i);
+
+	// globals
+	vec = gc_globals(gc);
+	for(i = 0; i < vec->length; i++){
+		g = vector_get(vec, i);
+		*g = (PTR)gc_copy(active, deactive, (BDValue *)*g);
+	}
+
+	// args
+	vec = gc_args(gc);
+	for(i = 0; i < vec->length; i++){
+		g = vector_get(vec, i);
 		*g = (PTR)gc_copy(active, deactive, (BDValue *)*g);
 	}
 
@@ -67,6 +73,21 @@ void gc_start()
 int is_gc_object(BDValue *target)
 {
 	return is_heap_object(gc_active_minor_heap(gc), target);
+}
+
+void gc_push_global(void *v)
+{
+	vector_add(gc_globals(gc), v);
+}
+
+void gc_push_arg(void *v)
+{
+	vector_add(gc_args(gc), v);
+}
+
+void gc_clear_args()
+{
+	gc_args(gc)->length = 0;
 }
 
 void cell_copy(Heap *active, Heap *deactive, PTR *dst, PTR *src, int length)
@@ -160,6 +181,8 @@ GC *gc_create(size_t minor_heap_size, size_t major_heap_size)
 	gc_minor_heap_1(gc) = heap_create(minor_heap_size);
 	gc_minor_heap_2(gc) = heap_create(minor_heap_size);
 	gc_major_heap(gc) = heap_create(major_heap_size);
+	gc_globals(gc) = vector_new();
+	gc_args(gc) = vector_new();
 	return gc;
 }
 
@@ -168,6 +191,8 @@ void gc_destroy(GC *gc)
 	heap_destroy(gc_minor_heap_1(gc));
 	heap_destroy(gc_minor_heap_2(gc));
 	heap_destroy(gc_major_heap(gc));
+	vector_destroy(gc_globals(gc));
+	vector_destroy(gc_args(gc));
 	free(gc);
 }
 
