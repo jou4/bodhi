@@ -12,7 +12,7 @@ See 'test' directory.
 
 ## Install
 
-	$ git clone git@github.com:jou4/bodhi.git
+	$ git clone git://github.com/jou4/bodhi.git
 	$ cd bodhi
 	$ make
 	$ bin/bodhi test/hello.bd
