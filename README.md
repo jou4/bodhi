@@ -16,6 +16,7 @@ See 'test' directory.
 	$ cd bodhi
 	$ make
 	$ bin/bodhi test/hello.bd
+	$ ./a.out
 
 
 ## Feature
