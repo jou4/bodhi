@@ -26,11 +26,13 @@ typedef struct {
 
 
 void gc_init(size_t minor_heap_size, size_t major_heap_size);
+void gc_finish();
 void *gc_allocate(size_t size);
 void gc_start();
+int is_gc_object(BDValue *target);
 void *gc_copy(Heap *active, Heap *deactive, BDValue *target);
 int is_exists_in_heap(Heap *heap, void *p);
-int is_gc_object(Heap *heap, BDValue *target);
+int is_heap_object(Heap *heap, BDValue *target);
 
 #define gc_minor_heap_size(gc) gc->minor_heap_size
 #define gc_minor_heap_threashold(gc) gc->minor_heap_threashold
@@ -42,7 +44,7 @@ int is_gc_object(Heap *heap, BDValue *target);
 #define gc_major_heap(gc) gc->major_heap
 
 GC *gc_create(size_t minor_heap_size, size_t major_heap_size);
-void gc_destory(GC *gc);
+void gc_destroy(GC *gc);
 
 int gc_allocatable_minor_heap(GC *gc, size_t alloc_size);
 int gc_allocatable_major_heap(GC *gc, size_t alloc_size);
@@ -58,10 +60,13 @@ Heap *gc_deactive_minor_heap(GC *gc);
 
 Heap *heap_create(size_t size);
 void heap_init(Heap *heap);
-void heap_destory(Heap *heap);
+void heap_destroy(Heap *heap);
 
 void *heap_allocate(Heap *heap, size_t alloc_size);
 int heap_allocatable(Heap *heap, size_t alloc_size, size_t threashold);
 
+
+void gc_dump(GC *gc);
+void heap_dump(Heap *heap, char *name);
 
 #endif

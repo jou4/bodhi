@@ -13,15 +13,13 @@ void bodhi_core_gc_init(size_t minor_heap_size, size_t major_heap_size)
 	gc_init(minor_heap_size, major_heap_size);
 }
 
-void bodhi_dump()
+void bodhi_core_gc_finish()
 {
-	printf("rbp: %p\n", BASE_PTR);
-	printf("rsp: %p\n", STACK_PTR);
+	gc_finish();
 }
 
 void bodhi_core_push_global_ptr(void *p)
 {
-	printf("global: %p\n", p);
 	vector_add(globals, p);
 }
 

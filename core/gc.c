@@ -1,4 +1,5 @@
 #include <string.h>
+#include <math.h>
 #include "gc.h"
 
 GC *gc;
@@ -6,6 +7,7 @@ GC *gc;
 void *BASE_PTR = NULL;
 void *STACK_PTR = NULL;
 Vector *globals;
+Vector *args;
 
 void gc_init(size_t minor_heap_size, size_t major_heap_size)
 {
@@ -13,10 +15,26 @@ void gc_init(size_t minor_heap_size, size_t major_heap_size)
 	globals = vector_new();
 }
 
+void gc_finish()
+{
+	vector_destroy(globals);
+	gc_destroy(gc);
+}
+
 void *gc_allocate(size_t size)
 {
 	if( ! gc_allocatable_minor_heap(gc, size)){
+		printf("GC Start.\n");
 		gc_start();
+
+		if( ! gc_allocatable_minor_heap(gc, size)){
+			printf("*** Exception: Memory was exhausted.\n");
+			/*
+			printf("Try to allocate %lu bytes.", size);
+			gc_dump(gc);
+			*/
+			exit(EXIT_FAILURE);
+		}
 	}
 	return heap_allocate(gc_active_minor_heap(gc), size);
 }
@@ -46,6 +64,11 @@ void gc_start()
 	gc_switch_minor_heap(gc);
 }
 
+int is_gc_object(BDValue *target)
+{
+	return is_heap_object(gc_active_minor_heap(gc), target);
+}
+
 void cell_copy(Heap *active, Heap *deactive, PTR *dst, PTR *src, int length)
 {
 	int i;
@@ -58,7 +81,7 @@ void cell_copy(Heap *active, Heap *deactive, PTR *dst, PTR *src, int length)
 
 void *gc_copy(Heap *active, Heap *deactive, BDValue *target)
 {
-	if( ! is_gc_object(active, target)){
+	if( ! is_heap_object(active, target)){
 		return target;
 	}
 
@@ -110,7 +133,7 @@ void *gc_copy(Heap *active, Heap *deactive, BDValue *target)
 
 int is_exists_in_heap(Heap *heap, void *p)
 {
-	if(heap_block(heap) >= p){
+	if(heap_block(heap) > p){
 		return 0;
 	}
 
@@ -121,9 +144,9 @@ int is_exists_in_heap(Heap *heap, void *p)
 	return 1;
 }
 
-int is_gc_object(Heap *heap, BDValue *target)
+int is_heap_object(Heap *heap, BDValue *target)
 {
-	return is_value(target) && is_exists_in_heap(heap, target);
+	return is_exists_in_heap(heap, target) && is_value(target);
 }
 
 GC *gc_create(size_t minor_heap_size, size_t major_heap_size)
@@ -140,11 +163,11 @@ GC *gc_create(size_t minor_heap_size, size_t major_heap_size)
 	return gc;
 }
 
-void gc_destory(GC *gc)
+void gc_destroy(GC *gc)
 {
-	heap_destory(gc_minor_heap_1(gc));
-	heap_destory(gc_minor_heap_2(gc));
-	heap_destory(gc_major_heap(gc));
+	heap_destroy(gc_minor_heap_1(gc));
+	heap_destroy(gc_minor_heap_2(gc));
+	heap_destroy(gc_major_heap(gc));
 	free(gc);
 }
 
@@ -153,18 +176,25 @@ Heap *heap_create(size_t size)
 	Heap *heap = malloc(sizeof(Heap));
 	heap_size(heap) = size;
 	heap_used(heap) = 0;
-	heap_block(heap) = malloc(sizeof(size));
+	heap_block(heap) = malloc(size);
 	heap_head(heap) = heap_block(heap);
 	return heap;
 }
 
 void heap_init(Heap *heap)
 {
+	char *block = heap_block(heap);
+	int i, length = heap_size(heap);
+	for(i = 0; i < length; i++){
+		*block = 0;
+		block++;
+	}
+
 	heap_used(heap) = 0;
 	heap_head(heap) = heap_block(heap);
 }
 
-void heap_destory(Heap *heap)
+void heap_destroy(Heap *heap)
 {
 	free(heap_block(heap));
 	free(heap);
@@ -173,7 +203,7 @@ void heap_destory(Heap *heap)
 void *heap_allocate(Heap *heap, size_t alloc_size)
 {
 	if(alloc_size % HEAP_ALIGN != 0){
-		alloc_size = alloc_size / HEAP_ALIGN + HEAP_ALIGN;
+		alloc_size = (size_t)ceil((double)alloc_size / (double)HEAP_ALIGN) * HEAP_ALIGN;
 	}
 
 	void *m = heap_head(heap);
@@ -226,3 +256,34 @@ Heap *gc_deactive_minor_heap(GC *gc)
 	}
 	return gc_minor_heap_2(gc);
 }
+
+
+
+void heap_dump(Heap *heap, char *name)
+{
+	printf("%s: (%p)\n", name, heap);
+	printf("size: %lu\n", heap_size(heap));
+	printf("used: %lu\n", heap_used(heap));
+	printf("block: %p\n", heap_block(heap));
+	printf("head: %p\n", heap_head(heap));
+	printf("\n");
+}
+
+void gc_dump(GC *gc)
+{
+	printf("GC:\n");
+	printf("gc_minor_heap_size: %lu\n", gc_minor_heap_size(gc));
+	printf("gc_minor_heap_threashold: %lu\n", gc_minor_heap_threashold(gc));
+	printf("gc_major_heap_size: %lu\n", gc_major_heap_size(gc));
+	printf("gc_major_heap_threashold: %lu\n", gc_major_heap_threashold(gc));
+	printf("gc_active_switch: %d\n", gc_active_switch(gc));
+	printf("gc_minor_heap_1: %p\n", gc_minor_heap_1(gc));
+	printf("gc_minor_heap_2: %p\n", gc_minor_heap_2(gc));
+	printf("gc_major_heap: %p\n", gc_major_heap(gc));
+	printf("\n");
+
+	heap_dump(gc_active_minor_heap(gc), "Active Heap");
+	heap_dump(gc_deactive_minor_heap(gc), "Deactive Heap");
+	heap_dump(gc_major_heap(gc), "Major Heap");
+}
+

@@ -16,6 +16,7 @@ extern size_t heap_size;
 	fprintf(OC, "\tmovq $%lu, %s\n", heap_size, reg_name(RARG1)); \
 	fprintf(OC, "\tmovq $%lu, %s\n", heap_size, reg_name(RARG2)); \
 	fprintf(OC, "\tcall %s\n", "_bodhi_core_gc_init")
+#define GC_FINISH fprintf(OC, "\tcall %s\n", "_bodhi_core_gc_finish")
 #define GC_SET_BASEPTR fprintf(OC, "\tmovq %s, %s(%s)\n", reg_bp, "_BASE_PTR", reg_ip)
 #define GC_SET_STACKPTR fprintf(OC, "\tmovq %s, %s(%s)\n", reg_sp, "_STACK_PTR", reg_ip)
 
@@ -577,7 +578,7 @@ void emit_fundef(EmitState *st, BDAExprDef *def)
 
 	// For GC.
     if(st->main){
-		GC_SET_BASEPTR;	// For GC.
+		GC_SET_BASEPTR;
 		GC_INIT;
 	}
 
@@ -586,6 +587,12 @@ void emit_fundef(EmitState *st, BDAExprDef *def)
 	GC_SET_STACKPTR;	// For GC.
 
     emit(st, def->body);
+
+	// For GC.
+    if(st->main){
+		GC_FINISH;
+	}
+
     fprintf(OC, "\tleave\n");
 	GC_SET_STACKPTR;	// For GC.
     fprintf(OC, "\tret\n");
@@ -641,7 +648,6 @@ void bd_emit(FILE *ch, BDAProgram *prog)
         fprintf(OC, "%s:\n", ident->name);
 		fprintf(OC, "\t.quad 0\n");
     }
-
 
     // functions
     vec = prog->fundefs;

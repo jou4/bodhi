@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include "core.h"
+#include "gc.h"
+
 
 double bodhi_i2f(long v);
 long bodhi_f2i(double v);
@@ -335,7 +337,7 @@ void _bodhi_print_array(BDValue *v)
 
 void _bodhi_print(BDValue *v)
 {
-    if(is_value(v)){
+	if(is_gc_object(v)){
         switch(v_type(v)){
             case T_NIL:
                 _bodhi_print_nil();

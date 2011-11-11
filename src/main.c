@@ -16,9 +16,9 @@ char *output = NULL;
 char *compiled_file = NULL;
 int proc_compile = 1;
 int proc_assemble = 1;
-size_t heap_size = 1000;
+size_t heap_size = 64000000;
 
-char *usage = "usage: bodhi [-Sv] [-o output] input";
+char *usage = "usage: bodhi [-Sv] [-o output] [-H heap size] input";
 char *version = "0.0.1";
 
 char *LIBS = "lib/libcore.a lib/libutil.a";
@@ -49,7 +49,7 @@ void getopts(int argc, char **argv)
 {
     int opt;
 
-    while((opt = getopt(argc, argv, "Svo:")) >= 0){
+    while((opt = getopt(argc, argv, "Svo:H:")) >= 0){
         switch(opt){
             case 'S':
                 // compile only
@@ -58,6 +58,9 @@ void getopts(int argc, char **argv)
             case 'o':
                 output = optarg;
                 break;
+			case 'H':
+				heap_size = atol(optarg);
+				break;
             case 'v':
                 fprintf(stdout, "%s\n", version);
                 exit(EXIT_SUCCESS);

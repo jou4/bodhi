@@ -27,7 +27,7 @@ int value_size(char type)
 int is_value(BDValue *v)
 {
     if(v == NULL){ return 0; }
-    if(((long)v % 16) != 0){ return 0; }
+    if(((long)v % HEAP_ALIGN) != 0){ return 0; }
     if(v_bit1(v) != VALUE_BIT1){ return 0; }
     if(v_bit2(v) != VALUE_BIT2){ return 0; }
     if(v_type(v) < TYPE_RANGE_MIN || v_type(v) > TYPE_RANGE_MAX){ return 0; }

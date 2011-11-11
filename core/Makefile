@@ -18,5 +18,9 @@ debug:	CFLAGS = $(DFLAGS)
 debug:	$(OBJS)
 	$(AR) rv $(PROGRAM) $(OBJS)
 
+test:	CFLAGS = $(DFLAGS)
+test:	$(OBJS) test.o
+	$(CC) $(OBJS) test.o ../lib/libutil.a
+
 clean:
 	rm -f *.o *~ $(PROGRAM)
