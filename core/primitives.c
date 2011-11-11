@@ -210,13 +210,14 @@ int bodhi_string_compare(BDValue *v1, BDValue *v2)
     char *cell1 = v_string_val(v1);
     char *cell2 = v_string_val(v2);
 
-    while(*cell1 >= 0){
+	int i, length = v_string_length(v1);
+	for(i = 0; i < length; i++){
         if(*cell1 != *cell2){
             return 0;
         }
         cell1++;
         cell2++;
-    }
+	}
 
     return 1;
 }
