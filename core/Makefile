@@ -1,10 +1,10 @@
 CC			= gcc
-CFLAGS		= -O3 -Wall -I/usr/local/include
-DFLAGS		= -g -Wall -I/usr/local/include
+CFLAGS		= -O3 -Wall -I/usr/local/include -I../include
+DFLAGS		= -g -Wall -I/usr/local/include -I../include
 DEST		=
 LDFLAGS		=
 LIBS		=
-OBJS		= core.o primitives.o value.o heap.o
+OBJS		= core.o primitives.o value.o gc.o
 PROGRAM		= libcore.a
 AR			= ar
 

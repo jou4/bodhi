@@ -16,11 +16,12 @@ char *output = NULL;
 char *compiled_file = NULL;
 int proc_compile = 1;
 int proc_assemble = 1;
+size_t heap_size = 1000;
 
 char *usage = "usage: bodhi [-Sv] [-o output] input";
 char *version = "0.0.1";
 
-char *LIBS = "lib/libcore.a";
+char *LIBS = "lib/libcore.a lib/libutil.a";
 
 
 char *basename(char *path)

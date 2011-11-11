@@ -2,7 +2,7 @@
 #define _value_h_
 
 
-#define PTR long
+#define PTR unsigned long
 
 #define T_NIL 0
 #define T_CHAR 1
@@ -59,7 +59,7 @@ struct BDValue {
             void *cell;
         } u_array;
         struct {
-            char *entry;
+            void *entry;
             int length;
             void *cell;
         } u_closure;

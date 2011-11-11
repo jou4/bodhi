@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "value.h"
-#include "heap.h"
+#include "gc.h"
 
 void *NIL_PTR = "(nil)";
 
@@ -52,7 +52,7 @@ int is_nil(void *p)
 
 BDValue *bd_value(char type)
 {
-    BDValue *v = allocate_value(SIZE_OF_VALUE);
+    BDValue *v = gc_allocate(SIZE_OF_VALUE);
     v_bit1(v) = VALUE_BIT1;
     v_bit2(v) = VALUE_BIT2;
     v_type(v) = type;
@@ -63,7 +63,7 @@ BDValue *bd_value(char type)
 
 BDValue *bd_value_string(int length, char *val)
 {
-    char *cell = allocate_cell(SIZE_OF_CHAR * (length + 1));
+    char *cell = gc_allocate(SIZE_OF_CHAR * (length + 1));
     if(val != NULL){
         strcpy(cell, val);
     }
@@ -78,7 +78,7 @@ BDValue *bd_value_tuple(int length)
 {
     BDValue *v = bd_value(T_TUPLE);
     v_tuple_length(v) = length;
-    v_tuple_elements(v) = allocate_cell(SIZE_OF_ELEMENT * length);
+    v_tuple_elements(v) = gc_allocate(SIZE_OF_ELEMENT * length);
     return v;
 }
 
@@ -104,7 +104,7 @@ BDValue *bd_value_array(char size_of_elem, int length)
     v_array_size_of_elem(v) = size_of_elem;
     v_array_length(v) = length;
     v_array_max_length(v) = max_length;
-    v_array_elements(v) = allocate_cell(size_of_elem * max_length);
+    v_array_elements(v) = gc_allocate(size_of_elem * max_length);
     return v;
 }
 
@@ -113,6 +113,6 @@ BDValue *bd_value_closure(char *entry, int length)
     BDValue *v = bd_value(T_CLOSURE);
     v_closure_entry(v) = entry;
     v_closure_length(v) = length;
-    v_closure_vars(v) = allocate_cell(SIZE_OF_ELEMENT * length);
+    v_closure_vars(v) = gc_allocate(SIZE_OF_ELEMENT * length);
     return v;
 }

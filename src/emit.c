@@ -10,6 +10,12 @@ typedef struct {
 #define OC st->ch
 #define TAILCALL st->tailpoint
 
+extern size_t heap_size;
+
+#define GC_INIT \
+	fprintf(OC, "\tmovq $%lu, %s\n", heap_size, reg_name(RARG1)); \
+	fprintf(OC, "\tmovq $%lu, %s\n", heap_size, reg_name(RARG2)); \
+	fprintf(OC, "\tcall %s\n", "_bodhi_core_gc_init")
 #define GC_SET_BASEPTR fprintf(OC, "\tmovq %s, %s(%s)\n", reg_bp, "_BASE_PTR", reg_ip)
 #define GC_SET_STACKPTR fprintf(OC, "\tmovq %s, %s(%s)\n", reg_sp, "_STACK_PTR", reg_ip)
 
@@ -572,6 +578,7 @@ void emit_fundef(EmitState *st, BDAExprDef *def)
 	// For GC.
     if(st->main){
 		GC_SET_BASEPTR;	// For GC.
+		GC_INIT;
 	}
 
     // frame size (local vars + push args + buffer for tail-call)
