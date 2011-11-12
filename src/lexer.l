@@ -76,7 +76,11 @@ upper [A-Z]
     return(CHAR_LIT);
 }
 
-<INITIAL>{digit}+ {
+<INITIAL>-?{digit}+\.{digit}+ {
+    yylval->d_val = atof(yytext);
+    return(FLOAT_LIT);
+}
+<INITIAL>-?{digit}+ {
     yylval->i_val = atol(yytext);
     return(INT_LIT);
 }

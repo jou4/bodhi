@@ -92,8 +92,8 @@ extern int yyget_lineno();
 %left  EQUAL EQUAL_EQUAL LESS_GREATER LESS GREATER LESS_EQUAL GREATER_EQUAL
 %left  PLUS MINUS PLUS_DOT MINUS_DOT
 %left  AST SLASH
-%left  prec_unary_minus
 %left  prec_app
+%left  prec_unary_minus
 %left  DOT
 
 

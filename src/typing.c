@@ -617,8 +617,8 @@ BDType *typing(Env *env, BDSExpr *e)
                         vector_add(actual_types, typing(env, vector_get(actuals, i)));
                     }
 
-                    unify(bd_type_fun(actual_types, expected), typing(env, e->u.u_app.fun));
-                    //unify(typing(env, e->u.u_app.fun), bd_type_fun(actual_types, expected));
+                    //unify(bd_type_fun(actual_types, expected), typing(env, e->u.u_app.fun));
+                    unify(typing(env, e->u.u_app.fun), bd_type_fun(actual_types, expected));
 
                     return expected;
                 }

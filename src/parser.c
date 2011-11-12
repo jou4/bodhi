@@ -173,8 +173,8 @@ extern int yyget_lineno();
      prec_if = 303,
      MINUS_DOT = 304,
      PLUS_DOT = 305,
-     prec_unary_minus = 306,
-     prec_app = 307
+     prec_app = 306,
+     prec_unary_minus = 307
    };
 #endif
 
@@ -546,8 +546,8 @@ static const char *const yytname[] =
   "REC", "COMMA", "COLON", "DOT", "LESS_MINUS", "SEMICOLON", "LPAREN",
   "RPAREN", "LBRACKET", "RBRACKET", "LBRACKET_BAR", "RBRACKET_BAR",
   "LBRACE", "RBRACE", "FUN", "ARROW", "MAIN", "DEF", "CCALL", "prec_let",
-  "prec_lambda", "prec_if", "MINUS_DOT", "PLUS_DOT", "prec_unary_minus",
-  "prec_app", "$accept", "input", "toplevel", "simple_exp", "exp",
+  "prec_lambda", "prec_if", "MINUS_DOT", "PLUS_DOT", "prec_app",
+  "prec_unary_minus", "$accept", "input", "toplevel", "simple_exp", "exp",
   "uniop_exp", "binop_exp", "formal_args", "formal_arg", "actual_args",
   "t_elems", "l_elems", "pat", 0
 };

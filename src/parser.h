@@ -97,8 +97,8 @@
      prec_if = 303,
      MINUS_DOT = 304,
      PLUS_DOT = 305,
-     prec_unary_minus = 306,
-     prec_app = 307
+     prec_app = 306,
+     prec_unary_minus = 307
    };
 #endif
 
