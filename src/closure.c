@@ -519,9 +519,7 @@ BDCProgram *bd_closure_transform(BDNProgram *prog)
 
     // Do closure_transform main definition.
     def = prog->maindef;
-    cprog->maindef = bd_cexpr_def(
-            bd_expr_ident_clone(def->ident),
-            rename_closure(closure_transform(env, known, def->body)));
+	cprog->maindef = closure_transform_def(env, known, prog->maindef);
 
     // Append collected toplevel-functions to definitions.
     BDCExprDef *toplevel;

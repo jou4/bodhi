@@ -116,7 +116,11 @@ toplevel
 | DEF IDENT formal_args EQUAL exp
     { add_def(bd_sexpr_def(bd_expr_ident_typevar($2), bd_sexpr_fun(bd_type_var(NULL), $3, $5))); }
 | DEF MAIN EQUAL exp
-    { set_maindef(bd_sexpr_def(bd_expr_ident("main", bd_type_unit()), $4)); }
+    { set_maindef(bd_sexpr_def(
+		bd_expr_ident("main", bd_type_unit()), bd_sexpr_fun(bd_type_var(NULL), vector_new(), $4))); }
+| DEF MAIN formal_args EQUAL exp
+    { set_maindef(bd_sexpr_def(
+		bd_expr_ident("main", bd_type_unit()), bd_sexpr_fun(bd_type_var(NULL), $3, $5))); }
 ;
 
 simple_exp

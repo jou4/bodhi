@@ -393,6 +393,7 @@ BDAProgram *bd_virtual(BDCProgram *prog)
     Vector *initializers = vector_new();
 
     BDCExprDef *def;
+	BDAExprDef *maindef;
     BDAExpr *init, *mainexpr;
     PrimSig *sig;
     Vector *vec;
@@ -439,7 +440,8 @@ BDAProgram *bd_virtual(BDCProgram *prog)
 
     // Transform main definition and combine with initializes.
     def = prog->maindef;
-    mainexpr = virtual_expr(env, def->body);
+	maindef = virtual_expr_fundef(env, def);
+	mainexpr = maindef->body;
 
     for(i = inits->length - 1; i >= 0; i--){
         mainexpr = insert_initializer(
@@ -448,12 +450,8 @@ BDAProgram *bd_virtual(BDCProgram *prog)
                 mainexpr);
     }
 
-    aprog->maindef = bd_aexpr_def(
-            bd_expr_ident_clone(def->ident),
-            NULL,
-            NULL,
-            NULL,
-            mainexpr);
+	maindef->body = mainexpr;
+    aprog->maindef = maindef;
 
     env_destroy(env);
     vector_destroy(inits);
