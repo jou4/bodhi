@@ -88,9 +88,12 @@ BDValue *bd_value_tuple(int length)
 
 BDValue *bd_value_list(void *head, BDValue *tail)
 {
+	GC_PUSH_ARG(head);
+	GC_PUSH_ARG(tail);
     BDValue *v = bd_value(T_LIST);
     v_list_head(v) = head;
     v_list_tail(v) = tail;
+	GC_CLEAR_ARGS();
     return v;
 }
 

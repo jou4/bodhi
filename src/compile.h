@@ -1,13 +1,12 @@
 #ifndef _compile_h_
 #define _compile_h_
 
-#define DEBUG
-//#define DEBUG_OPTIMIZE
 #define OPTIMIZE_COUNT 10
 
 #include <stdlib.h>
 #include <stdio.h>
 
+#include "config.h"
 #include "util.h"
 #include "type.h"
 #include "id.h"

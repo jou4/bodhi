@@ -323,11 +323,13 @@ void bd_cprogram_init(BDCProgram *prog)
 
 void bd_cprogram_destroy(BDCProgram *prog)
 {
+#ifdef DEBUG
     printf("\n");
     printf("**************************\n");
     printf("TODO bd_cprogram_destroy\n");
     printf("**************************\n");
     printf("\n");
+#endif
 }
 
 

@@ -1,6 +1,7 @@
 #ifndef _gc_h_
 #define _gc_h_
 
+#include "config.h"
 #include "value.h"
 #include "util.h"
 
@@ -56,6 +57,7 @@ GC *gc_create(size_t minor_heap_size, size_t major_heap_size);
 void gc_destroy(GC *gc);
 
 int gc_allocatable_minor_heap(GC *gc, size_t alloc_size);
+int gc_allocatable_minor_heap_strict(GC *gc, size_t alloc_size);
 int gc_allocatable_major_heap(GC *gc, size_t alloc_size);
 void gc_switch_minor_heap(GC *gc);
 Heap *gc_active_minor_heap(GC *gc);
@@ -73,6 +75,7 @@ void heap_destroy(Heap *heap);
 
 void *heap_allocate(Heap *heap, size_t alloc_size);
 int heap_allocatable(Heap *heap, size_t alloc_size, size_t threashold);
+int heap_allocatable_strict(Heap *heap, size_t alloc_size);
 
 
 void gc_dump(GC *gc);

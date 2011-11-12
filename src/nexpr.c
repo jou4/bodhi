@@ -343,11 +343,13 @@ void bd_nprogram_init(BDNProgram *prog)
 
 void bd_nprogram_destroy(BDNProgram *prog)
 {
+#ifdef DEBUG
     printf("\n");
     printf("**************************\n");
     printf("TODO bd_nprogram_destroy\n");
     printf("**************************\n");
     printf("\n");
+#endif
 }
 
 void _bd_nexpr_show(BDNExpr *e, int col, int depth)

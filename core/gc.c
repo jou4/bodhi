@@ -20,15 +20,18 @@ void gc_finish()
 void *gc_allocate(size_t size)
 {
 	if( ! gc_allocatable_minor_heap(gc, size)){
+#ifdef DEBUG
 		printf("GC Start.\n");
+#endif
 		gc_start();
 
-		if( ! gc_allocatable_minor_heap(gc, size)){
+		if( ! gc_allocatable_minor_heap_strict(gc, size)){
 			printf("*** Exception: Memory was exhausted.\n");
-			/*
+#ifdef DEBUG
 			printf("Try to allocate %lu bytes.", size);
 			gc_dump(gc);
-			*/
+#endif
+			gc_destroy(gc);
 			exit(EXIT_FAILURE);
 		}
 	}
@@ -112,8 +115,9 @@ void *gc_copy(Heap *active, Heap *deactive, BDValue *target)
 
 	BDValue *value = heap_allocate(deactive, sizeof(BDValue));
 	*value = *target;
-	v_age(target)++;
-	v_forward(target) = NULL;
+	v_age(value)++;
+	v_forward(value) = NULL;
+	v_forward(target) = value;
 
 	switch(target->type){
 		case T_STRING:
@@ -174,9 +178,9 @@ GC *gc_create(size_t minor_heap_size, size_t major_heap_size)
 {
 	GC *gc = malloc(sizeof(GC));
 	gc_minor_heap_size(gc) = minor_heap_size;
-	gc_minor_heap_threashold(gc) = minor_heap_size / 3 * 2;
+	gc_minor_heap_threashold(gc) = minor_heap_size / 4 * 3;
 	gc_major_heap_size(gc) = major_heap_size;
-	gc_major_heap_threashold(gc) = major_heap_size / 3 * 2;
+	gc_major_heap_threashold(gc) = major_heap_size / 4 * 3;
 	gc_active_switch(gc) = 0;
 	gc_minor_heap_1(gc) = heap_create(minor_heap_size);
 	gc_minor_heap_2(gc) = heap_create(minor_heap_size);
@@ -244,6 +248,11 @@ int heap_allocatable(Heap *heap, size_t alloc_size, size_t threashold)
 		return 0;
 	}
 
+	return heap_allocatable_strict(heap, alloc_size);
+}
+
+int heap_allocatable_strict(Heap *heap, size_t alloc_size)
+{
 	if(heap_used(heap) + alloc_size >= heap_size(heap)){
 		return 0;
 	}
@@ -254,6 +263,11 @@ int heap_allocatable(Heap *heap, size_t alloc_size, size_t threashold)
 int gc_allocatable_minor_heap(GC *gc, size_t alloc_size)
 {
 	return heap_allocatable(gc_active_minor_heap(gc), alloc_size, gc_minor_heap_threashold(gc));
+}
+
+int gc_allocatable_minor_heap_strict(GC *gc, size_t alloc_size)
+{
+	return heap_allocatable_strict(gc_active_minor_heap(gc), alloc_size);
 }
 
 int gc_allocatable_major_heap(GC *gc, size_t alloc_size)

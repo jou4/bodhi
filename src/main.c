@@ -19,7 +19,7 @@ int proc_compile = 1;
 int proc_assemble = 1;
 size_t heap_size = 64000000;
 
-char *usage = "usage: bodhi [-Sv] [-o output] [-H heap size] input";
+char *usage = "usage: bodhi [-Sv] [-o output] [-m heap memory size] input";
 char *version = "0.0.1";
 
 char *LIBS = "-lbdcore -lbdutil -lm";
@@ -50,7 +50,7 @@ void getopts(int argc, char **argv)
 {
     int opt;
 
-    while((opt = getopt(argc, argv, "Svo:H:")) >= 0){
+    while((opt = getopt(argc, argv, "Svo:m:")) >= 0){
         switch(opt){
             case 'S':
                 // compile only
@@ -59,7 +59,7 @@ void getopts(int argc, char **argv)
             case 'o':
                 output = optarg;
                 break;
-			case 'H':
+			case 'm':
 				heap_size = atol(optarg);
 				break;
             case 'v':
@@ -111,7 +111,6 @@ void getopts(int argc, char **argv)
 
 int main(int argc, char **argv)
 {
-    printf("%s\n", argv[0]);
     primsigs = primitives();
 
     Parser ps;

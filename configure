@@ -6,9 +6,10 @@ config_h=include/config.h
 prefix=/usr/local
 bindir=''
 libdir='lib'
-host=
+host=''
 host_type=unknown
-arch=
+arch=''
+debug=''
 
 while : ; do
   case "$1" in
@@ -33,6 +34,8 @@ while : ; do
         arch=$2; shift;;
     -arch=*|--arch=*)
         arch=`echo $1 | sed -e 's/-*arch=//'`;;
+    -debug|--debug)
+		debug='true';;
   esac
   shift
 done
@@ -94,3 +97,8 @@ esac
 
 echo "#define BIN_DIR \"$bindir\"" >> $config_h
 echo "#define LIB_DIR \"$libdir\"" >> $config_h
+
+case "$debug" in
+	true)
+		echo "#define DEBUG" >> $config_h;;
+esac

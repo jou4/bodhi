@@ -459,11 +459,13 @@ void bd_sprogram_init(BDSProgram *prog)
 
 void bd_sprogram_destroy(BDSProgram *prog)
 {
+#ifdef DEBUG
     printf("\n");
     printf("**************************\n");
     printf("TODO bd_sprogram_destroy\n");
     printf("**************************\n");
     printf("\n");
+#endif
 }
 
 void bd_sprogram_def_show(BDSExprDef *def)
