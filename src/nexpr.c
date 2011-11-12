@@ -82,7 +82,7 @@ BDNExpr *bd_nexpr_unit()
     return bd_nexpr(E_UNIT);
 }
 
-BDNExpr *bd_nexpr_int(int val)
+BDNExpr *bd_nexpr_int(long val)
 {
     BDNExpr *e = bd_nexpr(E_INT);
     e->u.u_int = val;
@@ -363,7 +363,7 @@ void _bd_nexpr_show(BDNExpr *e, int col, int depth)
             PRINT(col, "()");
             break;
         case E_INT:
-            PRINT1(col, "%d", e->u.u_int);
+            PRINT1(col, "%ld", e->u.u_int);
             break;
         case E_FLOAT:
             PRINT1(col, "%.14g", e->u.u_double);

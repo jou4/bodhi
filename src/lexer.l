@@ -77,7 +77,7 @@ upper [A-Z]
 }
 
 <INITIAL>{digit}+ {
-    yylval->i_val = atoi(yytext);
+    yylval->i_val = atol(yytext);
     return(INT_LIT);
 }
 <INITIAL>[A-Za-z_][A-Za-z_0-9]* {

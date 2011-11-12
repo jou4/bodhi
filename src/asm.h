@@ -76,7 +76,13 @@ char *reg_name(BDReg reg);
 BDReg argreg(int offset);
 BDReg fargreg(int offset);
 
+typedef union {
+	int i[2];
+	double d;
+} Dbl;
 
+int gethi(double d);
+int getlo(double d);
 
 typedef enum {
     AE_ANS,
@@ -189,7 +195,7 @@ struct BDAInst {
     BDAInstKind kind;
     char *lbl;
     union {
-        int u_int;
+        long u_int;
         double u_double;
         char u_char;
         Vector *u_elems;
@@ -231,7 +237,7 @@ typedef struct {
     BDAExprConstKind kind;
     union {
         char u_char;
-        int u_int;
+        long u_int;
         double u_double;
         char *u_str;
     } u;
@@ -251,7 +257,7 @@ void bd_aprogram_show(BDAProgram *prog);
 BDAExprDef *bd_aexpr_def(BDExprIdent *ident, Vector *iformals, Vector *fformals, Vector *freevars, BDAExpr *body);
 BDAExprConst *bd_aexpr_const(BDAExprConstKind kind, char *lbl, BDType *type);
 BDAExprConst *bd_aexpr_const_char(char *lbl, char val);
-BDAExprConst *bd_aexpr_const_int(char *lbl, int val);
+BDAExprConst *bd_aexpr_const_int(char *lbl, long val);
 BDAExprConst *bd_aexpr_const_float(char *lbl, double val);
 BDAExprConst *bd_aexpr_const_str(char *lbl, char *val);
 
@@ -262,7 +268,7 @@ BDAExpr *bd_aexpr_ans(BDAInst *val);
 BDAInst *bd_ainst(BDAInstKind kind);
 #define bd_ainst_nop() bd_ainst(AI_NOP)
 BDAInst *bd_ainst_setc(char val);
-BDAInst *bd_ainst_seti(int val);
+BDAInst *bd_ainst_seti(long val);
 BDAInst *bd_ainst_setglobal(BDType *type, char *l, char *r);
 #define bd_ainst_setglobal_c(l, r) _ainst_binreg(AI_SETGLOBAL_C, l, r)
 #define bd_ainst_setglobal_i(l, r) _ainst_binreg(AI_SETGLOBAL_I, l, r)

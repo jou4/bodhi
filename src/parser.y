@@ -29,7 +29,7 @@ extern int yyget_lineno();
 %parse-param { char *stream_name }
 
 %union {
-  int i_val;
+  long i_val;
   double d_val;
   char c_val;
   char *s_val;

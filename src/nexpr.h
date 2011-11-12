@@ -71,7 +71,7 @@ typedef struct {
 struct BDNExpr {
     BDExprKind kind;
     union {
-        int u_int;
+        long u_int;
         double u_double;
         char u_char;
         char *u_str;
@@ -104,7 +104,7 @@ void bd_nexpr_show(BDNExpr *e);
 Set *bd_nexpr_freevars(BDNExpr *e);
 
 BDNExpr *bd_nexpr_unit();
-BDNExpr *bd_nexpr_int(int val);
+BDNExpr *bd_nexpr_int(long val);
 BDNExpr *bd_nexpr_float(double val);
 BDNExpr *bd_nexpr_char(char val);
 BDNExpr *bd_nexpr_str(char *val);

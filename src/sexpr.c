@@ -95,14 +95,14 @@ BDSExpr *bd_sexpr_unit()
     return bd_sexpr(E_UNIT);
 }
 
-BDSExpr *bd_sexpr_bool(int val)
+BDSExpr *bd_sexpr_bool(long val)
 {
     BDSExpr *e = bd_sexpr(E_BOOL);
     e->u.u_int = val;
     return e;
 }
 
-BDSExpr *bd_sexpr_int(int val)
+BDSExpr *bd_sexpr_int(long val)
 {
     BDSExpr *e = bd_sexpr(E_INT);
     e->u.u_int = val;
@@ -248,7 +248,7 @@ void _bd_sexpr_show(BDSExpr *e, int col, int depth)
             }
             break;
         case E_INT:
-            PRINT1(col, "%d", e->u.u_int);
+            PRINT1(col, "%ld", e->u.u_int);
             break;
         case E_FLOAT:
             PRINT1(col, "%.14g", e->u.u_double);

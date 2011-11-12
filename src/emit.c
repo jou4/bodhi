@@ -48,7 +48,7 @@ void emit_inst(EmitState *st, BDAInst *inst, char *dst)
             fprintf(OC, "\tmovq $%d, %s\n", (int)inst->u.u_char, dst);
             break;
         case AI_SET_I:
-            fprintf(OC, "\tmovq $%d, %s\n", inst->u.u_int, dst);
+            fprintf(OC, "\tmovq $%ld, %s\n", inst->u.u_int, dst);
             break;
 
         case AI_SETGLOBAL_C:
@@ -211,29 +211,29 @@ void emit_inst(EmitState *st, BDAInst *inst, char *dst)
             return;
 
         case AI_PUSHLCL_C:
-            fprintf(OC, "\tmovq %s, -%d(%s)\n", inst->lbl, inst->u.u_int + SIZE_ALIGN, reg_bp);
+            fprintf(OC, "\tmovq %s, -%d(%s)\n", inst->lbl, (int)inst->u.u_int + SIZE_ALIGN, reg_bp);
             break;
         case AI_PUSHLCL_I:
-            fprintf(OC, "\tmovq %s, -%d(%s)\n", inst->lbl, inst->u.u_int + SIZE_ALIGN, reg_bp);
+            fprintf(OC, "\tmovq %s, -%d(%s)\n", inst->lbl, (int)inst->u.u_int + SIZE_ALIGN, reg_bp);
             break;
         case AI_PUSHLCL_F:
-            fprintf(OC, "\tmovd %s, -%d(%s)\n", inst->lbl, inst->u.u_int + SIZE_ALIGN, reg_bp);
+            fprintf(OC, "\tmovd %s, -%d(%s)\n", inst->lbl, (int)inst->u.u_int + SIZE_ALIGN, reg_bp);
             break;
         case AI_PUSHLCL_L:
-            fprintf(OC, "\tmovq %s, -%d(%s)\n", inst->lbl, inst->u.u_int + SIZE_ALIGN, reg_bp);
+            fprintf(OC, "\tmovq %s, -%d(%s)\n", inst->lbl, (int)inst->u.u_int + SIZE_ALIGN, reg_bp);
             break;
 
         case AI_GETLCL_C:
-            fprintf(OC, "\tmovq -%d(%s), %s\n", inst->u.u_int + SIZE_ALIGN, reg_bp, dst);
+            fprintf(OC, "\tmovq -%d(%s), %s\n", (int)inst->u.u_int + SIZE_ALIGN, reg_bp, dst);
             break;
         case AI_GETLCL_I:
-            fprintf(OC, "\tmovq -%d(%s), %s\n", inst->u.u_int + SIZE_ALIGN, reg_bp, dst);
+            fprintf(OC, "\tmovq -%d(%s), %s\n", (int)inst->u.u_int + SIZE_ALIGN, reg_bp, dst);
             break;
         case AI_GETLCL_F:
-            fprintf(OC, "\tmovd -%d(%s), %s\n", inst->u.u_int + SIZE_ALIGN, reg_bp, dst);
+            fprintf(OC, "\tmovd -%d(%s), %s\n", (int)inst->u.u_int + SIZE_ALIGN, reg_bp, dst);
             break;
         case AI_GETLCL_L:
-            fprintf(OC, "\tmovq -%d(%s), %s\n", inst->u.u_int + SIZE_ALIGN, reg_bp, dst);
+            fprintf(OC, "\tmovq -%d(%s), %s\n", (int)inst->u.u_int + SIZE_ALIGN, reg_bp, dst);
             break;
 
         case AI_PUSHARG_C:
@@ -242,7 +242,7 @@ void emit_inst(EmitState *st, BDAInst *inst, char *dst)
         case AI_PUSHARG_L:
             {
                 char *lbl = inst->lbl;
-                int offset = inst->u.u_int;
+                int offset = (int)inst->u.u_int;
 
                 BDReg reg = argreg(offset);
                 if(reg >= 0){
@@ -623,10 +623,13 @@ void bd_emit(FILE *ch, BDAProgram *prog)
             case AEC_INT:
                 fprintf(OC, "\t.data\n");
                 fprintf(OC, "%s:\n", c->lbl);
-                fprintf(OC, "\t.quad %d\n", c->u.u_int);
+                fprintf(OC, "\t.quad %ld\n", c->u.u_int);
                 break;
             case AEC_FLOAT:
-                // TODO
+                fprintf(OC, "\t.data\n");
+                fprintf(OC, "%s:\n", c->lbl);
+                fprintf(OC, "\t.long %d\n", gethi(c->u.u_double));
+                fprintf(OC, "\t.long %d\n", getlo(c->u.u_double));
                 break;
             case AEC_STR:
                 {

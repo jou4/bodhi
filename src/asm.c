@@ -98,6 +98,19 @@ BDReg fargreg(int offset){
     }
 }
 
+int gethi(double d)
+{
+	Dbl dbl;
+	dbl.d = d;
+	return dbl.i[0];
+}
+
+int getlo(double d)
+{
+	Dbl dbl;
+	dbl.d = d;
+	return dbl.i[1];
+}
 
 void bd_aprogram_init(BDAProgram *prog)
 {
@@ -181,7 +194,7 @@ BDAExprConst *bd_aexpr_const_char(char *lbl, char val)
     return c;
 }
 
-BDAExprConst *bd_aexpr_const_int(char *lbl, int val)
+BDAExprConst *bd_aexpr_const_int(char *lbl, long val)
 {
     BDAExprConst *c = bd_aexpr_const(AEC_INT, lbl, bd_type_int());
     c->u.u_int = val;
@@ -210,7 +223,7 @@ BDAInst *bd_ainst_setc(char val)
     return inst;
 }
 
-BDAInst *bd_ainst_seti(int val)
+BDAInst *bd_ainst_seti(long val)
 {
     BDAInst *inst = bd_ainst(AI_SET_I);
     inst->u.u_int = val;
@@ -408,7 +421,7 @@ void _bd_ainst_show(BDAInst *inst, int col, int depth)
             PRINT1(col, "SET '%c'", inst->u.u_char);
             break;
         case AI_SET_I:
-            PRINT1(col, "SET %d", inst->u.u_int);
+            PRINT1(col, "SET %ld", inst->u.u_int);
             break;
 
         case AI_SETGLOBAL_C:
@@ -538,59 +551,59 @@ void _bd_ainst_show(BDAInst *inst, int col, int depth)
             break;
 
         case AI_PUSHLCL_C:
-            PRINT2(col, "PUSHLCL_C %s, %d", inst->lbl, inst->u.u_int);
+            PRINT2(col, "PUSHLCL_C %s, %ld", inst->lbl, inst->u.u_int);
             break;
         case AI_PUSHLCL_I:
-            PRINT2(col, "PUSHLCL_I %s, %d", inst->lbl, inst->u.u_int);
+            PRINT2(col, "PUSHLCL_I %s, %ld", inst->lbl, inst->u.u_int);
             break;
         case AI_PUSHLCL_F:
-            PRINT2(col, "PUSHLCL_F %s, %d", inst->lbl, inst->u.u_int);
+            PRINT2(col, "PUSHLCL_F %s, %ld", inst->lbl, inst->u.u_int);
             break;
         case AI_PUSHLCL_L:
-            PRINT2(col, "PUSHLCL_L %s, %d", inst->lbl, inst->u.u_int);
+            PRINT2(col, "PUSHLCL_L %s, %ld", inst->lbl, inst->u.u_int);
             break;
 
         case AI_GETLCL_C:
-            PRINT1(col, "GETLCL_C %d", inst->u.u_int);
+            PRINT1(col, "GETLCL_C %ld", inst->u.u_int);
             break;
         case AI_GETLCL_I:
-            PRINT1(col, "GETLCL_I %d", inst->u.u_int);
+            PRINT1(col, "GETLCL_I %ld", inst->u.u_int);
             break;
         case AI_GETLCL_F:
-            PRINT1(col, "GETLCL_F %d", inst->u.u_int);
+            PRINT1(col, "GETLCL_F %ld", inst->u.u_int);
             break;
         case AI_GETLCL_L:
-            PRINT1(col, "GETLCL_L %d", inst->u.u_int);
+            PRINT1(col, "GETLCL_L %ld", inst->u.u_int);
             break;
 
         case AI_PUSHARG_C:
-            PRINT2(col, "PUSHARG_C %s, %d", inst->lbl, inst->u.u_int);
+            PRINT2(col, "PUSHARG_C %s, %ld", inst->lbl, inst->u.u_int);
             break;
         case AI_PUSHARG_I:
-            PRINT2(col, "PUSHARG_I %s, %d", inst->lbl, inst->u.u_int);
+            PRINT2(col, "PUSHARG_I %s, %ld", inst->lbl, inst->u.u_int);
             break;
         case AI_PUSHARG_F:
-            PRINT2(col, "PUSHARG_F %s, %d", inst->lbl, inst->u.u_int);
+            PRINT2(col, "PUSHARG_F %s, %ld", inst->lbl, inst->u.u_int);
             break;
         case AI_PUSHARG_L:
-            PRINT2(col, "PUSHARG_L %s, %d", inst->lbl, inst->u.u_int);
+            PRINT2(col, "PUSHARG_L %s, %ld", inst->lbl, inst->u.u_int);
             break;
 
         case AI_GETARG_C:
-            PRINT1(col, "GETARG_C %d", inst->u.u_int);
+            PRINT1(col, "GETARG_C %ld", inst->u.u_int);
             break;
         case AI_GETARG_I:
-            PRINT1(col, "GETARG_I %d", inst->u.u_int);
+            PRINT1(col, "GETARG_I %ld", inst->u.u_int);
             break;
         case AI_GETARG_F:
-            PRINT1(col, "GETARG_F %d", inst->u.u_int);
+            PRINT1(col, "GETARG_F %ld", inst->u.u_int);
             break;
         case AI_GETARG_L:
-            PRINT1(col, "GETARG_L %d", inst->u.u_int);
+            PRINT1(col, "GETARG_L %ld", inst->u.u_int);
             break;
 
         case AI_MAKECLS:
-            PRINT2(col, "MAKECLS %s, %d", inst->lbl, inst->u.u_int);
+            PRINT2(col, "MAKECLS %s, %ld", inst->lbl, inst->u.u_int);
             break;
         case AI_LOADFVS:
             PRINT1(col, "LOADFVS %s", inst->lbl);
@@ -600,44 +613,44 @@ void _bd_ainst_show(BDAInst *inst, int col, int depth)
             break;
 
         case AI_PUSHFV_C:
-            PRINT2(col, "PUSHFV_C %s, %d", inst->lbl, inst->u.u_int);
+            PRINT2(col, "PUSHFV_C %s, %ld", inst->lbl, inst->u.u_int);
             break;
         case AI_PUSHFV_I:
-            PRINT2(col, "PUSHFV_I %s, %d", inst->lbl, inst->u.u_int);
+            PRINT2(col, "PUSHFV_I %s, %ld", inst->lbl, inst->u.u_int);
             break;
         case AI_PUSHFV_F:
-            PRINT2(col, "PUSHFV_F %s, %d", inst->lbl, inst->u.u_int);
+            PRINT2(col, "PUSHFV_F %s, %ld", inst->lbl, inst->u.u_int);
             break;
         case AI_PUSHFV_L:
-            PRINT2(col, "PUSHFV_L %s, %d", inst->lbl, inst->u.u_int);
+            PRINT2(col, "PUSHFV_L %s, %ld", inst->lbl, inst->u.u_int);
             break;
 
         case AI_GETFV_C:
-            PRINT1(col, "GETFV_C %d", inst->u.u_int);
+            PRINT1(col, "GETFV_C %ld", inst->u.u_int);
             break;
         case AI_GETFV_I:
-            PRINT1(col, "GETFV_I %d", inst->u.u_int);
+            PRINT1(col, "GETFV_I %ld", inst->u.u_int);
             break;
         case AI_GETFV_F:
-            PRINT1(col, "GETFV_F %d", inst->u.u_int);
+            PRINT1(col, "GETFV_F %ld", inst->u.u_int);
             break;
         case AI_GETFV_L:
-            PRINT1(col, "GETFV_L %d", inst->u.u_int);
+            PRINT1(col, "GETFV_L %ld", inst->u.u_int);
             break;
 
         case AI_MAKETUPLE:
             {
-                PRINT1(col, "MAKETUPLE %d", inst->u.u_int);
+                PRINT1(col, "MAKETUPLE %ld", inst->u.u_int);
             }
             break;
         case AI_LOADELMS:
             PRINT1(col, "LOADELMS %s", inst->lbl);
             break;
         case AI_PUSHELM:
-            PRINT2(col, "PUSHELM %s, %d", inst->lbl, inst->u.u_int);
+            PRINT2(col, "PUSHELM %s, %ld", inst->lbl, inst->u.u_int);
             break;
         case AI_GETELM:
-            PRINT1(col, "GETELM %d", inst->u.u_int);
+            PRINT1(col, "GETELM %ld", inst->u.u_int);
             break;
 
         case AI_MAKESTRING:
@@ -697,7 +710,7 @@ void bd_aprogram_const_show(BDAExprConst *c)
 
     switch(c->kind){
         case AEC_INT:
-            PRINT1(col, "%d", c->u.u_int);
+            PRINT1(col, "%ld", c->u.u_int);
             break;
         case AEC_FLOAT:
             PRINT1(col, "%.14g", c->u.u_double);
