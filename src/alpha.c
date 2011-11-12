@@ -233,7 +233,7 @@ BDNProgram *bd_alpha_convert(BDNProgram *prog)
     // convert maindef
     def = prog->maindef;
     nprog->maindef = bd_nexpr_def(
-            bd_expr_ident(bd_generate_cfunc_lbl(def->ident->name), bd_type_clone(def->ident->type)),
+            bd_expr_ident(bd_generate_toplevel_lbl(def->ident->name), bd_type_clone(def->ident->type)),
             bd_alpha(env, def->body)
             );
 

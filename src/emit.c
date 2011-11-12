@@ -564,7 +564,7 @@ void emit_fundef(EmitState *st, BDAExprDef *def)
     else{
         textlbl = bd_generate_id(def->ident->type);
 
-        // .data(ptr to functoin)
+        // .data(ptr to function)
         fprintf(OC, "\t.data\n");
         fprintf(OC, "%s:\n", def->ident->name);
         fprintf(OC, "\t.quad %s\n", textlbl);
@@ -576,25 +576,74 @@ void emit_fundef(EmitState *st, BDAExprDef *def)
     fprintf(OC, "\tpushq %s\n", reg_bp);
     fprintf(OC, "\tmovq %s, %s\n", reg_sp, reg_bp);
 
-	// For GC.
-    if(st->main){
-		GC_SET_BASEPTR;
-		GC_INIT;
-	}
-
     // frame size (local vars + push args + buffer for tail-call)
     fprintf(OC, "\tsubq $%d, %s\n", frame_size(def->body), reg_sp);
 	GC_SET_STACKPTR;	// For GC.
 
     emit(st, def->body);
 
-	// For GC.
-    if(st->main){
-		GC_FINISH;
-	}
-
     fprintf(OC, "\tleave\n");
 	GC_SET_STACKPTR;	// For GC.
+    fprintf(OC, "\tret\n");
+}
+
+void emit_entry(EmitState *st)
+{
+    char *lbl = bd_generate_lbl("main");
+    char *mainlbl = bd_generate_lbl("bodhi_main");
+    char *beginlbl = bd_generate_lbl("HandleArgsBegin");
+    char *endlbl = bd_generate_lbl("HandleArgsEnd");
+    int offset_arg1 = SIZE_ALIGN * 1;
+    int offset_arg2 = SIZE_ALIGN * 2;
+    int offset_arg3 = SIZE_ALIGN * 3;
+
+    fprintf(OC, "\t.text\n");
+    fprintf(OC, ".globl %s\n", lbl);
+    fprintf(OC, "%s:\n", lbl);
+    fprintf(OC, "\tpushq %s\n", reg_bp);
+    fprintf(OC, "\tmovq %s, %s\n", reg_sp, reg_bp);
+    fprintf(OC, "\tsubq $%d, %s\n", STACK_ALIGN * 2, reg_sp);
+
+    // Save bp & sp.
+    GC_SET_BASEPTR;
+	GC_SET_STACKPTR;
+
+    // Save argc.
+    fprintf(OC, "\tmovq %s, -%d(%s)\n", reg_name(RARG1), offset_arg1, reg_bp);
+    // Save argv.
+    fprintf(OC, "\tmovq %s, -%d(%s)\n", reg_name(RARG2), offset_arg2, reg_bp);
+    // Save [].
+    fprintf(OC, "\tmovq %s(%s), %s\n", bd_generate_lbl("NIL_PTR"), reg_ip, reg_acc);
+    fprintf(OC, "\tmovq %s, -%d(%s)\n", reg_acc, offset_arg3, reg_bp);
+
+    // Init gc.
+    GC_INIT;
+
+    // Get args from command line and generate list.
+    fprintf(OC, "%s:\n", beginlbl);
+    fprintf(OC, "\tmovq -%d(%s), %s\n", offset_arg1, reg_bp, reg_acc);
+    fprintf(OC, "\tcmp $1, %s\n", reg_acc);
+    fprintf(OC, "\tjle %s\n", endlbl);
+    fprintf(OC, "\tsubq $1, %s\n", reg_acc);
+    fprintf(OC, "\tmovq %s, -%d(%s)\n", reg_acc, offset_arg1, reg_bp);
+    fprintf(OC, "\tmovq -%d(%s), %s\n", offset_arg2, reg_bp, reg_name(REXT1));
+    fprintf(OC, "\tmovq (%s, %s, %d), %s\n", reg_name(REXT1), reg_acc, SIZE_ALIGN, reg_name(RARG1));
+    fprintf(OC, "\tcall %s\n", bd_generate_toplevel_lbl("core_make_string"));
+    fprintf(OC, "\tmovq %s, %s\n", reg_acc, reg_name(RARG1));
+    fprintf(OC, "\tmovq -%d(%s), %s\n", offset_arg3, reg_bp, reg_name(RARG2));
+    fprintf(OC, "\tcall %s\n", bd_generate_toplevel_lbl("core_list_cons"));
+    fprintf(OC, "\tmovq %s, -%d(%s)\n", reg_acc, offset_arg3, reg_bp);
+    fprintf(OC, "jmp %s\n", beginlbl);
+    fprintf(OC, "%s:\n", endlbl);
+
+    // Call main function.
+    fprintf(OC, "\tmovq -%d(%s), %s\n", offset_arg3, reg_bp, reg_name(RARG1));
+    fprintf(OC, "\tcall %s\n", mainlbl);
+
+    // Destroy gc.
+    GC_FINISH;
+
+    fprintf(OC, "\tleave\n");
     fprintf(OC, "\tret\n");
 }
 
@@ -663,10 +712,13 @@ void bd_emit(FILE *ch, BDAProgram *prog)
     }
 
     // main function
-    fprintf(OC, "\t.text\n");
-    fprintf(OC, ".globl %s\n", bd_generate_lbl("main"));
     def = prog->maindef;
     st->tailpoint = 0;
     st->main = 1;
     emit_fundef(st, def);
+
+    // entry point
+    st->tailpoint = 0;
+    st->main = 0;
+    emit_entry(st);
 }
