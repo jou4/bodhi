@@ -6,8 +6,9 @@ config_h=include/config.h
 prefix=/usr/local
 bindir=''
 libdir='lib'
-system=macosx   # linux, macosx, win
-arch=amd64      # i386, amd64
+host=
+host_type=unknown
+arch=
 
 while : ; do
   case "$1" in
@@ -24,10 +25,10 @@ while : ; do
 #        libdir=$2; shift;;
 #    -libdir=*|--libdir=*)
 #        bindir=`echo $1 | sed -e 's/-*libdir=//'`;;
-    -system|--system)
-        system=$2; shift;;
-    -system=*|--system=*)
-        system=`echo $1 | sed -e 's/-*system=//'`;;
+    -host|--host)
+        host_type=$2; shift;;
+    -host=*|--host=*)
+        host_type=`echo $1 | sed -e 's/-*host=//'`;;
     -arch|--arch)
         arch=$2; shift;;
     -arch=*|--arch=*)
@@ -54,6 +55,18 @@ esac
 #   *) echo "The -libdir directory must be absolute." 1>&2; exit 2;;
 #esac
 
+if test "$host_type" = "unknown"; then
+  if host_type=`./gnu/config.guess`; then :; else
+    echo "Cannot guess host type"
+    echo "You must specify one with the -host option"
+    exit 2
+  fi
+fi
+if host=`./gnu/config.sub $host_type`; then :; else
+  echo "Please specify the correct host type with the -host option"
+  exit 2
+fi
+echo "Configuring for a $host ..."
 
 #case "$bindir" in
 #  "") bindir="$prefix/bin";;
@@ -68,16 +81,15 @@ rm -f $config_h
 touch $config_h
 
 
-case "$system" in
-    macosx)
-        echo "#define SYSTEM_MACOSX" >> $config_h;;
-    linux)
-        echo "#define SYSTEM_LINUX" >> $config_h;;
-esac
-
-case "$arch" in
-    amd64)
-        echo "#define ARCH_AMD64" >> $config_h;;
+case "$host" in
+	x86_64-*-darwin*)
+        echo "#define SYSTEM_MACOSX" >> $config_h;
+        echo "#define ARCH_X86_64" >> $config_h;;
+	x86_64-*-linux*)
+        echo "#define SYSTEM_LINUX" >> $config_h;
+        echo "#define ARCH_X86_64" >> $config_h;;
+	*)
+		echo "Sorry. Unsupported host!"; exit 2;;
 esac
 
 echo "#define BIN_DIR \"$bindir\"" >> $config_h

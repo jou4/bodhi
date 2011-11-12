@@ -14,6 +14,7 @@ See 'test' directory.
 
 	$ git clone git://github.com/jou4/bodhi.git
 	$ cd bodhi
+	$ ./configure
 	$ make
 	$ bin/bodhi test/hello.bd
 	$ ./a.out
