@@ -643,6 +643,8 @@ void emit_entry(EmitState *st)
     // Destroy gc.
     GC_FINISH;
 
+    // return 0;
+    fprintf(OC, "\tmovq $0, %s\n", reg_acc);
     fprintf(OC, "\tleave\n");
     fprintf(OC, "\tret\n");
 }

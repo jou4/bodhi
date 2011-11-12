@@ -39,3 +39,23 @@ clean:
 	rm -f bin/*
 	rmdir lib
 	rmdir bin
+
+runtest:
+	bin/bodhi test/hello.bd
+	./a.out
+	bin/bodhi test/char.bd
+	./a.out
+	bin/bodhi test/fib.bd
+	./a.out
+	bin/bodhi test/args.bd
+	./a.out aa bb cc dd ee
+	bin/bodhi test/fold.bd
+	./a.out
+	bin/bodhi test/ref.bd
+	./a.out
+	bin/bodhi test/array.bd
+	./a.out
+	bin/bodhi test/closure.bd
+	./a.out
+	bin/bodhi test/file.bd
+	./a.out
