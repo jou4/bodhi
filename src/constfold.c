@@ -95,6 +95,11 @@ BDNExpr *const_fold(Env *env, BDNExpr *e)
                         newexpr = bd_nexpr_int(find_const_int(env, x) / find_const_int(env, y));
                     }
                     break;
+                case OP_FADD:
+                case OP_FSUB:
+                case OP_FMUL:
+                case OP_FDIV:
+                    // TODO
 				default:
 					break;
             }

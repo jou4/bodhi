@@ -114,6 +114,13 @@ BDReg extra_regs[] = {
     -1
 };
 
+BDReg extra_fregs[] = {
+    RFEXT1,
+    RFEXT2,
+    RFEXT3,
+    -1
+};
+
 void target_reg_in_expr(Env *regenv, char *lbl, BDAExpr *e, TargetRegResult *result, int wallstop);
 
 int target_reg_in_inst(Env *regenv, char *lbl, BDAInst *inst, TargetRegResult *result, int wallstop)
@@ -141,14 +148,23 @@ int target_reg_in_inst(Env *regenv, char *lbl, BDAInst *inst, TargetRegResult *r
             }
             return 0;
 
+        case AI_MOV_F:
+            if(is_match_lbl(lbl, inst->lbl)){
+                add_target_reg(result, usable_reg(regenv, extra_fregs));
+            }
+            return 0;
+
         case AI_NEG:
             if(is_match_lbl(lbl, inst->lbl)){
                 add_target_reg(result, usable_reg(regenv, extra_regs));
             }
             return 0;
         case AI_FNEG:
-            // TODO
-            return 0;
+            if(is_match_lbl(lbl, inst->lbl)){
+                add_target_reg(result, usable_reg(regenv, extra_fregs));
+                return 0;
+            }
+            return 1;
 
         case AI_ADD:
         case AI_SUB:
@@ -166,7 +182,12 @@ int target_reg_in_inst(Env *regenv, char *lbl, BDAInst *inst, TargetRegResult *r
         case AI_FSUB:
         case AI_FMUL:
         case AI_FDIV:
-            // TODO
+            if(is_match_lbl(lbl, inst->u.u_bin.l)){
+                add_target_reg(result, RFACC);
+            }
+            else if(is_match_lbl(lbl, inst->u.u_bin.r)){
+                add_target_reg(result, usable_reg(regenv, extra_fregs));
+            }
             return 0;
 
         case AI_IFEQ:
@@ -521,10 +542,18 @@ BDAExpr *resolve_lbl(Env *env, char *lbl, BDReg dst, BDAExpr *body)
                         bd_ainst_getarg(type, lst->u.offset),
                         body);
             case POS_DATA:
-                return bd_aexpr_let(
-                        bd_expr_ident_typevar(reg_name(dst)),
-                        bd_ainst_movglobal(lbl),
-                        body);
+                if(type->kind == T_FLOAT){
+                    return bd_aexpr_let(
+                            bd_expr_ident_typevar(reg_name(dst)),
+                            bd_ainst_movglobal_f(lbl),
+                            body);
+                }
+                else{
+                    return bd_aexpr_let(
+                            bd_expr_ident_typevar(reg_name(dst)),
+                            bd_ainst_movglobal(lbl),
+                            body);
+                }
 			default:
 				break;
         }
@@ -574,7 +603,9 @@ BDAExpr *regalloc_inst(AllocState *st, Env *env, Env *regenv, BDAInst *inst, int
 			break;
 
         case AI_MOV:
+        case AI_MOV_F:
         case AI_NEG:
+        case AI_FNEG:
             {
                 char *lbl = find_reg(env, regenv, inst->lbl);
                 free_reg(regenv, lbl);
@@ -582,14 +613,20 @@ BDAExpr *regalloc_inst(AllocState *st, Env *env, Env *regenv, BDAInst *inst, int
                 switch(inst->kind){
                     case AI_MOV:
                         return bd_aexpr_ans(bd_ainst_mov(lbl));
+                    case AI_MOV_F:
+                        return bd_aexpr_ans(bd_ainst_mov_f(lbl));
                     case AI_NEG:
                         return bd_aexpr_ans(bd_ainst_neg(lbl));
+                    case AI_FNEG:
+                        return bd_aexpr_ans(bd_ainst_fneg(lbl));
 					default:
 						break;
                 }
             }
         case AI_MOVGLOBAL:
             return bd_aexpr_ans(bd_ainst_movglobal(inst->lbl));
+        case AI_MOVGLOBAL_F:
+            return bd_aexpr_ans(bd_ainst_movglobal_f(inst->lbl));
         case AI_MOVGLOBAL_L:
             return bd_aexpr_ans(bd_ainst_movglobal_l(inst->lbl));
 
@@ -619,12 +656,30 @@ BDAExpr *regalloc_inst(AllocState *st, Env *env, Env *regenv, BDAInst *inst, int
             }
 			break;
 
-        case AI_FNEG:
         case AI_FADD:
         case AI_FSUB:
         case AI_FMUL:
         case AI_FDIV:
-            // TODO
+            {
+                char *l = find_reg(env, regenv, inst->u.u_bin.l);
+                char *r = find_reg(env, regenv, inst->u.u_bin.r);
+
+                free_reg(regenv, l);
+                free_reg(regenv, r);
+
+                switch(inst->kind){
+                    case AI_FADD:
+                        return bd_aexpr_ans(bd_ainst_fadd(l, r));
+                    case AI_FSUB:
+                        return bd_aexpr_ans(bd_ainst_fsub(l, r));
+                    case AI_FMUL:
+                        return bd_aexpr_ans(bd_ainst_fmul(l, r));
+                    case AI_FDIV:
+                        return bd_aexpr_ans(bd_ainst_fdiv(l, r));
+					default:
+						break;
+                }
+            }
             break;
 
         case AI_IFEQ:
@@ -846,7 +901,12 @@ BDAExpr *regalloc_inst(AllocState *st, Env *env, Env *regenv, BDAInst *inst, int
                             return bd_aexpr_ans(bd_ainst_getarg(type, lst->u.offset));
                         case POS_DATA:
                         default:
-                            return bd_aexpr_ans(bd_ainst_movglobal(lbl));
+                            if(type->kind == T_FLOAT){
+                                return bd_aexpr_ans(bd_ainst_movglobal_f(lbl));
+                            }
+                            else{
+                                return bd_aexpr_ans(bd_ainst_movglobal(lbl));
+                            }
                     }
                 }
             }

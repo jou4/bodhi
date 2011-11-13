@@ -50,6 +50,18 @@ char *reg_name(BDReg reg)
             return reg_ext4;
         case REXT5:
             return reg_ext5;
+        case RFACC:
+            return reg_farg1;
+        case RFEXT1:
+            return reg_farg8;
+        case RFEXT2:
+            return reg_farg7;
+        case RFEXT3:
+            return reg_farg6;
+        case RFEXT4:
+            return reg_farg5;
+        case RFEXT5:
+            return reg_farg4;
 		default:
 			break;
     }
@@ -440,8 +452,17 @@ void _bd_ainst_show(BDAInst *inst, int col, int depth)
         case AI_MOV:
             PRINT1(col, "MOV %s", inst->lbl);
             break;
+        case AI_MOV_F:
+            PRINT1(col, "MOV_F %s", inst->lbl);
+            break;
+        case AI_MOV_L:
+            PRINT1(col, "MOV_L %s", inst->lbl);
+            break;
         case AI_MOVGLOBAL:
             PRINT1(col, "MOVGLOBAL %s", inst->lbl);
+            break;
+        case AI_MOVGLOBAL_F:
+            PRINT1(col, "MOVGLOBAL_F %s", inst->lbl);
             break;
         case AI_MOVGLOBAL_L:
             PRINT1(col, "MOVGLOBAL_L %s", inst->lbl);

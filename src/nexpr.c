@@ -383,6 +383,7 @@ void _bd_nexpr_show(BDNExpr *e, int col, int depth)
                     PRINT1(col, "not %s", e->u.u_uniop.val);
                     break;
                 case OP_NEG:
+                case OP_FNEG:
                     PRINT1(col, "-%s", e->u.u_uniop.val);
                     break;
 				default:
@@ -393,15 +394,19 @@ void _bd_nexpr_show(BDNExpr *e, int col, int depth)
             PRINT1(col, "%s", e->u.u_binop.l);
             switch(e->u.u_binop.kind){
                 case OP_ADD:
+                case OP_FADD:
                     PRINT(col, " + ");
                     break;
                 case OP_SUB:
+                case OP_FSUB:
                     PRINT(col, " - ");
                     break;
                 case OP_MUL:
+                case OP_FMUL:
                     PRINT(col, " * ");
                     break;
                 case OP_DIV:
+                case OP_FDIV:
                     PRINT(col, " / ");
                     break;
                 case OP_CONS:

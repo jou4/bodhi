@@ -38,7 +38,7 @@ BDAExpr *virtual_expr(Env *env, BDCExpr *e)
             {
                 char *lbl = bd_generate_id(bd_type_float());
                 vector_add(consts, bd_aexpr_const_float(lbl, e->u.u_double));
-                return bd_aexpr_ans(bd_ainst_mov(lbl));
+                return bd_aexpr_ans(bd_ainst_mov_f(lbl));
             }
         case E_CHAR:
             return bd_aexpr_ans(bd_ainst_setc(e->u.u_char));
@@ -58,7 +58,14 @@ BDAExpr *virtual_expr(Env *env, BDCExpr *e)
             return bd_aexpr_ans(bd_ainst_movglobal(bd_generate_lbl("NIL_PTR")));
         case E_UNIOP:
             {
-                return bd_aexpr_ans(bd_ainst_neg(e->u.u_uniop.val));
+                switch(e->u.u_uniop.kind){
+                    case OP_NEG:
+                        return bd_aexpr_ans(bd_ainst_neg(e->u.u_uniop.val));
+                    case OP_FNEG:
+                        return bd_aexpr_ans(bd_ainst_fneg(e->u.u_uniop.val));
+                    default:
+                        break;
+                }
             }
             break;
         case E_BINOP:
@@ -72,6 +79,14 @@ BDAExpr *virtual_expr(Env *env, BDCExpr *e)
                         return bd_aexpr_ans(bd_ainst_mul(e->u.u_binop.l, e->u.u_binop.r));
                     case OP_DIV:
                         return bd_aexpr_ans(bd_ainst_div(e->u.u_binop.l, e->u.u_binop.r));
+                    case OP_FADD:
+                        return bd_aexpr_ans(bd_ainst_fadd(e->u.u_binop.l, e->u.u_binop.r));
+                    case OP_FSUB:
+                        return bd_aexpr_ans(bd_ainst_fsub(e->u.u_binop.l, e->u.u_binop.r));
+                    case OP_FMUL:
+                        return bd_aexpr_ans(bd_ainst_fmul(e->u.u_binop.l, e->u.u_binop.r));
+                    case OP_FDIV:
+                        return bd_aexpr_ans(bd_ainst_fdiv(e->u.u_binop.l, e->u.u_binop.r));
 					default:
 						break;
                 }
@@ -122,6 +137,8 @@ BDAExpr *virtual_expr(Env *env, BDCExpr *e)
                 switch(type->kind){
                     case T_UNIT:
                         return bd_aexpr_ans(bd_ainst_nop());
+                    case T_FLOAT:
+                        return bd_aexpr_ans(bd_ainst_mov_f(e->u.u_var.name));
                     default:
                         return bd_aexpr_ans(bd_ainst_mov(e->u.u_var.name));
                 }

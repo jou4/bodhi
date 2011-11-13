@@ -499,19 +499,26 @@ BDType *typing(Env *env, BDSExpr *e)
             case E_UNIOP:
                 {
                     BDType *expected = NULL;
+                    BDType *t = typing(env, e->u.u_uniop.val);
 
                     switch(e->u.u_uniop.kind){
                         case OP_NOT:
                             expected = bd_type_bool();
                             break;
                         case OP_NEG:
-                            expected = bd_type_int();
+                            if(t->kind == T_FLOAT){
+                                e->u.u_uniop.kind = OP_FNEG;
+                                expected = bd_type_float();
+                            }
+                            else{
+                                expected = bd_type_int();
+                            }
                             break;
 						default:
 							break;
                     }
 
-                    unify(expected, typing(env, e->u.u_uniop.val));
+                    unify(expected, t);
 
                     return expected;
                 }
@@ -522,9 +529,39 @@ BDType *typing(Env *env, BDSExpr *e)
                     case OP_MUL:
                     case OP_DIV:
                         {
-                            BDType *expected = bd_type_int();
-                            unify(expected, typing(env, e->u.u_binop.l));
-                            unify(expected, typing(env, e->u.u_binop.r));
+                            BDType *expected;
+                            BDType *t1 = typing(env, e->u.u_binop.l);
+                            BDType *t2 = typing(env, e->u.u_binop.r);
+
+                            if(e->u.u_binop.kind == OP_ADD && t1->kind == T_STRING){
+                                e->u.u_binop.kind = OP_SADD;
+                                expected = bd_type_string();
+                            }
+                            else if(t1->kind == T_FLOAT){
+                                switch(e->u.u_binop.kind){
+                                    case OP_ADD:
+                                        e->u.u_binop.kind = OP_FADD;
+                                        break;
+                                    case OP_SUB:
+                                        e->u.u_binop.kind = OP_FSUB;
+                                        break;
+                                    case OP_MUL:
+                                        e->u.u_binop.kind = OP_FMUL;
+                                        break;
+                                    case OP_DIV:
+                                        e->u.u_binop.kind = OP_FDIV;
+                                        break;
+                                    default:
+                                        break;
+                                }
+                                expected = bd_type_float();
+                            }
+                            else{
+                                expected = bd_type_int();
+                            }
+
+                            unify(expected, t1);
+                            unify(expected, t2);
                             return expected;
                         }
                     case OP_CONS:

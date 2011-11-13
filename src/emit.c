@@ -5,10 +5,14 @@ typedef struct {
     FILE *ch;
     int tailpoint;
     int main;
+    int hasfneg;
+    char *fneglbl;
 } EmitState;
 
 #define OC st->ch
 #define TAILCALL st->tailpoint
+#define HAS_FNEG st->hasfneg
+#define FNEG_LBL st->fneglbl
 
 extern size_t heap_size;
 
@@ -72,9 +76,19 @@ void emit_inst(EmitState *st, BDAInst *inst, char *dst)
                 fprintf(OC, "\tmovq %s, %s\n", inst->lbl, dst);
             }
             break;
+        case AI_MOV_F:
+            if(strne(inst->lbl, dst)){
+                fprintf(OC, "\tmovsd %s, %s\n", inst->lbl, dst);
+            }
+            break;
         case AI_MOVGLOBAL:
             if(strne(inst->lbl, dst)){
                 fprintf(OC, "\tmovq %s(%s), %s\n", inst->lbl, reg_ip, dst);
+            }
+            break;
+        case AI_MOVGLOBAL_F:
+            if(strne(inst->lbl, dst)){
+                fprintf(OC, "\tmovsd %s(%s), %s\n", inst->lbl, reg_ip, dst);
             }
             break;
         case AI_MOVGLOBAL_L:
@@ -88,6 +102,18 @@ void emit_inst(EmitState *st, BDAInst *inst, char *dst)
                 fprintf(OC, "\tmovq %s, %s\n", inst->lbl, dst);
             }
             fprintf(OC, "\tnegq %s\n", dst);
+            break;
+        case AI_FNEG:
+            if( ! HAS_FNEG){
+                HAS_FNEG = 1;
+                FNEG_LBL = bd_generate_id(NULL);
+            }
+            if( ! strne(inst->lbl, dst)){
+                fprintf(OC, "\tmovsd %s, %s\n", inst->lbl, reg_name(REXT5));
+                inst->lbl = reg_name(REXT5);
+            }
+            fprintf(OC, "\tmovsd %s(%s), %s\n", FNEG_LBL, reg_ip, dst);
+            fprintf(OC, "\txorpd %s, %s\n", inst->lbl, dst);
             break;
 
         case AI_ADD:
@@ -118,12 +144,31 @@ void emit_inst(EmitState *st, BDAInst *inst, char *dst)
             }
             break;
 
-        case AI_FNEG:
         case AI_FADD:
         case AI_FSUB:
         case AI_FMUL:
         case AI_FDIV:
-            // TODO
+            {
+                char *op = NULL;
+                switch(inst->kind){
+                    case AI_FADD:
+                        op = "addsd"; break;
+                    case AI_FSUB:
+                        op = "subsd"; break;
+                    case AI_FMUL:
+                        op = "mulsd"; break;
+                    case AI_FDIV:
+                        op = "divsd";
+                        break;
+					default:
+						break;
+                }
+
+                fprintf(OC, "\t%s %s, %s\n", op, inst->u.u_bin.r, inst->u.u_bin.l);
+                if(strne(inst->u.u_bin.l, dst)){
+                    fprintf(OC, "\tmovsd %s, %s\n", inst->u.u_bin.l, dst);
+                }
+            }
             break;
 
         case AI_IFEQ:
@@ -238,7 +283,6 @@ void emit_inst(EmitState *st, BDAInst *inst, char *dst)
 
         case AI_PUSHARG_C:
         case AI_PUSHARG_I:
-        case AI_PUSHARG_F:
         case AI_PUSHARG_L:
             {
                 char *lbl = inst->lbl;
@@ -262,10 +306,32 @@ void emit_inst(EmitState *st, BDAInst *inst, char *dst)
                 fprintf(OC, "\tmovq %s, -%d(%s)\n", lbl, offset, reg_sp);
             }
             break;
+        case AI_PUSHARG_F:
+            {
+                char *lbl = inst->lbl;
+                int offset = (int)inst->u.u_int;
+
+                BDReg reg = fargreg(offset);
+                if(reg >= 0){
+                    char *regname = reg_name(reg);
+                    if(strne(regname, lbl) > 0){
+                        fprintf(OC, "\tmovsd %s, %s\n", lbl, regname);
+                    }
+                    return;
+                }
+
+                if(TAILCALL){
+                    offset = offset * 8 + 16;
+                }
+                else{
+                    offset = offset * 8;
+                }
+                fprintf(OC, "\tmovsd %s, -%d(%s)\n", lbl, offset, reg_sp);
+            }
+            break;
 
         case AI_GETARG_C:
         case AI_GETARG_I:
-        case AI_GETARG_F:
         case AI_GETARG_L:
             {
                 int offset = inst->u.u_int;
@@ -281,6 +347,23 @@ void emit_inst(EmitState *st, BDAInst *inst, char *dst)
 
                 offset = offset * 8;
                 fprintf(OC, "\tmovq %d(%s), %s\n", offset, reg_bp, dst);
+            }
+            break;
+        case AI_GETARG_F:
+            {
+                int offset = inst->u.u_int;
+
+                BDReg reg = fargreg(offset);
+                if(reg >= 0){
+                    char *regname = reg_name(reg);
+                    if(strne(regname, dst)){
+                        fprintf(OC, "\tmovsd %s, %s\n", regname, dst);
+                    }
+                    return;
+                }
+
+                offset = offset * 8;
+                fprintf(OC, "\tmovsd %d(%s), %s\n", offset, reg_bp, dst);
             }
             break;
 
@@ -633,7 +716,7 @@ void emit_entry(EmitState *st)
     fprintf(OC, "\tmovq -%d(%s), %s\n", offset_arg3, reg_bp, reg_name(RARG2));
     fprintf(OC, "\tcall %s\n", bd_generate_toplevel_lbl("core_list_cons"));
     fprintf(OC, "\tmovq %s, -%d(%s)\n", reg_acc, offset_arg3, reg_bp);
-    fprintf(OC, "jmp %s\n", beginlbl);
+    fprintf(OC, "\tjmp %s\n", beginlbl);
     fprintf(OC, "%s:\n", endlbl);
 
     // Call main function.
@@ -653,6 +736,10 @@ void bd_emit(FILE *ch, BDAProgram *prog)
 {
     EmitState *st = malloc(sizeof(EmitState));
     st->ch = ch;
+    st->main = 0;
+    st->tailpoint = 0;
+    st->hasfneg = 0;
+    st->fneglbl = NULL;
 
     BDAExprConst *c;
     BDExprIdent *ident;
@@ -723,4 +810,12 @@ void bd_emit(FILE *ch, BDAProgram *prog)
     st->tailpoint = 0;
     st->main = 0;
     emit_entry(st);
+
+    // for fneg
+    if(HAS_FNEG){
+        fprintf(OC, "\t.data\n");
+        fprintf(OC, "%s:\n", FNEG_LBL);
+		fprintf(OC, "\t.long 0\n");
+		fprintf(OC, "\t.long -2147483648\n");
+    }
 }

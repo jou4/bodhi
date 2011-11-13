@@ -275,6 +275,7 @@ void _bd_sexpr_show(BDSExpr *e, int col, int depth)
                     _bd_sexpr_show(e->u.u_uniop.val, col, depth);
                     break;
                 case OP_NEG:
+                case OP_FNEG:
                     PRINT(col, "-");
                     _bd_sexpr_show(e->u.u_uniop.val, col, depth);
                     break;
@@ -286,15 +287,19 @@ void _bd_sexpr_show(BDSExpr *e, int col, int depth)
             _bd_sexpr_show(e->u.u_binop.l, col, depth);
             switch(e->u.u_binop.kind){
                 case OP_ADD:
+                case OP_FADD:
                     PRINT(col, " + ");
                     break;
                 case OP_SUB:
+                case OP_FSUB:
                     PRINT(col, " - ");
                     break;
                 case OP_MUL:
+                case OP_FMUL:
                     PRINT(col, " * ");
                     break;
                 case OP_DIV:
+                case OP_FDIV:
                     PRINT(col, " / ");
                     break;
                 case OP_EQ:

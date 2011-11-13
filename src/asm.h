@@ -2,6 +2,7 @@
 #define _asm_h_
 
 #include "expr.h"
+#include "id.h"
 
 #define SIZE_ALIGN 8
 #define SIZE_CHAR 1
@@ -41,6 +42,13 @@ typedef enum {
     REXT3,
     REXT4,
     REXT5,
+
+    RFACC,
+    RFEXT1,
+    RFEXT2,
+    RFEXT3,
+    RFEXT4,
+    RFEXT5,
 } BDReg;
 
 
@@ -101,8 +109,10 @@ typedef enum {
     AI_SETGLOBAL_L,
 
     AI_MOV,
+    AI_MOV_F,
     AI_MOV_L,
     AI_MOVGLOBAL,
+    AI_MOVGLOBAL_F,
     AI_MOVGLOBAL_L,
 
     AI_NEG,
@@ -275,8 +285,10 @@ BDAInst *bd_ainst_setglobal(BDType *type, char *l, char *r);
 #define bd_ainst_setglobal_f(l, r) _ainst_binreg(AI_SETGLOBAL_F, l, r)
 #define bd_ainst_setglobal_l(l, r) _ainst_binreg(AI_SETGLOBAL_L, l, r)
 BDAInst *bd_ainst_mov(char *lbl);
+#define bd_ainst_mov_f(lbl) _ainst_unireg(AI_MOV_F, lbl)
 #define bd_ainst_mov_l(lbl) _ainst_unireg(AI_MOV_L, lbl)
 #define bd_ainst_movglobal(lbl) _ainst_unireg(AI_MOVGLOBAL, lbl)
+#define bd_ainst_movglobal_f(lbl) _ainst_unireg(AI_MOVGLOBAL_F, lbl)
 #define bd_ainst_movglobal_l(lbl) _ainst_unireg(AI_MOVGLOBAL_L, lbl)
 BDAInst *_ainst_unireg(BDAInstKind kind, char *reg);
 BDAInst *_ainst_binreg(BDAInstKind kind, char *l, char *r);

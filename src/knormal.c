@@ -76,16 +76,11 @@ Pair normalize_binop(Env *env, BDSExpr *src, BDNExpr *dest)
     dest->u.u_binop.r = y.name;
 
     switch(src->u.u_binop.kind){
-        case OP_ADD:
-        case OP_SUB:
-        case OP_MUL:
-        case OP_DIV:
-            t = p1.t;
-            break;
         case OP_CONS:
             t = bd_type_list(p1.t);
             break;
 		default:
+            t = p1.t;
 			break;
     }
 
@@ -139,24 +134,21 @@ Pair normalize(Env *env, BDSExpr *e)
                     return normalize(env, bd_sexpr_if(e->u.u_uniop.val, bd_sexpr_bool(0), bd_sexpr_bool(1)));
                 case OP_NEG:
                     return normalize_uniop(env, e, bd_nexpr_uniop(e->u.u_uniop.kind, NULL), bd_type_int());
+                case OP_FNEG:
+                    return normalize_uniop(env, e, bd_nexpr_uniop(e->u.u_uniop.kind, NULL), bd_type_float());
 				default:
 					break;
             }
             break;
         case E_BINOP:
             switch(e->u.u_binop.kind){
-                case OP_ADD:
-                case OP_SUB:
-                case OP_MUL:
-                case OP_DIV:
-                    return normalize_binop(env, e, bd_nexpr_binop(e->u.u_binop.kind, NULL, NULL));
                 case OP_EQ:
                 case OP_LE:
                     return normalize(env, bd_sexpr_if(e, bd_sexpr_bool(1), bd_sexpr_bool(0)));
                 case OP_CONS:
                     return normalize_binop(env, e, bd_nexpr_binop(e->u.u_binop.kind, NULL, NULL));
 				default:
-					break;
+                    return normalize_binop(env, e, bd_nexpr_binop(e->u.u_binop.kind, NULL, NULL));
             }
             break;
         case E_IF:
