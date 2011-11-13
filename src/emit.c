@@ -262,7 +262,7 @@ void emit_inst(EmitState *st, BDAInst *inst, char *dst)
             fprintf(OC, "\tmovq %s, -%d(%s)\n", inst->lbl, (int)inst->u.u_int + SIZE_ALIGN, reg_bp);
             break;
         case AI_PUSHLCL_F:
-            fprintf(OC, "\tmovd %s, -%d(%s)\n", inst->lbl, (int)inst->u.u_int + SIZE_ALIGN, reg_bp);
+            fprintf(OC, "\tmovsd %s, -%d(%s)\n", inst->lbl, (int)inst->u.u_int + SIZE_ALIGN, reg_bp);
             break;
         case AI_PUSHLCL_L:
             fprintf(OC, "\tmovq %s, -%d(%s)\n", inst->lbl, (int)inst->u.u_int + SIZE_ALIGN, reg_bp);
@@ -275,7 +275,7 @@ void emit_inst(EmitState *st, BDAInst *inst, char *dst)
             fprintf(OC, "\tmovq -%d(%s), %s\n", (int)inst->u.u_int + SIZE_ALIGN, reg_bp, dst);
             break;
         case AI_GETLCL_F:
-            fprintf(OC, "\tmovd -%d(%s), %s\n", (int)inst->u.u_int + SIZE_ALIGN, reg_bp, dst);
+            fprintf(OC, "\tmovsd -%d(%s), %s\n", (int)inst->u.u_int + SIZE_ALIGN, reg_bp, dst);
             break;
         case AI_GETLCL_L:
             fprintf(OC, "\tmovq -%d(%s), %s\n", (int)inst->u.u_int + SIZE_ALIGN, reg_bp, dst);

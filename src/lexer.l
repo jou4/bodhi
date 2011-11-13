@@ -47,6 +47,10 @@ upper [A-Z]
 <INITIAL>"-"        { return(MINUS); }
 <INITIAL>"*"        { return(AST); }
 <INITIAL>"/"        { return(SLASH); }
+<INITIAL>"+."       { return(PLUS_DOT); }
+<INITIAL>"-."       { return(MINUS_DOT); }
+<INITIAL>"*."       { return(AST_DOT); }
+<INITIAL>"/."       { return(SLASH_DOT); }
 <INITIAL>"="        { return(EQUAL); }
 <INITIAL>"=="       { return(EQUAL_EQUAL); }
 <INITIAL>"<>"       { return(LESS_GREATER); }

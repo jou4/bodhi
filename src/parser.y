@@ -51,6 +51,10 @@ extern int yyget_lineno();
 %token PLUS
 %token AST
 %token SLASH
+%token MINUS_DOT
+%token PLUS_DOT
+%token AST_DOT
+%token SLASH_DOT
 %token EQUAL
 %token EQUAL_EQUAL
 %token LESS_GREATER
@@ -91,7 +95,7 @@ extern int yyget_lineno();
 %left  COMMA
 %left  EQUAL EQUAL_EQUAL LESS_GREATER LESS GREATER LESS_EQUAL GREATER_EQUAL
 %left  PLUS MINUS PLUS_DOT MINUS_DOT
-%left  AST SLASH
+%left  AST SLASH AST_DOT SLASH_DOT
 %left  prec_app
 %left  prec_unary_minus
 %left  DOT
@@ -182,6 +186,9 @@ uniop_exp
 | MINUS simple_exp
     %prec prec_unary_minus
     { $$ = bd_sexpr_uniop(OP_NEG, $2); }
+| MINUS_DOT simple_exp
+    %prec prec_unary_minus
+    { $$ = bd_sexpr_uniop(OP_FNEG, $2); }
 ;
 
 binop_exp
@@ -193,6 +200,14 @@ binop_exp
     { $$ = bd_sexpr_binop(OP_MUL, $1, $3); }
 | exp SLASH exp
     { $$ = bd_sexpr_binop(OP_DIV, $1, $3); }
+| exp PLUS_DOT exp
+    { $$ = bd_sexpr_binop(OP_FADD, $1, $3); }
+| exp MINUS_DOT exp
+    { $$ = bd_sexpr_binop(OP_FSUB, $1, $3); }
+| exp AST_DOT exp
+    { $$ = bd_sexpr_binop(OP_FMUL, $1, $3); }
+| exp SLASH_DOT exp
+    { $$ = bd_sexpr_binop(OP_FDIV, $1, $3); }
 | exp EQUAL_EQUAL exp
     { $$ = bd_sexpr_binop(OP_EQ, $1, $3); }
 | exp LESS_GREATER exp

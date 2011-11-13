@@ -506,13 +506,10 @@ BDType *typing(Env *env, BDSExpr *e)
                             expected = bd_type_bool();
                             break;
                         case OP_NEG:
-                            if(t->kind == T_FLOAT){
-                                e->u.u_uniop.kind = OP_FNEG;
-                                expected = bd_type_float();
-                            }
-                            else{
-                                expected = bd_type_int();
-                            }
+                            expected = bd_type_int();
+                            break;
+                        case OP_FNEG:
+                            expected = bd_type_float();
                             break;
 						default:
 							break;
@@ -528,36 +525,32 @@ BDType *typing(Env *env, BDSExpr *e)
                     case OP_SUB:
                     case OP_MUL:
                     case OP_DIV:
+                    case OP_FADD:
+                    case OP_FSUB:
+                    case OP_FMUL:
+                    case OP_FDIV:
                         {
-                            BDType *expected;
+                            BDType *expected = NULL;
                             BDType *t1 = typing(env, e->u.u_binop.l);
                             BDType *t2 = typing(env, e->u.u_binop.r);
 
-                            if(e->u.u_binop.kind == OP_ADD && t1->kind == T_STRING){
-                                e->u.u_binop.kind = OP_SADD;
-                                expected = bd_type_string();
-                            }
-                            else if(t1->kind == T_FLOAT){
-                                switch(e->u.u_binop.kind){
-                                    case OP_ADD:
-                                        e->u.u_binop.kind = OP_FADD;
-                                        break;
-                                    case OP_SUB:
-                                        e->u.u_binop.kind = OP_FSUB;
-                                        break;
-                                    case OP_MUL:
-                                        e->u.u_binop.kind = OP_FMUL;
-                                        break;
-                                    case OP_DIV:
-                                        e->u.u_binop.kind = OP_FDIV;
-                                        break;
-                                    default:
-                                        break;
-                                }
-                                expected = bd_type_float();
-                            }
-                            else{
-                                expected = bd_type_int();
+                            switch(e->u.u_binop.kind){
+                                case OP_ADD:
+                                case OP_SUB:
+                                case OP_MUL:
+                                case OP_DIV:
+                                    expected = bd_type_int();
+                                    break;
+                                case OP_FADD:
+                                case OP_FSUB:
+                                case OP_FMUL:
+                                case OP_FDIV:
+                                    expected = bd_type_float();
+                                    break;
+                                default:
+                                    printf("Unexpected operator was passed.\n");
+                                    exit(EXIT_FAILURE);
+                                    break;
                             }
 
                             unify(expected, t1);
