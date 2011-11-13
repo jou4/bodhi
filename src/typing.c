@@ -763,6 +763,10 @@ BDType *typing_def(Env *env, BDSExprDef *def)
     unify(def->ident->type, typing(env, def->body));
     def->ident->type = deref_type(def->ident->type, NULL);
     def->body = deref_term(def->body);
+
+    // Reset infered type to env.
+    env_set(env, def->ident->name, create_type_schema(env, def->ident->type));
+
     return def->ident->type;
 }
 
