@@ -44,12 +44,18 @@ BDNExpr *bd_alpha(Env *env, BDNExpr *e)
             {
                 BDExprIdent *ident = e->u.u_let.ident;
                 char *oldname = ident->name;
-                char *newname = bd_generate_id(ident->type);
+                char *newname;
+                Env *local = env_local_new(env);
+
+                if(is_trash_name(oldname)){
+                    newname = "";
+                }
+                else{
+                    newname = bd_generate_id(ident->type);
+                    env_set(local, oldname, newname);
+                }
 
                 BDExprIdent *newident = bd_expr_ident(newname, bd_type_clone(ident->type));
-
-                Env *local = env_local_new(env);
-                env_set(local, oldname, newname);
 
                 BDNExpr *newexpr = bd_nexpr_let(newident
                         , bd_alpha(env, e->u.u_let.val)
@@ -70,7 +76,7 @@ BDNExpr *bd_alpha(Env *env, BDNExpr *e)
                 char *oldname = ident->name;
                 char *newname = bd_generate_id(ident->type);
 
-                // create local env
+                // set to local env
                 Env *local = env_local_new(env);
                 env_set(local, oldname, newname);
 

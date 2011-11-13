@@ -572,6 +572,12 @@ BDType *typing(Env *env, BDSExpr *e)
             case E_VAR:
                 {
                     char *name = e->u.u_var.name;
+
+                    if(is_trash_name(name)){
+                        printf("'%s' is unavailable for var name.\n", name);
+                        exit(EXIT_FAILURE);
+                    }
+
                     BDType *schema = env_get(env, name);
 
                     if(schema != NULL){
@@ -589,6 +595,11 @@ BDType *typing(Env *env, BDSExpr *e)
                     BDExprIdent *ident = e->u.u_letrec.ident;
                     BDSExpr *fun = e->u.u_letrec.fun;
                     BDSExpr *body = e->u.u_letrec.body;
+
+                    if(is_trash_name(ident->name)){
+                        printf("'%s' is unavailable for function name.\n", ident->name);
+                        exit(EXIT_FAILURE);
+                    }
 
                     Env *local = env_local_new(env);
                     env_set(local, ident->name, bd_type_schema(NULL, ident->type));

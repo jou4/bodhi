@@ -68,3 +68,18 @@ char *bd_generate_cfunc_lbl(const char *name)
 {
 	return bd_generate_lbl(name);
 }
+
+int is_trash_name(const char *name)
+{
+    if(name == NULL){
+        return 1;
+    }
+
+    while(*name > 0){
+        if(*name != '_'){
+            return 0;
+        }
+        name++;
+    }
+    return 1;
+}

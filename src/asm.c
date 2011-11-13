@@ -808,13 +808,25 @@ BDAExpr *bd_aexpr_concat(BDAExpr *e1, BDExprIdent *ident, BDAExpr *e2)
     BDAExpr *ret = NULL;
     switch(e1->kind){
         case AE_ANS:
-            ret = bd_aexpr_let(bd_expr_ident_clone(ident), e1->u.u_ans.val, e2);
+            if(is_trash_name(ident->name)){
+                ret = bd_aexpr_nonelet(e1->u.u_ans.val, e2);
+            }
+            else{
+                ret = bd_aexpr_let(bd_expr_ident_clone(ident), e1->u.u_ans.val, e2);
+            }
             break;
         case AE_LET:
-            ret = bd_aexpr_let(
-                    bd_expr_ident_clone(e1->u.u_let.ident),
-                    e1->u.u_let.val,
-                    bd_aexpr_concat(e1->u.u_let.body, ident, e2));
+            if(is_trash_name(e1->u.u_let.ident->name)){
+                ret = bd_aexpr_nonelet(
+                        e1->u.u_let.val,
+                        bd_aexpr_concat(e1->u.u_let.body, ident, e2));
+            }
+            else{
+                ret = bd_aexpr_let(
+                        bd_expr_ident_clone(e1->u.u_let.ident),
+                        e1->u.u_let.val,
+                        bd_aexpr_concat(e1->u.u_let.body, ident, e2));
+            }
             break;
 		default:
 			break;
