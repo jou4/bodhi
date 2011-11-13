@@ -1,0 +1,9 @@
+def f x = (x, x*2 , x*3)
+
+def main xs =
+    let (a, b, c) = f 10 in
+    let _ = print_int a in
+    let _ = print_int b in
+    let _ = print_int c in
+    let _ = print (f 20) in
+    ()
