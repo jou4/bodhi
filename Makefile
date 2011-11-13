@@ -61,4 +61,6 @@ runtest:
 	./a.out
 	bin/bodhi test/tuple.bd
 	./a.out
+	bin/bodhi test/float.bd
+	./a.out
 

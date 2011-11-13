@@ -774,17 +774,6 @@ void typing_defs(Env *env, Vector *defs)
     }
 }
 
-BDType *return_type(BDType *t)
-{
-	switch(t->kind){
-		case T_FUN:
-			return t->u.u_fun.ret;
-		default:
-			break;
-	}
-	return t;
-}
-
 
 extern Vector *primsigs;
 
@@ -810,7 +799,7 @@ BDSProgram *bd_typing(BDSProgram *prog)
 
         // typing main
         def = prog->maindef;
-        BDType *maintype = return_type(deref_type(typing(env, def->body), NULL));
+        BDType *maintype = bd_return_type(deref_type(typing(env, def->body), NULL));
         def->body = deref_term(def->body);
 
         env_destroy(env);

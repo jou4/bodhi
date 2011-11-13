@@ -39,9 +39,9 @@ int strne(char *s1, char *s2)
     }
 }
 
-void emit(EmitState *st, BDAExpr *e);
+void emit(EmitState *st, BDAExpr *e, BDType *ret_type);
 
-void emit_inst(EmitState *st, BDAInst *inst, char *dst)
+void emit_inst(EmitState *st, BDAInst *inst, char *dst, BDType *ret_type)
 {
     switch(inst->kind)
     {
@@ -196,11 +196,11 @@ void emit_inst(EmitState *st, BDAInst *inst, char *dst)
                 }
 
                 fprintf(OC, "%s:\n", f_lbl);
-                emit(st, f);
+                emit(st, f, ret_type);
                 fprintf(OC, "\tjmp %s\n", end_lbl);
 
                 fprintf(OC, "%s:\n", t_lbl);
-                emit(st, t);
+                emit(st, t, ret_type);
 
                 fprintf(OC, "%s:\n", end_lbl);
             }
@@ -213,8 +213,15 @@ void emit_inst(EmitState *st, BDAInst *inst, char *dst)
             }
             else{
                 fprintf(OC, "\tcall %s\n", inst->lbl);
-                if(strne(reg_name(RACC), dst)){
-                    fprintf(OC, "\tmovq %s, %s\n", reg_name(RACC), dst);
+                if(ret_type != NULL && ret_type->kind != T_FLOAT){
+                    if(strne(reg_name(RACC), dst)){
+                        fprintf(OC, "\tmovq %s, %s\n", reg_name(RACC), dst);
+                    }
+                }
+                else{
+                    if(strne(reg_name(RFACC), dst)){
+                        fprintf(OC, "\tmovsd %s, %s\n", reg_name(RFACC), dst);
+                    }
                 }
             }
             break;
@@ -227,8 +234,15 @@ void emit_inst(EmitState *st, BDAInst *inst, char *dst)
                     }
                     else{
                         fprintf(OC, "\tcall *%s\n", inst->lbl);
-                        if(strne(reg_name(RACC), dst)){
-                            fprintf(OC, "\tmovq %s, %s\n", reg_name(RACC), dst);
+                        if(ret_type != NULL && ret_type->kind != T_FLOAT){
+                            if(strne(reg_name(RACC), dst)){
+                                fprintf(OC, "\tmovq %s, %s\n", reg_name(RACC), dst);
+                            }
+                        }
+                        else{
+                            if(strne(reg_name(RFACC), dst)){
+                                fprintf(OC, "\tmovsd %s, %s\n", reg_name(RFACC), dst);
+                            }
                         }
                     }
                 }
@@ -239,8 +253,15 @@ void emit_inst(EmitState *st, BDAInst *inst, char *dst)
                     }
                     else{
                         fprintf(OC, "\tcall *%s(%s)\n", inst->lbl, reg_ip);
-                        if(strne(reg_name(RACC), dst)){
-                            fprintf(OC, "\tmovq %s, %s\n", reg_name(RACC), dst);
+                        if(ret_type != NULL && ret_type->kind != T_FLOAT){
+                            if(strne(reg_name(RACC), dst)){
+                                fprintf(OC, "\tmovq %s, %s\n", reg_name(RACC), dst);
+                            }
+                        }
+                        else{
+                            if(strne(reg_name(RFACC), dst)){
+                                fprintf(OC, "\tmovsd %s, %s\n", reg_name(RFACC), dst);
+                            }
                         }
                     }
                 }
@@ -495,11 +516,16 @@ void emit_inst(EmitState *st, BDAInst *inst, char *dst)
     }
 }
 
-void emit(EmitState *st, BDAExpr *e)
+void emit(EmitState *st, BDAExpr *e, BDType *ret_type)
 {
     switch(e->kind){
         case AE_ANS:
-            emit_inst(st, e->u.u_ans.val, reg_acc);
+            if(ret_type != NULL && ret_type->kind != T_FLOAT){
+                emit_inst(st, e->u.u_ans.val, reg_name(RACC), ret_type);
+            }
+            else{
+                emit_inst(st, e->u.u_ans.val, reg_name(RFACC), ret_type);
+            }
             break;
         case AE_LET:
             {
@@ -508,8 +534,8 @@ void emit(EmitState *st, BDAExpr *e)
                 if(ident->type != NULL){
                     dst = ident->name;
                 }
-                emit_inst(st, e->u.u_let.val, dst);
-                emit(st, e->u.u_let.body);
+                emit_inst(st, e->u.u_let.val, dst, ident->type);
+                emit(st, e->u.u_let.body, ret_type);
             }
             break;
 		default:
@@ -663,7 +689,7 @@ void emit_fundef(EmitState *st, BDAExprDef *def)
     fprintf(OC, "\tsubq $%d, %s\n", frame_size(def->body), reg_sp);
 	GC_SET_STACKPTR;	// For GC.
 
-    emit(st, def->body);
+    emit(st, def->body, bd_return_type(def->ident->type));
 
     fprintf(OC, "\tleave\n");
 	GC_SET_STACKPTR;	// For GC.

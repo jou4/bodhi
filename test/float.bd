@@ -1,0 +1,9 @@
+def fadd a b = a +. b
+def fsub a b = a -. b
+
+def main xs =
+    let _ = print_float (fadd 1.1 2.2) in
+    let _ = print_float (fsub 1.1 2.2) in
+    let _ = print_float (1.1 *. 2.2) in
+    let _ = print_float (1.1 /. 2.2) in
+    ()

@@ -76,5 +76,7 @@ BDType *bd_type_array(BDType *elem);
 BDType *bd_type_var(BDType *content);
 BDType *bd_type_schema(Vector *vars, BDType *body);
 
+BDType *bd_return_type(BDType *t);
+
 
 #endif

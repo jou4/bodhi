@@ -334,6 +334,17 @@ char *bd_type_show(BDType *t)
     return result;
 }
 
+BDType *bd_return_type(BDType *t)
+{
+	switch(t->kind){
+		case T_FUN:
+			return t->u.u_fun.ret;
+		default:
+			break;
+	}
+	return t;
+}
+
 
 /*
 void bd_type_show_test(BDType *t)
