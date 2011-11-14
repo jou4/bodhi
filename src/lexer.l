@@ -65,11 +65,7 @@ upper [A-Z]
 <INITIAL>"in"       { return(IN); }
 <INITIAL>"rec"      { return(REC); }
 <INITIAL>","        { return(COMMA); }
- /* TODO <INITIAL>"_"        { } */
- /*<INITIAL>"Array.create" { return(ARRAY_CREATE); } */
- /*<INITIAL>"."        { return(DOT); } */
- /*<INITIAL>"<-"       { return(LESS_MINUS); } */
- /*<INITIAL>";"        { return(SEMICOLON); } */
+<INITIAL>";"        { return(SEMICOLON); }
 
 <INITIAL>'\\n' {
     yylval->c_val = '\n';
@@ -80,11 +76,11 @@ upper [A-Z]
     return(CHAR_LIT);
 }
 
-<INITIAL>-?{digit}+\.{digit}+ {
+<INITIAL>{digit}+\.{digit}+ {
     yylval->d_val = atof(yytext);
     return(FLOAT_LIT);
 }
-<INITIAL>-?{digit}+ {
+<INITIAL>{digit}+ {
     yylval->i_val = atol(yytext);
     return(INT_LIT);
 }

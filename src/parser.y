@@ -96,14 +96,13 @@ extern int yyget_lineno();
 %left  EQUAL EQUAL_EQUAL LESS_GREATER LESS GREATER LESS_EQUAL GREATER_EQUAL
 %left  PLUS MINUS PLUS_DOT MINUS_DOT
 %left  AST SLASH AST_DOT SLASH_DOT
-%left  prec_app
 %left  prec_unary_minus
-%left  DOT
+%left  prec_app
 
 
 %type <vec> formal_args actual_args t_elems pat
 %type <ident> formal_arg
-%type <t> exp simple_exp uniop_exp binop_exp l_elems
+%type <t> exp simple_exp uniop_exp binop_exp l_elems exp_seq
 %start input
 
 %%
@@ -177,6 +176,8 @@ exp
 | FUN formal_args ARROW exp
     %prec prec_lambda
     { $$ = bd_sexpr_fun(bd_type_var(NULL), $2, $4); }
+| LBRACE exp_seq RBRACE
+    { $$ = $2; }
 ;
 
 uniop_exp
@@ -268,6 +269,14 @@ pat
 | IDENT
     { Vector *vec = vector_new(); vector_add(vec, bd_expr_ident_typevar($1)); $$ = vec; }
 ;
+
+exp_seq
+: exp SEMICOLON exp
+    { $$ = bd_sexpr_let(bd_expr_ident("_", bd_type_unit()), $1, $3); }
+| exp SEMICOLON exp SEMICOLON
+    { $$ = bd_sexpr_let(bd_expr_ident("_", bd_type_unit()), $1, $3); }
+;
+
 
 
 %%

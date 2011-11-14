@@ -4,7 +4,7 @@ DFLAGS		= -g -Wall -I/usr/local/include
 DEST		=
 LDFLAGS		=
 LIBS		=
-OBJS		= exception.o list.o map.o mem.o set.o string_buffer.o treemap.o vector.o
+OBJS		=
 PROGRAM		= bodhi
 BIN			= ./bin
 
@@ -41,26 +41,15 @@ clean:
 	rmdir bin
 
 runtest:
-	bin/bodhi test/hello.bd
-	./a.out
-	bin/bodhi test/char.bd
-	./a.out
-	bin/bodhi test/fib.bd
-	./a.out
-	bin/bodhi test/args.bd
-	./a.out aa bb cc dd ee
-	bin/bodhi test/fold.bd
-	./a.out
-	bin/bodhi test/ref.bd
-	./a.out
-	bin/bodhi test/array.bd
-	./a.out
-	bin/bodhi test/closure.bd
-	./a.out
-	bin/bodhi test/file.bd
-	./a.out
-	bin/bodhi test/tuple.bd
-	./a.out
-	bin/bodhi test/float.bd
-	./a.out
+	@bin/bodhi test/hello.bd && ./a.out
+	@bin/bodhi test/char.bd && ./a.out
+	@bin/bodhi test/fib.bd && ./a.out
+	@bin/bodhi test/args.bd && ./a.out aa bb cc dd ee
+	@bin/bodhi test/fold.bd && ./a.out
+	@bin/bodhi test/ref.bd && ./a.out
+	@bin/bodhi test/array.bd && ./a.out
+	@bin/bodhi test/closure.bd && ./a.out
+	@bin/bodhi test/file.bd && ./a.out
+	@bin/bodhi test/tuple.bd && ./a.out
+	@bin/bodhi test/float.bd && ./a.out
 

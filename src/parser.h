@@ -99,8 +99,8 @@
      prec_let = 305,
      prec_lambda = 306,
      prec_if = 307,
-     prec_app = 308,
-     prec_unary_minus = 309
+     prec_unary_minus = 308,
+     prec_app = 309
    };
 #endif
 
