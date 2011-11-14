@@ -7,4 +7,4 @@ tmp*
 *.o
 *.out
 config.h
-Makefile.in
+Makefile

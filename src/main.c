@@ -19,9 +19,10 @@ int proc_compile = 1;
 int proc_assemble = 1;
 size_t heap_size = 64000000;
 
-char *usage = "usage: bodhi [-Sv] [-o output] [-m heap memory size] input";
+char *usage = "usage: bodhi [-Sv] [-o output] [-m heap memory size] [-L library directory] input";
 char *version = "0.0.1";
 
+char *libdir = NULL;
 char *LIBS = "-lbdcore -lbdutil -lm";
 
 
@@ -50,7 +51,7 @@ void getopts(int argc, char **argv)
 {
     int opt;
 
-    while((opt = getopt(argc, argv, "Svo:m:")) >= 0){
+    while((opt = getopt(argc, argv, "Svo:m:L:")) >= 0){
         switch(opt){
             case 'S':
                 // compile only
@@ -61,6 +62,9 @@ void getopts(int argc, char **argv)
                 break;
 			case 'm':
 				heap_size = atol(optarg);
+				break;
+			case 'L':
+				libdir = optarg;
 				break;
             case 'v':
                 fprintf(stdout, "%s\n", version);
@@ -83,6 +87,10 @@ void getopts(int argc, char **argv)
     if(input == NULL){
         fprintf(stderr, "%s\n", usage);
         exit(EXIT_FAILURE);
+    }
+
+    if(libdir == NULL){
+        libdir = LIB_DIR;
     }
 
     char *bname = basename(input);
@@ -144,7 +152,7 @@ int main(int argc, char **argv)
 
     if(proc_assemble && err == 0){
         char cmd[100];
-        sprintf(cmd, "gcc -o %s %s -L%s %s", output, compiled_file, LIB_DIR, LIBS);
+        sprintf(cmd, "gcc -o %s %s -L%s %s", output, compiled_file, libdir, LIBS);
         system(cmd);
     }
 

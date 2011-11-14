@@ -6,7 +6,7 @@ LDFLAGS		=
 LIBS		=
 OBJS		=
 PROGRAM		= bodhi
-BIN			= ./bin
+MKDIR		= mkdir -p
 
 
 all:
@@ -26,6 +26,13 @@ debug:
 	cp src/a.out bin/bodhi
 	cd core; $(MAKE) debug
 	cp core/libbdcore.a lib/libbdcore.a
+
+install:
+	if test -d $(BINDIR); then : ; else $(MKDIR) $(BINDIR); fi
+	if test -d $(LIBDIR); then : ; else $(MKDIR) $(LIBDIR); fi
+	cp bin/bodhi $(BINDIR)/bodhi
+	cp lib/libbdcore.a $(LIBDIR)/libbdcore.a
+	cp lib/libbdutil.a $(LIBDIR)/libbdutil.a
 
 dir:
 	mkdir -p lib

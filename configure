@@ -5,7 +5,7 @@ config_h=include/config.h
 
 prefix=/usr/local
 bindir=''
-libdir='lib'
+libdir=''
 host=''
 host_type=unknown
 arch=''
@@ -14,18 +14,18 @@ debug=''
 while : ; do
   case "$1" in
     "") break;;
-#    -prefix|--prefix=)
-#        prefix=$2; shift;;
-#    -prefix=*|--prefix=*)
-#        prefix=`echo $1 | sed -e 's/-*prefix=//'`;;
-#    -bindir|--bindir)
-#        bindir=$2; shift;;
-#    -bindir=*|--bindir=*)
-#        bindir=`echo $1 | sed -e 's/-*bindir=//'`;;
-#    -libdir|--libdir)
-#        libdir=$2; shift;;
-#    -libdir=*|--libdir=*)
-#        bindir=`echo $1 | sed -e 's/-*libdir=//'`;;
+    -prefix|--prefix=)
+        prefix=$2; shift;;
+    -prefix=*|--prefix=*)
+        prefix=`echo $1 | sed -e 's/-*prefix=//'`;;
+    -bindir|--bindir)
+        bindir=$2; shift;;
+    -bindir=*|--bindir=*)
+        bindir=`echo $1 | sed -e 's/-*bindir=//'`;;
+    -libdir|--libdir)
+        libdir=$2; shift;;
+    -libdir=*|--libdir=*)
+        bindir=`echo $1 | sed -e 's/-*libdir=//'`;;
     -host|--host)
         host_type=$2; shift;;
     -host=*|--host=*)
@@ -47,16 +47,16 @@ case "$prefix" in
   /*) ;;
    *) echo "The -prefix directory must be absolute." 1>&2; exit 2;;
 esac
-#case "$bindir" in
-#  /*) ;;
-#  "") ;;
-#   *) echo "The -bindir directory must be absolute." 1>&2; exit 2;;
-#esac
-#case "$libdir" in
-#  /*) ;;
-#  "") ;;
-#   *) echo "The -libdir directory must be absolute." 1>&2; exit 2;;
-#esac
+case "$bindir" in
+  /*) ;;
+  "") ;;
+   *) echo "The -bindir directory must be absolute." 1>&2; exit 2;;
+esac
+case "$libdir" in
+  /*) ;;
+  "") ;;
+   *) echo "The -libdir directory must be absolute." 1>&2; exit 2;;
+esac
 
 if test "$host_type" = "unknown"; then
   if host_type=`./gnu/config.guess`; then :; else
@@ -71,13 +71,13 @@ if host=`./gnu/config.sub $host_type`; then :; else
 fi
 echo "Configuring for a $host ..."
 
-#case "$bindir" in
-#  "") bindir="$prefix/bin";;
-#esac
-#
-#case "$libdir" in
-#  "") bindir="$prefix/lib";;
-#esac
+case "$bindir" in
+  "") bindir="$prefix/bin";;
+esac
+
+case "$libdir" in
+  "") libdir="$prefix/lib";;
+esac
 
 
 rm -f $config_h
@@ -102,3 +102,9 @@ case "$debug" in
 	true)
 		echo "#define DEBUG" >> $config_h;;
 esac
+
+rm -f Makefile
+touch Makefile
+echo "BINDIR = $bindir" >> Makefile
+echo "LIBDIR = $libdir" >> Makefile
+cat Makefile.in >> Makefile

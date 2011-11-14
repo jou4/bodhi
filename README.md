@@ -16,7 +16,8 @@ See 'test' directory.
 	$ cd bodhi
 	$ ./configure
 	$ make
-	$ bin/bodhi test/hello.bd
+	$ make install
+	$ bodhi test/hello.bd
 	$ ./a.out
 
 
