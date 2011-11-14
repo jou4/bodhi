@@ -6,6 +6,7 @@
 typedef struct {
     StringBuffer *buf;
     void *scanner;
+    int comment_depth;
 } Lexer;
 
 void lexer_init(Lexer *lexer);

@@ -1,3 +1,7 @@
+{-
+    You can save the scope by creating function as response.
+-}
+
 def make_adder x =
 	let rec f y = x + y in f
 

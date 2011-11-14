@@ -1,1 +1,7 @@
+{-
+    You can use command line args as List of String.
+
+    ex) ./a.out a b c --> ["a", "b", "c"]
+-}
+
 def main args = print args

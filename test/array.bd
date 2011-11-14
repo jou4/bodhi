@@ -1,3 +1,8 @@
+{-
+    array_make: Int -> 'a -> [| 'a |]
+        'array_make 5 0' is create array that length is 5 and have be initialized by 0.
+-}
+
 def ary = array_make 5 0
 
 def main =

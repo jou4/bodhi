@@ -1,3 +1,11 @@
+{-
+    You can call C functions by using 'ccall'.
+    But String in Bodhi is different from String in C language.
+    So convert value by using string_to_cstr.
+
+    Be careful to use 'ccall', because 'ccall' is out of typing.
+-}
+
 def cstr = string_to_cstr
 def filename = "tmp.txt"
 def text = "Hello, world!"

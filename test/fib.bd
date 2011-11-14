@@ -1,3 +1,10 @@
+{-
+    You can define recursive function by using 'let rec'.
+
+    usage)
+        let rec func_name arg1 arg2 arg3 .. = expression
+-}
+
 def fib n =
 	let rec iter x y c n =
 		if c == n then x

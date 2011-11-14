@@ -1,3 +1,12 @@
+{-
+    Operators for float
+
+    add --> +.
+    sub --> -.
+    mol --> *.
+    div --> /.
+-}
+
 def fadd a b = a +. b
 def fsub a b = a -. b
 

@@ -118,9 +118,10 @@ upper [A-Z]
 <STRLIT>.      { sb_append_n(lexer->buf, yytext, yyleng); }
 
  /* Comment */
-<INITIAL>\/\/[^\n]+ { }
-<INITIAL>"/*"       { BEGIN(COMMENT); }
-<COMMENT>"*/"       { BEGIN(INITIAL); }
+<INITIAL>--[^\n]+ { }
+<INITIAL>"{-"       { lexer->comment_depth++; BEGIN(COMMENT); }
+<COMMENT>"{-"       { lexer->comment_depth++; }
+<COMMENT>"-}"       { lexer->comment_depth--; if(lexer->comment_depth == 0){ BEGIN(INITIAL); } }
 <COMMENT><<EOF>>    { YY_FATAL_ERROR("unexpected end of input."); }
 <COMMENT>{br}       { }
 <COMMENT>.          { }
@@ -133,6 +134,7 @@ upper [A-Z]
 void lexer_init(Lexer *lexer)
 {
     lexer->buf = sb_new();
+    lexer->comment_depth = 0;
     yylex_init(&lexer->scanner);
 }
 

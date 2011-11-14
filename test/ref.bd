@@ -1,3 +1,7 @@
+{-
+    'ref' is create mutable State.
+-}
+
 def c = ref 0
 def count () = deref c
 def inc () = setref c (count () + 1)
