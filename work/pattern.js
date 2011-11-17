@@ -91,8 +91,53 @@ function equal_item(i1, i2){
         }
     }
 
+    return false;
 }
 
+//
+// i1がi2を含まないかチェック
+//
+// Var("a"), Int(1) ---> true
+// Int(1), Var("a") ---> false
+// Int(1), Int(2)   ---> false
+// Int(1), Int(1)   ---> false
+//
+function overlapped_item(i1, i2){
+    if(i1.tag == "VAR"){
+        return true;
+    }
+
+    if(i1.tag != i2.tag){
+        return false;
+    }
+
+    switch(i1.tag){
+        case "INT":
+        case "BOOL":
+        case "STRING":
+        {
+            return i1.val == i2.val;
+        }
+        case "TUPLE":
+        {
+            var ret = true;
+            i1.vals.map(function(e, i){
+                    ret &= overlapped_item(e, i2.vals[i]);
+            });
+            return ret;
+        }
+        case "VARIANT":
+        {
+            var ret = i1.cons == i2.cons;
+            i1.vals.map(function(e, i){
+                    ret &= overlapped_item(e, i2.vals[i]);
+            });
+            return ret;
+        }
+    }
+
+    return false;
+}
 
 function let_expr(l, r, e)
 {
@@ -247,6 +292,17 @@ function expand_item(src){
     }
 }
 
+function overlapped_pattern_check(base_cond, remain_conds){
+    var overlapped = remain_conds.filter(function(c){
+            if(overlapped_item(base_cond.cond, c.cond)){
+                return true;
+            }
+            return false;
+    });
+
+    return overlapped.length > 0;
+}
+
 function transform(e, cont){
     switch(e.type){
         case "CASE":
@@ -254,17 +310,11 @@ function transform(e, cont){
             var target = e.target;
             var conds = e.conds;
 
-            // Check overlapped patter.
+            // Check overlapped pattern.
             for(var i = 0; i < conds.length - 1; i++){
                 var x = conds[i];
                 var xs = conds.slice(i + 1);
-                var overlapped = xs.filter(function(y){
-                        if(equal_item(x.cond, y.cond)){
-                            return true;
-                        }
-                        return false;
-                });
-                if(overlapped.length > 0){
+                if(overlapped_pattern_check(x, xs)){
                     puts("Error: pattern overlapped! " + show_item(x.cond));
                     process.exit(1);
                 }
@@ -308,10 +358,6 @@ function transform(e, cont){
                                         tmp_conds.push(c);
                                     }
                                     else{
-                                        if(!base_item){
-                                            console.log(target);
-                                            console.log(conds);
-                                        }
                                         if(equal_item(base_item, c.cond.vals[0])){
                                             grouped_conds.push(c);
                                         }
@@ -347,10 +393,56 @@ function transform(e, cont){
                                     });
                             });
 
-                            new_conds.push({
-                                    cond: shifted_item,
-                                    ret: case_expr(succeeding_target, succeeding_conds)
-                            });
+                            if(shifted_item.tag != "VAR"){
+
+                                //
+                                // 以降の条件のうちVARの条件を探す
+                                // 存在する場合は失敗時の継続として渡す
+                                //
+                                // ex)
+                                // case (A,B)
+                                //  (1,2) -> ...
+                                //  (2,3) -> ...
+                                //  (a,4) -> ...    <-- (1,2), (2,3)の失敗時にこの条件式へ継続させる
+                                //
+
+                                var var_conds = tmp_conds.filter(function(c){
+                                        var shifted = c.cond.vals[0];
+                                        return shifted.tag == "VAR";
+                                });
+
+                                if(var_conds.length > 0){
+                                    var new_cont = transform(case_expr(target, var_conds), cont);
+                                    new_conds.push({
+                                            cond: shifted_item,
+                                            ret: transform(case_expr(succeeding_target, succeeding_conds), new_cont)
+                                    });
+                                }
+                                else{
+                                    new_conds.push({
+                                            cond: shifted_item,
+                                            ret: transform(case_expr(succeeding_target, succeeding_conds), cont)
+                                    });
+                                }
+
+                            }
+                            else{
+                                if(tmp_conds.length > 0){
+                                    // 以降の条件は並列に扱えないため全て継続として渡す
+                                    var new_cont = transform(case_expr(target, tmp_conds), cont);
+                                    new_conds.push({
+                                            cond: shifted_item,
+                                            ret: transform(case_expr(succeeding_target, succeeding_conds), new_cont)
+                                    });
+                                    tmp_conds = [];
+                                }
+                                else{
+                                    new_conds.push({
+                                            cond: shifted_item,
+                                            ret: transform(case_expr(succeeding_target, succeeding_conds), cont)
+                                    });
+                                }
+                            }
 
                             // 初期化
                             grouped_conds = [];
@@ -560,10 +652,26 @@ var exp5 = case_expr(variable("X"), [
         { cond: variable("_"), ret: ans_expr("TRASH") }
 ]);
 
+var exp6 = case_expr(variable("X"), [
+        { cond: tuple([integer(10), integer(20)]), ret: ans_expr("A") },
+        { cond: tuple([integer(10), integer(30)]), ret: ans_expr("B") },
+        { cond: tuple([variable("a"), integer(30)]), ret: ans_expr("C") },
+        { cond: tuple([variable("a"), integer(40)]), ret: ans_expr("D") },
+        { cond: tuple([integer(30), integer(50)]), ret: ans_expr("E") },
+]);
+
+var exp7 = case_expr(variable("X"), [
+        { cond: tuple([tuple([integer(10), integer(20)]), tuple([integer(10), integer(20)])]), ret: ans_expr("A") },
+        { cond: tuple([tuple([integer(10), integer(20)]), tuple([integer(20), integer(20)])]), ret: ans_expr("B") },
+        { cond: variable("_"), ret: ans_expr("TRASH") }
+]);
+
 puts(show_expr(transform(exp0, err_expr())));
 puts(show_expr(transform(exp1, err_expr())));
 puts(show_expr(transform(exp2, err_expr())));
 puts(show_expr(transform(exp3, err_expr())));
 puts(show_expr(transform(exp4, err_expr())));
 puts(show_expr(transform(exp5, err_expr())));
+puts(show_expr(transform(exp6, err_expr())));
+puts(show_expr(transform(exp7, err_expr())));
 
