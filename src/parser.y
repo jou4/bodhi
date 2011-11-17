@@ -89,8 +89,8 @@ extern int yyget_lineno();
 
 %right prec_let
 %right prec_lambda
-%right COLON
 %right prec_if
+%right COLON
 %right LESS_MINUS
 %left  COMMA
 %left  EQUAL EQUAL_EQUAL LESS_GREATER LESS GREATER LESS_EQUAL GREATER_EQUAL
@@ -271,10 +271,14 @@ pat
 ;
 
 exp_seq
-: exp SEMICOLON exp
+: exp
+    { $$ = $1; }
+| exp SEMICOLON
+    { $$ = $1; }
+| exp SEMICOLON exp_seq
     { $$ = bd_sexpr_let(bd_expr_ident("_", bd_type_unit()), $1, $3); }
-| exp SEMICOLON exp SEMICOLON
-    { $$ = bd_sexpr_let(bd_expr_ident("_", bd_type_unit()), $1, $3); }
+ /*| exp SEMICOLON exp_seq SEMICOLON
+    { $$ = bd_sexpr_let(bd_expr_ident("_", bd_type_unit()), $1, $3); } */
 ;
 
 
