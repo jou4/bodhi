@@ -29,14 +29,24 @@ void *bodhi_core_make_closure(char *entry, int num_of_vars)
 
 void *bodhi_core_closure_entry(BDValue *v)
 {
-    assert_expected_value(v, T_CLOSURE);
-    return v_closure_entry(v);
+    //assert_expected_value(v, T_CLOSURE);
+    if( ! is_expected_value(v, T_CLOSURE)){
+        return v;
+    }
+    else{
+        return v_closure_entry(v);
+    }
 }
 
 void *bodhi_core_closure_vars(BDValue *v)
 {
-    assert_expected_value(v, T_CLOSURE);
-    return v_closure_vars(v);
+    //assert_expected_value(v, T_CLOSURE);
+    if( ! is_expected_value(v, T_CLOSURE)){
+        return NULL;
+    }
+    else{
+        return v_closure_vars(v);
+    }
 }
 
 void *bodhi_core_make_tuple(int num_of_elements)
