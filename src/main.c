@@ -103,7 +103,7 @@ void getopts(int argc, char **argv)
     if(output == NULL){
         if(proc_assemble){
 #ifdef DEBUG
-            // Output assembly file to current director.
+            // Output assembly file to current directory.
             sprintf(compiled_file, "%s.s", bname);
 #endif
             output = "a.out";
