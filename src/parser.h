@@ -96,11 +96,16 @@
      MAIN = 302,
      DEF = 303,
      CCALL = 304,
-     prec_let = 305,
-     prec_lambda = 306,
-     prec_if = 307,
-     prec_unary_minus = 308,
-     prec_app = 309
+     MATCH = 305,
+     WITH = 306,
+     VERTICAL_BAR = 307,
+     prec_match = 308,
+     prec_match_branch = 309,
+     prec_let = 310,
+     prec_lambda = 311,
+     prec_if = 312,
+     prec_unary_minus = 313,
+     prec_app = 314
    };
 #endif
 
@@ -120,12 +125,13 @@ typedef union YYSTYPE
   StringBuffer* buf;
   BDSExpr* t;
   BDExprIdent *ident;
+  BDSExprMatchBranch *branch;
   Vector *vec;
 
 
 
 /* Line 2132 of yacc.c  */
-#line 129 "parser.h"
+#line 135 "parser.h"
 } YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */

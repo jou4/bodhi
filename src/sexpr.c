@@ -84,6 +84,10 @@ void bd_sexpr_destroy(BDSExpr *e)
             bd_sexpr_destroy(e->u.u_lettuple.val);
             bd_sexpr_destroy(e->u.u_lettuple.body);
             break;
+        case E_MATCH:
+            bd_sexpr_destroy(e->u.u_match.target);
+            vector_each(e->u.u_match.branches, bd_sexpr_match_branch_destroy);
+            break;
 		default:
 			break;
     }
@@ -226,6 +230,35 @@ BDSExpr *bd_sexpr_lettuple(Vector *idents, BDSExpr *val, BDSExpr *body)
     e->u.u_lettuple.val = val;
     e->u.u_lettuple.body = body;
     return e;
+}
+
+BDSExpr *bd_sexpr_match(BDSExpr *target, Vector *branches)
+{
+    BDSExpr *e = bd_sexpr(E_MATCH);
+    e->u.u_match.target = target;
+    e->u.u_match.branches = branches;
+    return e;
+}
+
+BDSExpr *bd_sexpr_pattern_var(BDExprIdent *ident)
+{
+    BDSExpr *e = bd_sexpr(E_PATTERNVAR);
+    e->u.u_patvar.ident = ident;
+    return e;
+}
+
+BDSExprMatchBranch *bd_sexpr_match_branch(BDSExpr *pattern, BDSExpr *body)
+{
+    BDSExprMatchBranch *branch = malloc(sizeof(BDSExprMatchBranch));
+    branch->pattern = pattern;
+    branch->body = body;
+    return branch;
+}
+
+void bd_sexpr_match_branch_destroy(BDSExprMatchBranch *branch)
+{
+    bd_sexpr_destroy(branch->pattern);
+    bd_sexpr_destroy(branch->body);
 }
 
 
@@ -445,6 +478,35 @@ void _bd_sexpr_show(BDSExpr *e, int col, int depth)
                 _bd_sexpr_show(e->u.u_lettuple.body, col, depth + 1);
             }
             break;
+        case E_MATCH:
+            {
+                BDSExpr *target = e->u.u_match.target;
+                Vector *branches = e->u.u_match.branches;
+                int i;
+                BDSExprMatchBranch *branch;
+                BDSExpr *pattern, *body;
+
+                PRINT(col, "match ");
+                _bd_sexpr_show(target, col, depth + 1);
+                PRINT(col, " with");
+                DOBREAKLINE(col, depth);
+
+                for(i = 0; i < branches->length; i++){
+                    if(i > 0){
+                        DOBREAKLINE_NOSHIFT(col, depth);
+                    }
+                    branch = vector_get(branches, i);
+                    pattern = branch->pattern;
+                    body = branch->body;
+
+                    _bd_sexpr_show(pattern, col, depth);
+                    PRINT(col, " -> ");
+                    _bd_sexpr_show(body, col, depth + 1);
+                }
+            }
+            break;
+        case E_PATTERNVAR:
+            PRINT1(col, "%s", bd_expr_ident_show(e->u.u_patvar.ident));
 		default:
 			break;
     }

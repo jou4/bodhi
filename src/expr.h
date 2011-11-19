@@ -25,11 +25,11 @@ typedef enum {
     E_CCALL,
     E_TUPLE,
     E_LETTUPLE,
-    E_LIST,
-    E_ARRAY,
+    E_MATCH,
+    E_PATTERNVAR,
     E_MAKECLS,
     E_APPCLS,
-    E_APPDIR
+    E_APPDIR,
 } BDExprKind;
 
 typedef enum {

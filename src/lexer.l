@@ -40,6 +40,9 @@ upper [A-Z]
 <INITIAL>"main"     { return(MAIN); }
 <INITIAL>"def"      { return(DEF); }
 <INITIAL>"ccall"    { return(CCALL); }
+<INITIAL>"match"    { return(MATCH); }
+<INITIAL>"with"     { return(WITH); }
+<INITIAL>"|"        { return(VERTICAL_BAR); }
 <INITIAL>"\\"       { return(FUN); }
 <INITIAL>"->"       { return(ARROW); }
 
