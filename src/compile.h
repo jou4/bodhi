@@ -19,7 +19,9 @@
 #include "asm.h"
 
 int compile(FILE *ch, BDSProgram *prog);
+BDSProgram *bd_sanitize(BDSProgram *prog);
 BDSProgram *bd_typing(BDSProgram *prog);
+BDSProgram *bd_match_transform(BDSProgram *prog);
 BDNProgram *bd_knormalize(BDSProgram *prog);
 BDNProgram *bd_alpha_convert(BDNProgram *prog);
 BDNExpr *bd_alpha(Env *env, BDNExpr *e);

@@ -48,15 +48,15 @@ clean:
 	rmdir bin
 
 runtest:
-	@bin/bodhi test/hello.bd && ./a.out
-	@bin/bodhi test/char.bd && ./a.out
-	@bin/bodhi test/fib.bd && ./a.out
-	@bin/bodhi test/args.bd && ./a.out aa bb cc dd ee
-	@bin/bodhi test/fold.bd && ./a.out
-	@bin/bodhi test/ref.bd && ./a.out
-	@bin/bodhi test/array.bd && ./a.out
-	@bin/bodhi test/closure.bd && ./a.out
-	@bin/bodhi test/file.bd && ./a.out
-	@bin/bodhi test/tuple.bd && ./a.out
-	@bin/bodhi test/float.bd && ./a.out
+	@bin/bodhi -Llib test/hello.bd && ./a.out
+	@bin/bodhi -Llib test/char.bd && ./a.out
+	@bin/bodhi -Llib test/fib.bd && ./a.out
+	@bin/bodhi -Llib test/args.bd && ./a.out aa bb cc dd ee
+	@bin/bodhi -Llib test/fold.bd && ./a.out
+	@bin/bodhi -Llib test/ref.bd && ./a.out
+	@bin/bodhi -Llib test/array.bd && ./a.out
+	@bin/bodhi -Llib test/closure.bd && ./a.out
+	@bin/bodhi -Llib test/file.bd && ./a.out
+	@bin/bodhi -Llib test/tuple.bd && ./a.out
+	@bin/bodhi -Llib test/float.bd && ./a.out
 

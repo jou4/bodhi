@@ -707,6 +707,41 @@ BDType *typing(Env *env, BDSExpr *e)
 
                     return result;
                 }
+            case E_MATCH:
+                {
+                    BDSExpr *target = e->u.u_match.target;
+                    Vector *branches = e->u.u_match.branches;
+
+                    BDType *pattern_expected = typing(env, target);
+                    BDType *expected = bd_type_var(NULL);
+
+                    int i;
+                    BDSExprMatchBranch *branch;
+                    BDSExpr *pattern;
+                    BDSExpr *body;
+                    Env *local;
+
+                    for(i = 0; i < branches->length; i++){
+                        branch = vector_get(branches, i);
+                        pattern = branch->pattern;
+                        body = branch->body;
+
+                        local = env_local_new(env);
+                        unify(pattern_expected, typing(local, pattern));
+                        unify(expected, typing(local, body));
+                        env_local_destroy(local);
+                    }
+
+                    return expected;
+                }
+                break;
+            case E_PATTERNVAR:
+                {
+                    BDExprIdent *ident = e->u.u_patvar.ident;
+                    env_set(env, ident->name, bd_type_schema(NULL, ident->type));
+                    return ident->type;
+                }
+                break;
 			default:
 				break;
         }

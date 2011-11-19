@@ -88,6 +88,9 @@ void bd_sexpr_destroy(BDSExpr *e)
             bd_sexpr_destroy(e->u.u_match.target);
             vector_each(e->u.u_match.branches, bd_sexpr_match_branch_destroy);
             break;
+        case E_PATTERNVAR:
+            bd_expr_ident_destroy(e->u.u_patvar.ident);
+            break;
 		default:
 			break;
     }

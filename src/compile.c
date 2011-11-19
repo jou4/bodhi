@@ -16,7 +16,8 @@ int compile(FILE *ch, BDSProgram *sprog)
             return 1;
         }
 
-        bd_typing(sprog);
+        sprog = bd_sanitize(sprog);
+        sprog = bd_typing(sprog);
 
 #ifdef DEBUG
         printf("--- Typing ---\n");

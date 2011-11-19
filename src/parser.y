@@ -296,7 +296,9 @@ exp_seq
 ;
 
 match_branches
-: VERTICAL_BAR match_branch
+: match_branch
+    { Vector *vec = vector_new(); vector_add(vec, $1); $$ = vec; }
+| VERTICAL_BAR match_branch
     { Vector *vec = vector_new(); vector_add(vec, $2); $$ = vec; }
 | match_branches VERTICAL_BAR match_branch
     { vector_add($1, $3); $$ = $1; }

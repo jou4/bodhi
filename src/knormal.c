@@ -273,7 +273,7 @@ Pair normalize(Env *env, BDSExpr *e)
                 InsertLetResult x;
                 Vector *lets = vector_new();
 
-                Vector *actuals = e->u.u_app.actuals;
+                Vector *actuals = e->u.u_ccall.actuals;
                 Vector *new_actuals = vector_new();
                 int i;
                 for(i = 0; i < actuals->length; i++){
