@@ -224,46 +224,6 @@ function show_expr(e){
     return expr2string(e, 0);
 }
 
-function eq(i1, i2){
-    if(i1.tag != i2.tag){
-        return false;
-    }
-
-    switch(i1.tag){
-        case "INT":
-        return i1.val == i2.val;
-        case "VAR":
-        return true;
-        case "TUPLE":
-        return true;
-    }
-}
-
-function sep(conds){
-    var top_cond = conds[0].cond;
-    var ary1 = [conds[0]], ary2 = [];
-    for(var i = 1; i < conds.length; i++){
-        if(eq(top_cond, conds[i].cond)){
-            ary1.push(conds[i]);
-        }
-        else{
-            ary2 = conds.slice(i);
-            break;
-        }
-    }
-    return [ary1, ary2];
-}
-
-function sep_i(conds){
-    var top_cond = conds[0].cond;
-    for(var i = 1; i < conds.length; i++){
-        if( ! eq(top_cond, conds[i].cond)){
-            return i;
-        }
-    }
-    return i;
-}
-
 var id_num = 0;
 function get_id(){
     return "L" + (id_num++);
@@ -586,7 +546,14 @@ function transform(e, cont){
                 // let x = T in ...
                 //
                 var c = e.conds[0];
-                return let_expr(c.cond, target, transform(c.ret, cont));
+                if(c.cond.name == "_"){
+                    // c.ret = transform(c.ret, cont);
+                    // return case_expr(target, [c]);
+                    return transform(c.ret, cont);
+                }
+                else{
+                    return let_expr(c.cond, target, transform(c.ret, cont));
+                }
             }
             else{
                 var new_conds = [];
@@ -594,11 +561,23 @@ function transform(e, cont){
                 conds.forEach(function(c){
                         if(c.cond.tag == "VAR"){
                             has_variable = true;
+                            /*
+                            new_conds.push({
+                                    cond: variable("_"),
+                                    ret: let_expr(c.cond, target, transform(c.ret, cont))
+                            });
+                            */
+                            new_conds.push({
+                                    cond: c.cond,
+                                    ret: transform(c.ret, cont)
+                            });
                         }
-                        new_conds.push({
-                                cond: c.cond,
-                                ret: transform(c.ret, cont)
-                        });
+                        else{
+                            new_conds.push({
+                                    cond: c.cond,
+                                    ret: transform(c.ret, cont)
+                            });
+                        }
                 });
                 if( ! has_variable){
                     new_conds.push({
