@@ -317,12 +317,12 @@ match_pattern
     { $$ = bd_sexpr_bool($1); }
 | INT_LIT
     { $$ = bd_sexpr_int($1); }
-| FLOAT_LIT
-    { $$ = bd_sexpr_float($1); }
+/*| FLOAT_LIT
+    { $$ = bd_sexpr_float($1); }*/
 | CHAR_LIT
     { $$ = bd_sexpr_char($1); }
-| STR_LIT
-    { $$ = bd_sexpr_str(sb_to_string($1)); }
+/*| STR_LIT
+    { $$ = bd_sexpr_str(sb_to_string($1)); }*/
 | LPAREN pattern_tuple_elems RPAREN
     { $$ = bd_sexpr_tuple($2); }
 | LPAREN match_pattern RPAREN

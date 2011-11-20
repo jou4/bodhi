@@ -30,6 +30,7 @@ typedef enum {
     E_MAKECLS,
     E_APPCLS,
     E_APPDIR,
+    E_CONT,
 } BDExprKind;
 
 typedef enum {

@@ -458,3 +458,8 @@ void bodhi_print_tuple(BDValue *v)
     _bodhi_print_tuple(v); BREAKLINE;
 }
 
+void bodhi_error(BDValue *v)
+{
+    printf("*** Exception: %s\n", (char *)v_string_val(v));
+    exit(EXIT_FAILURE);
+}

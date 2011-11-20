@@ -60,6 +60,7 @@ LblState *lbl_state_data(BDType *type)
 typedef struct {
     BDReg target;
     int reuse;
+    int lost;
 } TargetRegResult;
 
 TargetRegResult *target_reg_result_new()
@@ -67,6 +68,7 @@ TargetRegResult *target_reg_result_new()
     TargetRegResult *result = malloc(sizeof(TargetRegResult));
     result->target = RNONE;
     result->reuse = 0;
+    result->lost = 0;
     return result;
 }
 
@@ -211,11 +213,13 @@ int target_reg_in_inst(Env *regenv, char *lbl, BDAInst *inst, TargetRegResult *r
                 target_reg_in_expr(regenv, lbl, inst->u.u_if.f, r2, wallstop);
 
                 if(ml || mr){
-                    if(r1->target != RNONE || r2->target != RNONE){
+                    if(r1->target != RNONE || r2->target != RNONE || r1->lost || r2->lost){
                         result->reuse = 1;
                     }
                 }
                 else{
+                    // notice to callee that the lbl is missed
+                    result->lost = 1;
                     wall = 1;
                 }
 

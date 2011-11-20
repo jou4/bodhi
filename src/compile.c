@@ -17,6 +17,7 @@ int compile(FILE *ch, BDSProgram *sprog)
         }
 
         sprog = bd_sanitize(sprog);
+        sprog = bd_pattern_transform(sprog);
         sprog = bd_typing(sprog);
 
 #ifdef DEBUG

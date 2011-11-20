@@ -91,6 +91,9 @@ void bd_sexpr_destroy(BDSExpr *e)
         case E_PATTERNVAR:
             bd_expr_ident_destroy(e->u.u_patvar.ident);
             break;
+        case E_CONT:
+            bd_sexpr_destroy(e->u.u_cont.body);
+            break;
 		default:
 			break;
     }
@@ -250,6 +253,14 @@ BDSExpr *bd_sexpr_pattern_var(BDExprIdent *ident)
     return e;
 }
 
+BDSExpr *bd_sexpr_error(const char *message)
+{
+    Vector *actuals = vector_new();
+    vector_add(actuals, bd_sexpr_str(mem_strdup(message)));
+    BDSExpr *e = bd_sexpr_app(bd_sexpr_var("error"), actuals);
+    return e;
+}
+
 BDSExprMatchBranch *bd_sexpr_match_branch(BDSExpr *pattern, BDSExpr *body)
 {
     BDSExprMatchBranch *branch = malloc(sizeof(BDSExprMatchBranch));
@@ -262,6 +273,13 @@ void bd_sexpr_match_branch_destroy(BDSExprMatchBranch *branch)
 {
     bd_sexpr_destroy(branch->pattern);
     bd_sexpr_destroy(branch->body);
+}
+
+BDSExpr *bd_sexpr_cont(BDSExpr *body)
+{
+    BDSExpr *e = bd_sexpr(E_CONT);
+    e->u.u_cont.body = body;
+    return e;
 }
 
 
@@ -510,6 +528,8 @@ void _bd_sexpr_show(BDSExpr *e, int col, int depth)
             break;
         case E_PATTERNVAR:
             PRINT1(col, "%s", bd_expr_ident_show(e->u.u_patvar.ident));
+        case E_CONT:
+            _bd_sexpr_show(e->u.u_cont.body, col, depth);
 		default:
 			break;
     }

@@ -33,7 +33,7 @@ BDSExpr *sanitize(BDSExpr *e)
                 Vector *actuals = e->u.u_app.actuals;
                 int i;
                 for(i = 0; i < actuals->length; i++){
-                    vector_set(actuals, i, vector_get(actuals, i));
+                    vector_set(actuals, i, sanitize(vector_get(actuals, i)));
                 }
             }
             break;
@@ -42,7 +42,7 @@ BDSExpr *sanitize(BDSExpr *e)
                 Vector *actuals = e->u.u_ccall.actuals;
                 int i;
                 for(i = 0; i < actuals->length; i++){
-                    vector_set(actuals, i, vector_get(actuals, i));
+                    vector_set(actuals, i, sanitize(vector_get(actuals, i)));
                 }
             }
             break;

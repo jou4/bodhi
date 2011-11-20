@@ -218,6 +218,8 @@ Vector *primitives()
     defprim(Sig("print_string", 2, PTString, PTUnit));
     defprim(Sig("print", 2, PTVar(1), PTUnit));
 
+    defprim(Sig("error", 2, PTString, PTUnit));
+
     defprim(Sig("raise", 2, PTVar(1), PTUnit));
     defprim(Sig("get_exception", 2, PTUnit, PTVar(1)));
 

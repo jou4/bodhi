@@ -5,7 +5,7 @@ DEST		=
 LDFLAGS		=
 LIBS		= ../lib/libbdutil.a
 OBJS		= lexer.o parser.o type.o env.o id.o show.o main.o compile.o \
-			  primitives.o expr.o sexpr.o sanitize.o typing.o nexpr.o knormal.o \
+			  primitives.o expr.o sexpr.o sanitize.o typing.o nexpr.o pattern.o knormal.o \
 			  alpha.o beta.o flatten.o inline.o constfold.o elim.o cexpr.o closure.o \
 			  asm.o virtual.o regalloc.o emit.o
 PROGRAM		= a.out

@@ -83,6 +83,10 @@ typedef struct {
     BDExprIdent *ident;
 } BDSExprPatternVar;
 
+typedef struct {
+    BDSExpr *body;
+} BDSExprCont;
+
 
 struct BDSExpr {
     BDExprKind kind;
@@ -104,6 +108,7 @@ struct BDSExpr {
         BDSExprFun u_fun;
         BDSExprMatch u_match;
         BDSExprPatternVar u_patvar;
+        BDSExprCont u_cont;
     } u;
 };
 
@@ -141,6 +146,8 @@ BDSExpr *bd_sexpr_tuple(Vector *elems);
 BDSExpr *bd_sexpr_lettuple(Vector *idents, BDSExpr *val, BDSExpr *body);
 BDSExpr *bd_sexpr_match(BDSExpr *target, Vector *branches);
 BDSExpr *bd_sexpr_pattern_var(BDExprIdent *ident);
+BDSExpr *bd_sexpr_error(const char *message);
+BDSExpr *bd_sexpr_cont(BDSExpr *body);
 BDSExprMatchBranch *bd_sexpr_match_branch(BDSExpr *pattern, BDSExpr *body);
 void bd_sexpr_match_branch_destroy(BDSExprMatchBranch *branch);
 
