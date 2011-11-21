@@ -10,6 +10,7 @@ MKDIR		= mkdir -p
 
 
 all:
+	$(MAKE) clean
 	$(MAKE) dir
 	cd util; $(MAKE) all
 	cp util/libbdutil.a lib/libbdutil.a

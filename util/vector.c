@@ -2,7 +2,12 @@
 
 void vector_resize(Vector *vec, int n)
 {
-    vec->blocks = realloc(vec->blocks, sizeof(void *) * n);
+    if(vec->blocks == NULL){
+        vec->blocks = malloc(sizeof(void *) * n);
+    }
+    else{
+        vec->blocks = realloc(vec->blocks, sizeof(void *) * n);
+    }
     vec->nblocks = n;
 }
 

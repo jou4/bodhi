@@ -204,12 +204,16 @@ void emit_inst(EmitState *st, BDAInst *inst, char *dst, BDType *ret_type)
 						break;
                 }
 
+                EmitState clone_st;
+
+                clone_st = *st;
                 fprintf(OC, "%s:\n", f_lbl);
-                emit(st, f, ret_type);
+                emit(&clone_st, f, ret_type);
                 fprintf(OC, "\tjmp %s\n", end_lbl);
 
+                clone_st = *st;
                 fprintf(OC, "%s:\n", t_lbl);
-                emit(st, t, ret_type);
+                emit(&clone_st, t, ret_type);
 
                 fprintf(OC, "%s:\n", end_lbl);
             }
