@@ -52,6 +52,7 @@ extern int yyget_lineno();
 %token PLUS
 %token AST
 %token SLASH
+%token PERCENT
 %token MINUS_DOT
 %token PLUS_DOT
 %token AST_DOT
@@ -100,6 +101,7 @@ extern int yyget_lineno();
 %right LESS_MINUS
 %left  COMMA
 %left  EQUAL EQUAL_EQUAL LESS_GREATER LESS GREATER LESS_EQUAL GREATER_EQUAL
+%left  PERCENT
 %left  PLUS MINUS PLUS_DOT MINUS_DOT
 %left  AST SLASH AST_DOT SLASH_DOT
 %left  prec_unary_minus
@@ -213,6 +215,8 @@ binop_exp
     { $$ = bd_sexpr_binop(OP_MUL, $1, $3); }
 | exp SLASH exp
     { $$ = bd_sexpr_binop(OP_DIV, $1, $3); }
+| exp PERCENT exp
+    { $$ = bd_sexpr_binop(OP_MOD, $1, $3); }
 | exp PLUS_DOT exp
     { $$ = bd_sexpr_binop(OP_FADD, $1, $3); }
 | exp MINUS_DOT exp

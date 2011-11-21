@@ -50,6 +50,7 @@ upper [A-Z]
 <INITIAL>"-"        { return(MINUS); }
 <INITIAL>"*"        { return(AST); }
 <INITIAL>"/"        { return(SLASH); }
+<INITIAL>"%"        { return(PERCENT); }
 <INITIAL>"+."       { return(PLUS_DOT); }
 <INITIAL>"-."       { return(MINUS_DOT); }
 <INITIAL>"*."       { return(AST_DOT); }

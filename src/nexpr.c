@@ -409,6 +409,9 @@ void _bd_nexpr_show(BDNExpr *e, int col, int depth)
                 case OP_FDIV:
                     PRINT(col, " / ");
                     break;
+                case OP_MOD:
+                    PRINT(col, " %% ");
+                    break;
                 case OP_CONS:
                     PRINT(col, " : ");
                     break;

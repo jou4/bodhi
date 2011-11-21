@@ -95,6 +95,11 @@ BDNExpr *const_fold(Env *env, BDNExpr *e)
                         newexpr = bd_nexpr_int(find_const_int(env, x) / find_const_int(env, y));
                     }
                     break;
+                case OP_MOD:
+                    if(has_const(env, x, T_INT) && has_const(env, y, T_INT)){
+                        newexpr = bd_nexpr_int(find_const_int(env, x) % find_const_int(env, y));
+                    }
+                    break;
                 case OP_FADD:
                 case OP_FSUB:
                 case OP_FMUL:

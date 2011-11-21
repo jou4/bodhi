@@ -525,6 +525,7 @@ BDType *typing(Env *env, BDSExpr *e)
                     case OP_SUB:
                     case OP_MUL:
                     case OP_DIV:
+                    case OP_MOD:
                     case OP_FADD:
                     case OP_FSUB:
                     case OP_FMUL:
@@ -539,6 +540,7 @@ BDType *typing(Env *env, BDSExpr *e)
                                 case OP_SUB:
                                 case OP_MUL:
                                 case OP_DIV:
+                                case OP_MOD:
                                     expected = bd_type_int();
                                     break;
                                 case OP_FADD:

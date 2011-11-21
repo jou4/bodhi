@@ -487,6 +487,9 @@ void _bd_ainst_show(BDAInst *inst, int col, int depth)
         case AI_DIV:
             PRINT2(col, "DIV %s, %s", inst->u.u_bin.l, inst->u.u_bin.r);
             break;
+        case AI_MOD:
+            PRINT2(col, "MOD %s, %s", inst->u.u_bin.l, inst->u.u_bin.r);
+            break;
 
         case AI_FADD:
             PRINT2(col, "FADD %s, %s", inst->u.u_bin.l, inst->u.u_bin.r);

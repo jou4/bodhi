@@ -120,6 +120,7 @@ void emit_inst(EmitState *st, BDAInst *inst, char *dst, BDType *ret_type)
         case AI_SUB:
         case AI_MUL:
         case AI_DIV:
+        case AI_MOD:
             {
                 char *op = NULL;
                 switch(inst->kind){
@@ -130,6 +131,7 @@ void emit_inst(EmitState *st, BDAInst *inst, char *dst, BDType *ret_type)
                     case AI_MUL:
                         op = "imulq"; break;
                     case AI_DIV:
+                    case AI_MOD:
                         op = "idivq";
                         fprintf(OC, "\tmovq $0, %s\n", "%rdx");
                         break;
@@ -138,8 +140,15 @@ void emit_inst(EmitState *st, BDAInst *inst, char *dst, BDType *ret_type)
                 }
 
                 fprintf(OC, "\t%s %s, %s\n", op, inst->u.u_bin.r, inst->u.u_bin.l);
-                if(strne(inst->u.u_bin.l, dst)){
-                    fprintf(OC, "\tmovq %s, %s\n", inst->u.u_bin.l, dst);
+                if(inst->kind != AI_MOD){
+                    if(strne(inst->u.u_bin.l, dst)){
+                        fprintf(OC, "\tmovq %s, %s\n", inst->u.u_bin.l, dst);
+                    }
+                }
+                else{
+                    if(strne("%rdx", dst)){
+                        fprintf(OC, "\tmovq %s, %s\n", "%rdx", dst);
+                    }
                 }
             }
             break;

@@ -172,6 +172,7 @@ int target_reg_in_inst(Env *regenv, char *lbl, BDAInst *inst, TargetRegResult *r
         case AI_SUB:
         case AI_MUL:
         case AI_DIV:
+        case AI_MOD:
             if(is_match_lbl(lbl, inst->u.u_bin.l)){
                 add_target_reg(result, RACC);
             }
@@ -638,6 +639,7 @@ BDAExpr *regalloc_inst(AllocState *st, Env *env, Env *regenv, BDAInst *inst, int
         case AI_SUB:
         case AI_MUL:
         case AI_DIV:
+        case AI_MOD:
             {
                 char *l = find_reg(env, regenv, inst->u.u_bin.l);
                 char *r = find_reg(env, regenv, inst->u.u_bin.r);
@@ -654,6 +656,8 @@ BDAExpr *regalloc_inst(AllocState *st, Env *env, Env *regenv, BDAInst *inst, int
                         return bd_aexpr_ans(bd_ainst_mul(l, r));
                     case AI_DIV:
                         return bd_aexpr_ans(bd_ainst_div(l, r));
+                    case AI_MOD:
+                        return bd_aexpr_ans(bd_ainst_mod(l, r));
 					default:
 						break;
                 }

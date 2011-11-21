@@ -120,6 +120,7 @@ typedef enum {
     AI_SUB,
     AI_MUL,
     AI_DIV,
+    AI_MOD,
 
     AI_FNEG,
     AI_FADD,
@@ -297,6 +298,7 @@ BDAInst *_ainst_binreg(BDAInstKind kind, char *l, char *r);
 #define bd_ainst_sub(l, r) _ainst_binreg(AI_SUB, l, r)
 #define bd_ainst_mul(l, r) _ainst_binreg(AI_MUL, l, r)
 #define bd_ainst_div(l, r) _ainst_binreg(AI_DIV, l, r)
+#define bd_ainst_mod(l, r) _ainst_binreg(AI_MOD, l, r)
 #define bd_ainst_fneg(lbl) _ainst_unireg(AI_FNEG, lbl)
 #define bd_ainst_fadd(l, r) _ainst_binreg(AI_FADD, l, r)
 #define bd_ainst_fsub(l, r) _ainst_binreg(AI_FSUB, l, r)

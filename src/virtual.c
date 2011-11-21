@@ -79,6 +79,8 @@ BDAExpr *virtual_expr(Env *env, BDCExpr *e)
                         return bd_aexpr_ans(bd_ainst_mul(e->u.u_binop.l, e->u.u_binop.r));
                     case OP_DIV:
                         return bd_aexpr_ans(bd_ainst_div(e->u.u_binop.l, e->u.u_binop.r));
+                    case OP_MOD:
+                        return bd_aexpr_ans(bd_ainst_mod(e->u.u_binop.l, e->u.u_binop.r));
                     case OP_FADD:
                         return bd_aexpr_ans(bd_ainst_fadd(e->u.u_binop.l, e->u.u_binop.r));
                     case OP_FSUB:

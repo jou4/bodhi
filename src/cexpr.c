@@ -390,6 +390,9 @@ void _bd_cexpr_show(BDCExpr *e, int col, int depth)
                 case OP_FDIV:
                     PRINT(col, " / ");
                     break;
+                case OP_MOD:
+                    PRINT(col, " %% ");
+                    break;
                 case OP_CONS:
                     PRINT(col, " : ");
                     break;

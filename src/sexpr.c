@@ -356,6 +356,9 @@ void _bd_sexpr_show(BDSExpr *e, int col, int depth)
                 case OP_FDIV:
                     PRINT(col, " / ");
                     break;
+                case OP_MOD:
+                    PRINT(col, " %% ");
+                    break;
                 case OP_EQ:
                     PRINT(col, " == ");
                     break;
