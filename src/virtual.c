@@ -215,13 +215,23 @@ BDAExpr *virtual_expr(Env *env, BDCExpr *e)
                 switch(e->kind){
                     case E_APPCLS:
                         {
-                            char *entry = bd_generate_id(NULL);
-                            return bd_aexpr_nonelet(
-                                    bd_ainst_loadfvs(fun),
-                                    bd_aexpr_let(
-                                        bd_expr_ident_typevar(entry),
-                                        bd_ainst_getcls_entry(fun),
-                                        bd_aexpr_ans(bd_ainst_callcls(entry, ilist, flist))));
+                            char *self_fun = env_get(env, "*self_fun*");
+
+                            if(self_fun != NULL && strcmp(fun, self_fun) == 0){
+                                // Call self as closure.
+                                return bd_aexpr_nonelet(
+                                        bd_ainst_loadfvs_self(fun),
+                                        bd_aexpr_ans(bd_ainst_calldir(fun, ilist, flist)));
+                            }
+                            else{
+                                char *entry = bd_generate_id(NULL);
+                                return bd_aexpr_nonelet(
+                                        bd_ainst_loadfvs(fun),
+                                        bd_aexpr_let(
+                                            bd_expr_ident_typevar(entry),
+                                            bd_ainst_getcls_entry(fun),
+                                            bd_aexpr_ans(bd_ainst_callcls(entry, ilist, flist))));
+                            }
                         }
                     case E_APPDIR:
                         return bd_aexpr_ans(bd_ainst_calldir(fun, ilist, flist));
@@ -329,6 +339,8 @@ BDAExprDef *virtual_expr_fundef(Env *env, BDCExprDef *def)
 
     BDExprIdent *ident = def->ident;
     BDCExpr *fun = def->body;
+
+    env_set(local, "*self_fun*", ident->name);
 
     Vector *formals = fun->u.u_fun.formals;
     Vector *fvs = fun->u.u_fun.freevars;

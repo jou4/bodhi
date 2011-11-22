@@ -299,6 +299,8 @@ int target_reg_in_inst(Env *regenv, char *lbl, BDAInst *inst, TargetRegResult *r
                 }
                 return 1;
             }
+        case AI_LOADFVS_SELF:
+            return 0;
         case AI_GETCLS_ENTRY:
             {
                 if(is_match_lbl(lbl, inst->lbl)){
@@ -374,7 +376,7 @@ void target_reg_in_expr(Env *regenv, char *lbl, BDAExpr *e, TargetRegResult *res
                     if(r1->target != RNONE){
                         // There is target-lbl and return use-register candidate.
                         result->target = r1->target;
-                        if(r1->reuse){
+                        if(r1->reuse || r1->lost){
                             result->reuse = 1;
                             target_reg_result_destroy(r1);
                             return;
@@ -383,7 +385,7 @@ void target_reg_in_expr(Env *regenv, char *lbl, BDAExpr *e, TargetRegResult *res
                             target_reg_result_destroy(r1);
                             r1 = target_reg_result_new();
                             target_reg_in_expr(regenv, lbl, e->u.u_let.body, r1, 0);
-                            if(r1->target != RNONE){
+                            if(r1->target != RNONE || r1->lost){
                                 result->reuse = 1;
                             }
                             target_reg_result_destroy(r1);
@@ -842,6 +844,8 @@ BDAExpr *regalloc_inst(AllocState *st, Env *env, Env *regenv, BDAInst *inst, int
                 free_reg(regenv, lbl);
                 return bd_aexpr_ans(bd_ainst_loadfvs(lbl));
             }
+        case AI_LOADFVS_SELF:
+            return bd_aexpr_ans(bd_ainst_loadfvs_self(inst->lbl));
         case AI_GETCLS_ENTRY:
             {
                 char *lbl = find_reg(env, regenv, inst->lbl);
@@ -1115,6 +1119,35 @@ BDAExprDef *regalloc_fundef(Env *env, BDAExprDef *def)
     result = bd_aexpr_nonelet(bd_ainst_nop(), NULL);
     tail = result;
 
+    vec = freevars;
+    if(vec != NULL){
+        // add reg_hp to top of local stack
+        if(vec->length > 0){
+            tail->u.u_let.body = bd_aexpr_nonelet(
+                    bd_ainst_pushlcl(bd_type_int(), reg_name(RHP), st->local_offset),
+                    NULL);
+            tail = tail->u.u_let.body;
+
+            st->local_offset += SIZE_ALIGN;
+        }
+
+        for(i = 0; i < vec->length; i++){
+            formal = vector_get(vec, i);
+
+            reg2lcl = bd_aexpr_nonelet(
+                    bd_ainst_pushlcl(formal->type, reg_name(RACC), st->local_offset),
+                    NULL);
+            tail->u.u_let.body = bd_aexpr_let(
+                    bd_expr_ident(reg_name(RACC), formal->type),
+                    bd_ainst_getfv(formal->type, i * SIZE_ALIGN),
+                    reg2lcl);
+            tail = reg2lcl;
+
+            env_set(local, formal->name, lbl_state_offset(formal->type, POS_LCL, st->local_offset));
+            st->local_offset += SIZE_ALIGN;
+        }
+    }
+
     vec = iformals;
     if(vec != NULL){
         for(i = 0; i < vec->length; i++){
@@ -1156,25 +1189,6 @@ BDAExprDef *regalloc_fundef(Env *env, BDAExprDef *def)
                 env_set(local, formal->name, lbl_state_offset(formal->type, POS_LCL, st->local_offset));
                 st->local_offset += SIZE_ALIGN;
             }
-        }
-    }
-
-    vec = freevars;
-    if(vec != NULL){
-        for(i = 0; i < vec->length; i++){
-            formal = vector_get(vec, i);
-
-            reg2lcl = bd_aexpr_nonelet(
-                    bd_ainst_pushlcl(formal->type, reg_name(RACC), st->local_offset),
-                    NULL);
-            tail->u.u_let.body = bd_aexpr_let(
-                    bd_expr_ident(reg_name(RACC), formal->type),
-                    bd_ainst_getfv(formal->type, i * SIZE_ALIGN),
-                    reg2lcl);
-            tail = reg2lcl;
-
-            env_set(local, formal->name, lbl_state_offset(formal->type, POS_LCL, st->local_offset));
-            st->local_offset += SIZE_ALIGN;
         }
     }
 

@@ -632,6 +632,9 @@ void _bd_ainst_show(BDAInst *inst, int col, int depth)
         case AI_LOADFVS:
             PRINT1(col, "LOADFVS %s", inst->lbl);
             break;
+        case AI_LOADFVS_SELF:
+            PRINT1(col, "LOADFVS_SELF %s", inst->lbl);
+            break;
         case AI_GETCLS_ENTRY:
             PRINT1(col, "GETCLS_ENTRY %s", inst->lbl);
             break;

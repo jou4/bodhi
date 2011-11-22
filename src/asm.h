@@ -161,6 +161,7 @@ typedef enum {
 
     AI_MAKECLS,
     AI_LOADFVS,
+    AI_LOADFVS_SELF,
     AI_GETCLS_ENTRY,
 
     AI_PUSHFV_C,
@@ -342,6 +343,7 @@ BDAInst *bd_ainst_makecls(char *lbl, int size);
 BDAInst *_ainst_push_offset(BDAInstKind kind, char *lbl, int offset);
 BDAInst *_ainst_get_offset(BDAInstKind kind, int offset);
 #define bd_ainst_loadfvs(lbl) _ainst_unireg(AI_LOADFVS, lbl)
+#define bd_ainst_loadfvs_self(lbl) _ainst_unireg(AI_LOADFVS_SELF, lbl)
 #define bd_ainst_getcls_entry(lbl) _ainst_unireg(AI_GETCLS_ENTRY, lbl)
 BDAInst *bd_ainst_pushfv(BDType *type, char *lbl, int offset);
 #define bd_ainst_pushfv_c(lbl, offset) _ainst_push_offset(AI_PUSHFV_C, lbl, offset)

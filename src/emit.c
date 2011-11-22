@@ -432,6 +432,11 @@ void emit_inst(EmitState *st, BDAInst *inst, char *dst, BDType *ret_type)
                 fprintf(OC, "\tmovq %s, %s\n", reg_acc, reg_hp);
             }
             break;
+        case AI_LOADFVS_SELF:
+            {
+                fprintf(OC, "\tmovq -%d(%s), %s\n", SIZE_ALIGN, reg_bp, reg_hp);
+            }
+            break;
         case AI_GETCLS_ENTRY:
             {
                 char *lbl = inst->lbl;
